@@ -69,9 +69,11 @@
 
 <h1>CCI Log Visualizer — text-color-contrast pipeline</h1>
 <div class="topbar">
-  <input type="file" id="shots" accept="image/*" multiple onchange="addFiles(this.files); this.value='';">
-  <span class="muted">upload one or more screenshots — each gets its own panel; paste that scan's <code>adb logcat -s CCI</code> output into the panel's box</span>
+  <input type="file" id="shots" accept="image/*,.txt,text/plain" multiple onchange="addFiles(this.files); this.value='';">
+  <span class="muted">upload screenshots AND their CCI <code>.txt</code> logs together — pairs by matching number in the filenames
+    (<code>screen1.png</code> + <code>logs1.txt</code>); a single image + single txt pairs without numbers</span>
 </div>
+<div id="gwarn" class="perr"></div>
 <div class="topbar">
   <label class="legend"><span style="background:#3b82f6"></span>OCR blocks</label>
   <label class="legend"><span style="background:#d946ef"></span>color blocks</label>
@@ -177,11 +179,57 @@ let panelSeq = 0;
 let pinned = null;   // {panel, entity, div}
 
 function addFiles(files) {
-  for (const f of files) addPanel(f);
-  document.getElementById('empty').style.display = 'none';
+  const images = [], txts = [];
+  for (const f of files) {
+    if (f.type.startsWith('image/')) images.push(f);
+    else if (f.name.toLowerCase().endsWith('.txt') || f.type === 'text/plain') txts.push(f);
+  }
+  // pairing number = LAST number in the filename ("scan_2.png" -> 2, "shot10.txt" -> 10)
+  const num = name => {
+    const m = name.match(/(\d+)(?!.*\d)/);
+    return m ? String(+m[1]) : null;
+  };
+  const readTxt = f => new Promise(res => {
+    const r = new FileReader();
+    r.onload = () => res(String(r.result || ''));
+    r.onerror = () => res('');
+    r.readAsText(f);
+  });
+  (async () => {
+    const warn = [];
+    if (images.length === 0 && txts.length > 0) {
+      warn.push('Only .txt file(s) uploaded — include the screenshot(s) in the same or a later upload.');
+    } else if (images.length === 1 && txts.length <= 1) {
+      // single screenshot (+ optional single txt): no numbering required
+      addPanel(images[0], txts.length ? await readTxt(txts[0]) : '');
+    } else {
+      const txtByNum = {};
+      for (const t of txts) {
+        const n = num(t.name);
+        if (n !== null) txtByNum[n] = t;
+        else warn.push(`"${t.name}": no number in filename — cannot pair when uploading multiple files.`);
+      }
+      for (const img of images) {
+        const n = num(img.name);
+        let logs = '';
+        if (n !== null && txtByNum[n]) {
+          logs = await readTxt(txtByNum[n]);
+          delete txtByNum[n];
+        } else if (images.length > 1 || txts.length > 0) {
+          warn.push(`"${img.name}": no matching numbered .txt — panel added with empty logs.`);
+        }
+        addPanel(img, logs);
+      }
+      for (const n in txtByNum) {
+        warn.push(`"${txtByNum[n].name}": no screenshot with number ${n}.`);
+      }
+    }
+    document.getElementById('gwarn').textContent = warn.join('  ');
+    if (document.querySelector('.panel')) document.getElementById('empty').style.display = 'none';
+  })();
 }
 
-function addPanel(file) {
+function addPanel(file, logsText) {
   const id = ++panelSeq;
   const url = URL.createObjectURL(file);
   const root = document.createElement('div');
@@ -206,8 +254,10 @@ function addPanel(file) {
   img.src = url;
 
   const panel = { id, root, img, entities: [] };
+  if (logsText) root.querySelector('textarea').value = logsText;
 
   const rerender = () => renderPanel(panel);
+  img.addEventListener('load', rerender);
   root.querySelector('.render').addEventListener('click', rerender);
   root.querySelectorAll('.pctl input').forEach(cb => cb.addEventListener('change', rerender));
   root.querySelector('textarea').addEventListener('paste', () => setTimeout(rerender, 50));
