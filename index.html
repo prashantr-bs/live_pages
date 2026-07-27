@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>CCI Log Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, sans-serif; background: #1e1f22; color: #ddd; padding: 14px; }
+  h1 { font-size: 16px; margin-bottom: 8px; }
+  .topbar { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+  button {
+    background: #3b82f6; color: #fff; border: none; border-radius: 6px;
+    padding: 6px 14px; font-size: 13px; cursor: pointer;
+  }
+  button.gray { background: #4b5563; }
+  input[type=file] { font-size: 12px; }
+  label { font-size: 12px; cursor: pointer; user-select: none; }
+  .legend span { display: inline-block; width: 10px; height: 10px; margin-right: 4px; border-radius: 2px; }
+  .muted { color: #8a8f98; font-size: 11px; }
+
+  #panels {
+    display: flex; gap: 16px; overflow-x: auto; align-items: flex-start;
+    padding-bottom: 12px; scroll-snap-type: x proximity;
+  }
+  .panel {
+    /* one panel spans the window (like the single-screen layout before);
+       scroll horizontally to reach the other screens */
+    flex: 0 0 calc(100vw - 48px);
+    scroll-snap-align: start;
+    background: #26272b; border: 1px solid #3a3b40;
+    border-radius: 10px; padding: 10px;
+  }
+  .panel .phead { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .panel .pname { font-size: 12px; font-weight: bold; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .panel .close { background: #7f1d1d; padding: 2px 9px; font-size: 12px; }
+  .panel textarea {
+    width: 100%; height: 84px; background: #1b1c1f; color: #cfd2d6;
+    border: 1px solid #444; border-radius: 6px; padding: 6px;
+    font-family: Menlo, monospace; font-size: 10px; margin-bottom: 6px;
+  }
+  .panel .pctl { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+  .panel .pctl button { padding: 4px 12px; font-size: 12px; }
+  .stage { position: relative; display: inline-block; max-width: 100%; cursor: crosshair; }
+  .stage img { display: block; max-width: 100%; height: auto; border-radius: 4px; }
+  .box {
+    position: absolute; border: 2px solid; border-radius: 2px;
+    pointer-events: none; transition: background 0.1s;
+  }
+  .box.hl { background: rgba(255,255,255,0.12); border-width: 3px; z-index: 50 !important; }
+  .box.pinned { background: rgba(255,255,255,0.10); border-width: 3px; z-index: 60 !important; }
+  .perr { color: #f87171; font-size: 11px; margin-bottom: 4px; }
+
+  #tip {
+    position: fixed; display: none; z-index: 100; max-width: 460px;
+    background: #101114; border: 1px solid #555; border-radius: 8px;
+    padding: 10px 12px; font-size: 12px; line-height: 1.5; pointer-events: none;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.6);
+  }
+  #tip .t { font-weight: bold; margin-bottom: 4px; }
+  #tip .chip {
+    display: inline-block; width: 11px; height: 11px; border-radius: 2px;
+    border: 1px solid #777; vertical-align: -1px; margin: 0 3px 0 6px;
+  }
+  #tip .status { font-weight: bold; }
+  #empty { color: #8a8f98; font-size: 13px; padding: 30px 10px; }
+</style>
+</head>
+<body>
+
+<h1>CCI Log Visualizer — text-color-contrast pipeline</h1>
+<div class="topbar">
+  <input type="file" id="shots" accept="image/*" multiple onchange="addFiles(this.files); this.value='';">
+  <span class="muted">upload one or more screenshots — each gets its own panel; paste that scan's <code>adb logcat -s CCI</code> output into the panel's box</span>
+</div>
+<div class="topbar">
+  <label class="legend"><span style="background:#3b82f6"></span>OCR blocks</label>
+  <label class="legend"><span style="background:#d946ef"></span>color blocks</label>
+  <label class="legend"><span style="background:#9ca3af"></span>nodes</label>
+  <label class="legend"><span style="background:#22c55e"></span>PASS</label>
+  <label class="legend"><span style="background:#ef4444"></span>FAIL</label>
+  <label class="legend"><span style="background:#f59e0b"></span>NEEDS_REVIEW</label>
+  <label class="legend"><span style="background:#6b7280"></span>NOT_APPLICABLE</label>
+  <span class="muted">hover = details · click = pin</span>
+</div>
+
+<div id="panels"></div>
+<div id="empty">No panels yet — upload screenshot(s) above to start.</div>
+<div id="tip"></div>
+
+<script>
+const STATUS_COLOR = {
+  PASS: '#22c55e', FAIL: '#ef4444', NEEDS_REVIEW: '#f59e0b',
+  NOT_APPLICABLE: '#6b7280', NONE: '#9ca3af', OCR: '#3b82f6', BLOCK: '#d946ef'
+};
+
+function stripPrefix(line) {
+  const m = line.match(/CCI\s*:\s?(.*)$/);
+  return (m ? m[1] : line).trim();
+}
+
+function parse(text) {
+  const ocr = [], nodes = [], blocks = [], byRect = {};
+  let lastNode = null;
+  const key = (x,y,w,h) => `${x},${y},${w},${h}`;
+  for (const raw of text.split('\n')) {
+    const l = stripPrefix(raw);
+    if (!l || l.startsWith('====')) continue;
+    let m;
+    if ((m = l.match(/^colorblock \[(\d+),(\d+) (\d+)x(\d+)\] "(.*?)"(?: \{contrast:1:([\d.]+), background:(#[0-9A-Fa-f]+), foreground:(#[0-9A-Fa-f]+)\})?(?: swatch=<error.*?)? words=(\d+)$/))) {
+      blocks.push({x:+m[1], y:+m[2], w:+m[3], h:+m[4], text:m[5],
+                   ratio: m[6] !== undefined ? +m[6] : undefined, bg: m[7], fg: m[8], words:+m[9]});
+    } else if ((m = l.match(/^ocr \[(\d+),(\d+) (\d+)x(\d+)\] "(.*?)"(?: \{contrast:1:([\d.]+), background:(#[0-9A-Fa-f]+), foreground:(#[0-9A-Fa-f]+)\})?(?: swatch=<error: .*)?$/))) {
+      ocr.push({x:+m[1], y:+m[2], w:+m[3], h:+m[4], text:m[5],
+                ratio: m[6] !== undefined ? +m[6] : undefined, bg: m[7], fg: m[8]});
+    } else if ((m = l.match(/^node \[(\d+),(\d+) (\d+)x(\d+)\] cls=(\S+) text="(.*)" -> swatch candidate$/))) {
+      lastNode = {x:+m[1], y:+m[2], w:+m[3], h:+m[4], cls:m[5], text:m[6], status:'NONE'};
+      nodes.push(lastNode);
+      byRect[key(+m[1],+m[2],+m[3],+m[4])] = lastNode;
+    } else if ((m = l.match(/^swatch crop \[(\d+),(\d+) (\d+)x(\d+)\] -> \{contrast:1:([\d.]+), background:(#[0-9A-Fa-f]+), foreground:(#[0-9A-Fa-f]+)\} ocrVerified=(\w+)$/))) {
+      if (lastNode) Object.assign(lastNode, {
+        cropX:+m[1], cropY:+m[2], cropW:+m[3], cropH:+m[4],
+        swatchRatio:+m[5], bg:m[6], fg:m[7], ocrVerified:m[8]
+      });
+    } else if ((m = l.match(/^SKIP: (.*)$/))) {
+      if (lastNode) lastNode.skip = m[1];
+    } else if ((m = l.match(/^\[(\d+),(\d+) (\d+)x(\d+)\] "(.*)" ratio=([\d.]+) \(needs >=([\d.]+)\) fg=(#[0-9A-Fa-f]+) bg=(#[0-9A-Fa-f]+) ocrVerified=(\w+) -> (\w+)$/))) {
+      const k = key(+m[1],+m[2],+m[3],+m[4]);
+      const n = byRect[k] || (() => {
+        const nn = {x:+m[1], y:+m[2], w:+m[3], h:+m[4], text:m[5]};
+        nodes.push(nn); byRect[k] = nn; return nn;
+      })();
+      Object.assign(n, {ratio:+m[6], needs:+m[7], fg:m[8], bg:m[9], ocrVerified:m[10], status:m[11]});
+    } else if ((m = l.match(/^\[(\d+),(\d+) (\d+)x(\d+)\] "(.*)" -> NOT_APPLICABLE: (.*)$/))) {
+      const k = key(+m[1],+m[2],+m[3],+m[4]);
+      const n = byRect[k] || (() => {
+        const nn = {x:+m[1], y:+m[2], w:+m[3], h:+m[4], text:m[5]};
+        nodes.push(nn); byRect[k] = nn; return nn;
+      })();
+      Object.assign(n, {status:'NOT_APPLICABLE', naReason:m[6]});
+    }
+  }
+  return {ocr, nodes, blocks};
+}
+
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+
+function tipHtml(e) {
+  if (e.kind === 'ocr' || e.kind === 'block') {
+    const title = e.kind === 'block'
+      ? `OCR color block (${e.words} word${e.words > 1 ? 's' : ''})` : 'OCR block';
+    let h = `<div class="t" style="color:${e.kind === 'block' ? STATUS_COLOR.BLOCK : STATUS_COLOR.OCR}">${title}</div>` +
+      `text: &ldquo;${esc(e.text)}&rdquo;<br>rect: [${e.x},${e.y} ${e.w}&times;${e.h}]`;
+    if (e.fg) h += `<br>fg:<span class="chip" style="background:${e.fg}"></span>${e.fg}` +
+      ` &nbsp;bg:<span class="chip" style="background:${e.bg}"></span>${e.bg}` +
+      `<br>block ratio: <b>${e.ratio}</b>`;
+    return h;
+  }
+  let h = `<div class="t" style="color:${STATUS_COLOR[e.status]||'#ddd'}">` +
+          `${e.cls ? esc(e.cls) : 'element'} &rarr; <span class="status">${e.status === 'NONE' ? 'no rule verdict' : e.status}</span></div>`;
+  h += `text: &ldquo;${esc(e.text || '')}&rdquo;<br>rect: [${e.x},${e.y} ${e.w}&times;${e.h}]<br>`;
+  if (e.fg) {
+    h += `fg:<span class="chip" style="background:${e.fg}"></span>${e.fg}` +
+         ` &nbsp;bg:<span class="chip" style="background:${e.bg}"></span>${e.bg}<br>`;
+  }
+  if (e.ratio !== undefined) h += `ratio: <b>${e.ratio}</b> (needs &ge;${e.needs})<br>`;
+  else if (e.swatchRatio !== undefined) h += `swatch ratio: ${e.swatchRatio}<br>`;
+  if (e.ocrVerified !== undefined) h += `ocrVerified: ${e.ocrVerified}<br>`;
+  if (e.cropX !== undefined && (e.cropX !== e.x || e.cropY !== e.y || e.cropW !== e.w || e.cropH !== e.h))
+    h += `swatch crop: [${e.cropX},${e.cropY} ${e.cropW}&times;${e.cropH}]<br>`;
+  if (e.naReason) h += `<span class="muted">reason: ${esc(e.naReason)}</span><br>`;
+  if (e.skip) h += `<span class="muted">capture skip: ${esc(e.skip)}</span><br>`;
+  return h;
+}
+
+// ---------- multi-panel ----------
+let panelSeq = 0;
+let pinned = null;   // {panel, entity, div}
+
+function addFiles(files) {
+  for (const f of files) addPanel(f);
+  document.getElementById('empty').style.display = 'none';
+}
+
+function addPanel(file) {
+  const id = ++panelSeq;
+  const url = URL.createObjectURL(file);
+  const root = document.createElement('div');
+  root.className = 'panel';
+  root.innerHTML = `
+    <div class="phead">
+      <span class="pname" title="${esc(file.name)}">${esc(file.name)}</span>
+      <button class="close" title="remove panel">&times;</button>
+    </div>
+    <textarea placeholder="paste this scan's CCI logs here"></textarea>
+    <div class="perr"></div>
+    <div class="pctl">
+      <button class="render">Render</button>
+      <label><input type="checkbox" class="l-ocr" checked> OCR</label>
+      <label><input type="checkbox" class="l-blocks" checked> color blocks</label>
+      <label><input type="checkbox" class="l-nodes" checked> nodes</label>
+    </div>
+    <div class="stage"><img alt="screenshot"></div>`;
+  document.getElementById('panels').appendChild(root);
+
+  const img = root.querySelector('img');
+  img.src = url;
+
+  const panel = { id, root, img, entities: [] };
+
+  const rerender = () => renderPanel(panel);
+  root.querySelector('.render').addEventListener('click', rerender);
+  root.querySelectorAll('.pctl input').forEach(cb => cb.addEventListener('change', rerender));
+  root.querySelector('textarea').addEventListener('paste', () => setTimeout(rerender, 50));
+  root.querySelector('.close').addEventListener('click', () => {
+    if (pinned && pinned.panel === panel) { pinned = null; hideTip(); }
+    URL.revokeObjectURL(url);
+    root.remove();
+    if (!document.querySelector('.panel')) document.getElementById('empty').style.display = 'block';
+  });
+
+  const stage = root.querySelector('.stage');
+  stage.addEventListener('mousemove', ev => {
+    if (pinned) return;
+    const g = hitTest(panel, ev.clientX, ev.clientY);
+    panel.entities.forEach(x => x.div.classList.remove('hl'));
+    if (g) { g.div.classList.add('hl'); showTip(g.e, ev); } else hideTip();
+  });
+  stage.addEventListener('mouseleave', () => {
+    if (pinned) return;
+    panel.entities.forEach(x => x.div.classList.remove('hl'));
+    hideTip();
+  });
+  stage.addEventListener('click', ev => {
+    ev.stopPropagation();
+    const g = hitTest(panel, ev.clientX, ev.clientY);
+    document.querySelectorAll('.box.pinned').forEach(b => b.classList.remove('pinned'));
+    if (g && !(pinned && pinned.entity === g.e)) {
+      pinned = { panel, entity: g.e, div: g.div };
+      g.div.classList.add('pinned');
+      showTip(g.e, ev);
+    } else {
+      pinned = null; hideTip();
+    }
+  });
+  return panel;
+}
+
+function renderPanel(panel) {
+  const root = panel.root, img = panel.img;
+  const text = root.querySelector('textarea').value;
+  const {ocr, nodes, blocks} = parse(text);
+  root.querySelector('.perr').textContent =
+    (ocr.length + nodes.length + blocks.length) === 0 && text.trim()
+      ? 'No CCI lines recognized — paste raw logcat output.' : '';
+  const stage = root.querySelector('.stage');
+  stage.querySelectorAll('.box').forEach(b => b.remove());
+  if (pinned && pinned.panel === panel) { pinned = null; hideTip(); }
+  panel.entities = [];
+
+  const W = img.naturalWidth || 1080, H = img.naturalHeight || 2400;
+  const entities = [];
+  if (root.querySelector('.l-ocr').checked) ocr.forEach(o => entities.push({...o, kind:'ocr'}));
+  if (root.querySelector('.l-blocks').checked) blocks.forEach(b => entities.push({...b, kind:'block'}));
+  if (root.querySelector('.l-nodes').checked) nodes.forEach(n => entities.push({...n, kind:'node'}));
+  entities.sort((a,b) => (b.w*b.h) - (a.w*a.h));
+  entities.forEach((e, i) => {
+    const d = document.createElement('div');
+    d.className = 'box';
+    d.style.left = (e.x / W * 100) + '%';
+    d.style.top = (e.y / H * 100) + '%';
+    d.style.width = (e.w / W * 100) + '%';
+    d.style.height = (e.h / H * 100) + '%';
+    d.style.zIndex = i + 1;
+    const color = e.kind === 'ocr' ? STATUS_COLOR.OCR
+                : e.kind === 'block' ? STATUS_COLOR.BLOCK
+                : (STATUS_COLOR[e.status] || '#9ca3af');
+    d.style.borderColor = color;
+    if (e.kind === 'ocr') d.style.borderStyle = 'dashed';
+    if (e.kind === 'block') d.style.borderStyle = 'dotted';
+    stage.appendChild(d);
+    panel.entities.push({e, div: d});
+  });
+}
+
+function hitTest(panel, clientX, clientY) {
+  const img = panel.img;
+  const r = img.getBoundingClientRect();
+  const W = img.naturalWidth || 1080, H = img.naturalHeight || 2400;
+  const px = (clientX - r.left) / r.width * W;
+  const py = (clientY - r.top) / r.height * H;
+  let best = null;
+  for (const g of panel.entities) {
+    const e = g.e;
+    if (px >= e.x && px <= e.x + e.w && py >= e.y && py <= e.y + e.h) {
+      if (!best || e.w * e.h < best.e.w * best.e.h) best = g;
+    }
+  }
+  return best;
+}
+
+function showTip(e, ev) {
+  const tip = document.getElementById('tip');
+  tip.innerHTML = tipHtml(e);
+  tip.style.display = 'block';
+  const pad = 14;
+  let x = ev.clientX + pad, y = ev.clientY + pad;
+  const r = tip.getBoundingClientRect();
+  if (x + r.width > innerWidth - 8) x = ev.clientX - r.width - pad;
+  if (y + r.height > innerHeight - 8) y = ev.clientY - r.height - pad;
+  tip.style.left = Math.max(4, x) + 'px';
+  tip.style.top = Math.max(4, y) + 'px';
+}
+function hideTip() { document.getElementById('tip').style.display = 'none'; }
+document.body.addEventListener('click', () => {
+  pinned = null;
+  document.querySelectorAll('.box.pinned').forEach(b => b.classList.remove('pinned'));
+  hideTip();
+});
+</script>
+</body>
+</html>
