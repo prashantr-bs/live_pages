@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Focus order — the tree each approach sees, and why MFP / Indian Oil deviate</title>
+<style>
+  body { margin:0 auto; max-width:1250px; padding:26px 26px 70px;
+         font:15px/1.55 -apple-system,"Segoe UI",Roboto,sans-serif; color:#1a1d21; background:#fff; }
+  h1 { font-size:22px; margin:0 0 4px; }
+  h2 { font-size:17px; margin:36px 0 6px; }
+  .sub { color:#5c6570; margin:0 0 14px; font-size:13.5px; }
+  .legend { display:flex; gap:16px; flex-wrap:wrap; font-size:13px; margin:10px 0 6px; }
+  .legend span { display:flex; align-items:center; gap:6px; }
+  .sw { width:14px; height:14px; border-radius:4px; display:inline-block; border:1px solid #0003; }
+  .imp{background:#d7f0dd} .notimp{background:#e9e9ec} .dropped{background:#ffd7d4} .provider{background:#f3e8ff;border:1.5px dashed #9333ea}
+  .grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; align-items:start; }
+  .col { border:1px solid #e3e6ea; border-radius:10px; padding:10px 12px; background:#fafbfc; }
+  .col h3 { margin:2px 0 2px; font-size:14.5px; }
+  .col .rule { font-size:12px; color:#5c6570; min-height:52px; margin:0 0 6px; }
+  .verdict { font-size:12.5px; font-weight:600; border-radius:8px; padding:6px 10px; margin-top:6px; }
+  .v-ok { background:#d7f0dd; color:#0a5d2a; }
+  .v-bad { background:#ffd7d4; color:#8f1b13; }
+  pre.mermaid { background:transparent; text-align:center; margin:4px 0; }
+  code { background:#f0f2f4; padding:1px 5px; border-radius:4px; font-size:12.5px; }
+  .rulebox { border:1px solid #e3e6ea; border-left:4px solid #0b57d0; background:#f7f9fb;
+             border-radius:8px; padding:12px 16px; font-size:14px; }
+  .rulebox b { font-family:ui-monospace,Menlo,monospace; font-size:13px; }
+  table { border-collapse:collapse; width:100%; font-size:13.5px; margin:10px 0; }
+  th,td { border:1px solid #e3e6ea; padding:7px 10px; text-align:left; }
+  th { background:#f2f4f6; }
+  td.bad { background:#ffd7d4; font-weight:600; }
+  td.ok { background:#d7f0dd; }
+  .note { color:#5c6570; font-size:12.5px; }
+</style>
+</head>
+<body>
+
+<h1>The element tree each approach computes focus order on</h1>
+<p class="sub">Running example: the <b>empty search box on My Fitness Pal</b> — the element the branch announces but a real phone skips. Indian Oil's content-less scroll strip is the identical pattern. Trees below are the real captured hierarchy, simplified.</p>
+
+<div class="legend">
+  <span><i class="sw imp"></i> marked <b>important</b> (always kept)</span>
+  <span><i class="sw notimp"></i> marked <b>not important</b></span>
+  <span><i class="sw provider"></i> <b>provider-rendered region</b> (Compose / Flutter / WebView) — the OS never applies its importance filter inside</span>
+  <span><i class="sw dropped"></i> wrongly deleted / wrongly announced</span>
+</div>
+
+<h2>0 · The real hierarchy on screen (what the app actually built)</h2>
+<pre class="mermaid">
+flowchart TD
+  ROOT["Window root"]:::imp --> WRAP["native wrapper<br/><i>not important</i>"]:::notimp
+  WRAP --> CV["ComposeView<br/><i>important — everything below is<br/>rendered by Compose, not native views</i>"]:::imp
+  subgraph PROV [" Compose-rendered region — OS importance filter never runs in here "]
+    CV --> SC["screen container<br/><i>not important</i>"]:::notimp
+    SC --> T1["Text 'Search for a food'<br/><i>important</i>"]:::imp
+    SC --> ET["🔍 EditText — search box, EMPTY<br/><i>important · focusable · silent</i>"]:::imp
+    SC --> B1["Button 'Scan a barcode'<br/><i>important</i>"]:::imp
+    ET --> IN["text-field internals<br/><i>not important</i>"]:::notimp
+    IN --> H["hint area<br/><i>not important</i>"]:::notimp
+    IN --> D["decoration<br/><i>not important</i>"]:::notimp
+  end
+  classDef imp fill:#d7f0dd,stroke:#3a9d5d,color:#0a3d1e;
+  classDef notimp fill:#e9e9ec,stroke:#9aa0a6,color:#3c4043;
+  style PROV fill:#f3e8ff33,stroke:#9333ea,stroke-dasharray:6 5;
+</pre>
+
+<h2>1 · The tree each approach hands to the focus-order algorithm</h2>
+<div class="grid3">
+
+  <div class="col">
+    <h3>Approach 1 — Flag ON</h3>
+    <p class="rule"><b>Drop condition: none.</b> The full tree, native scaffolding and all, goes straight into the focus algorithm.</p>
+<pre class="mermaid">
+flowchart TD
+  ROOT["Window root"]:::imp --> WRAP["native wrapper"]:::notimp
+  WRAP --> CV["ComposeView"]:::imp
+  CV --> SC["screen container"]:::notimp
+  SC --> T1["Text"]:::imp
+  SC --> ET["🔍 EditText (empty)<br/>children: 1"]:::imp
+  SC --> B1["Button"]:::imp
+  ET --> IN["internals"]:::notimp
+  IN --> H["hint"]:::notimp
+  IN --> D["deco"]:::notimp
+  classDef imp fill:#d7f0dd,stroke:#3a9d5d,color:#0a3d1e;
+  classDef notimp fill:#e9e9ec,stroke:#9aa0a6,color:#3c4043;
+</pre>
+    <div class="verdict v-ok">EditText: has a child → “speak test” → silent → <b>skipped ✓</b></div>
+    <p class="rule" style="margin-top:6px">…but the extra grey wrappers sit between real elements everywhere else, so ordering &amp; membership drift on other screens (the original problem this branch set out to fix).</p>
+  </div>
+
+  <div class="col">
+    <h3>Approach 2 — Flag OFF <span class="note">(= real phone)</span></h3>
+    <p class="rule"><b>Drop condition (applied by the OS):</b> a <u>native</u> view marked not-important is removed and its children take its place. <b>Inside a provider region: keep everything, importance ignored.</b></p>
+<pre class="mermaid">
+flowchart TD
+  ROOT["Window root"]:::imp --> CV["ComposeView<br/><i>wrapper dropped, hoisted</i>"]:::imp
+  CV --> SC["screen container<br/><i>KEPT — provider region</i>"]:::notimp
+  SC --> T1["Text"]:::imp
+  SC --> ET["🔍 EditText (empty)<br/>children: 1"]:::imp
+  SC --> B1["Button"]:::imp
+  ET --> IN["internals — KEPT"]:::notimp
+  IN --> H["hint"]:::notimp
+  IN --> D["deco"]:::notimp
+  classDef imp fill:#d7f0dd,stroke:#3a9d5d,color:#0a3d1e;
+  classDef notimp fill:#e9e9ec,stroke:#9aa0a6,color:#3c4043;
+</pre>
+    <div class="verdict v-ok">EditText: still has a child → “speak test” → silent → <b>skipped ✓ (ground truth)</b></div>
+  </div>
+
+  <div class="col">
+    <h3>Approach 3 — this branch</h3>
+    <p class="rule"><b>Drop condition (the rebuild):</b> remove <u>every</u> node marked not-important, hoist its children. It cannot see the provider boundary — importance is the only signal it has.</p>
+<pre class="mermaid">
+flowchart TD
+  ROOT["Window root"]:::imp --> CV["ComposeView"]:::imp
+  CV --> T1["Text"]:::imp
+  CV --> ET["🔍 EditText (empty)<br/>children: 0 ⚠️"]:::bad
+  CV --> B1["Button"]:::imp
+  X1["screen container ✕"]:::gone
+  X2["internals ✕ hint ✕ deco ✕<br/><i>deleted — but the OS keeps these!</i>"]:::gone
+  classDef imp fill:#d7f0dd,stroke:#3a9d5d,color:#0a3d1e;
+  classDef bad fill:#ffd7d4,stroke:#d9463b,stroke-width:2px,color:#6d130c;
+  classDef gone fill:#fff,stroke:#d9463b,stroke-dasharray:4 4,color:#8f1b13;
+</pre>
+    <div class="verdict v-bad">EditText: <b>0 children</b> → “childless control → always announce” → <b>announced ✗ (phone never stops here)</b></div>
+  </div>
+</div>
+
+<h2>2 · The deciding rule (same in all three — only the tree differs)</h2>
+<div class="rulebox">
+For a focusable / clickable element, TalkBack decides:<br><br>
+<b>1.</b>&nbsp; <b>children == 0</b> &nbsp;→ <b>ANNOUNCE</b> &nbsp;<span class="note">(a childless control, e.g. an icon button, must get focus even if unlabeled)</span><br>
+<b>2.</b>&nbsp; else, does it or its silent children have anything to speak? → <b>ANNOUNCE</b><br>
+<b>3.</b>&nbsp; else → <b>SKIP</b> &nbsp;<span class="note">(a silent container — its contents get focused individually instead)</span><br><br>
+The bug is not in this rule. It's that Approach 3 changes the answer to <b>“children == 0?”</b> by deleting children the real phone still has.
+</div>
+
+<table>
+<tr><th>Element</th><th>children — Flag ON</th><th>children — Flag OFF (phone)</th><th>children — Branch</th><th>Phone says</th><th>Branch says</th></tr>
+<tr><td>MFP: empty search EditText</td><td>1</td><td>1</td><td class="bad">0</td><td class="ok">skip</td><td class="bad">announce</td></tr>
+<tr><td>Indian Oil: content-less HorizontalScrollView</td><td>2</td><td>2</td><td class="bad">0</td><td class="ok">skip</td><td class="bad">announce</td></tr>
+</table>
+
+<h2>3 · Why exactly these apps?</h2>
+<p><b>My Fitness Pal renders with Jetpack Compose; Indian Oil with Flutter.</b> Both draw their UI through a
+<i>virtual-tree provider</i> instead of native Android views — the purple region above. The OS importance filter
+only ever runs on native views; it hands provider regions over <b>unfiltered</b>, so their “not important” internals
+legitimately exist on the real phone. Approach&nbsp;3 deletes by the importance tag alone, so inside Compose / Flutter /
+WebView regions it removes nodes the phone keeps — and any <i>silent focusable container</i> whose children were all
+deleted flips from “skip” to “announce”. Fully-native screens (banana_club, etc.) have no provider region, which is
+why they matched perfectly.</p>
+<p class="note">Verified from the captures: all 11 surviving not-important nodes in MFP's flag-OFF tree sit under a
+<code>ComposeView</code>; Indian Oil's 12 sit under its full-screen provider host.</p>
+
+<h2>4 · Fix</h2>
+<table>
+<tr><th></th><th>Change</th><th>Guarantee</th></tr>
+<tr><td><b>Recommended</b></td><td>Compute focus order on the <b>real</b> screen-reader tree, fetched by a silent second service whose connection has the flag off (TalkBack's own flag stays ON).</td><td>Equal to the phone by construction — no importance guessing at all.</td></tr>
+<tr><td>Quick patch</td><td>In the rebuild, answer “children == 0?” from the <b>original</b> tree, not the pruned one.</td><td>Fixes both cases above; still heuristic — a silent childless-after-pruning control can misbehave in rarer provider layouts.</td></tr>
+</table>
+
+<h2>5 · The fix now being implemented — teach the rebuild the phone's second rule</h2>
+<p>The rebuild previously knew only one rule: <i>"not important → delete"</i>. The phone actually applies <b>two</b> rules,
+and the missing one is what caused the deviation. Every element carries a hidden marker saying whether it was created by a
+<b>real Android view</b> or manufactured by a <b>provider</b> (Compose / Flutter / WebView) — the exact marker the OS keys on.
+The fixed rebuild reads that marker and applies both rules:</p>
+
+<div class="rulebox">
+<b>1.</b>&nbsp; real view &amp; not important &nbsp;→ <b>delete, lift its children up</b> <span class="note">(unchanged — the native filter)</span><br>
+<b>2.</b>&nbsp; provider-made element — or the host view a provider draws into &nbsp;→ <b>always keep, importance ignored</b> <span class="note">(new — the provider passthrough, exactly what the OS does)</span>
+</div>
+
+<div class="grid3" style="grid-template-columns:1fr 1fr;max-width:900px">
+  <div class="col">
+    <h3>Approach 3 — before fix</h3>
+<pre class="mermaid">
+flowchart TD
+  ROOT["Window root"]:::imp --> CV["ComposeView"]:::imp
+  CV --> T1["Text"]:::imp
+  CV --> ET["🔍 EditText (empty)<br/>children: 0 ⚠️"]:::bad
+  CV --> B1["Button"]:::imp
+  classDef imp fill:#d7f0dd,stroke:#3a9d5d,color:#0a3d1e;
+  classDef bad fill:#ffd7d4,stroke:#d9463b,stroke-width:2px,color:#6d130c;
+</pre>
+    <div class="verdict v-bad">announced ✗ — deviates from phone</div>
+  </div>
+  <div class="col">
+    <h3>Approach 3 — with the fix</h3>
+<pre class="mermaid">
+flowchart TD
+  ROOT["Window root"]:::imp --> CV["ComposeView"]:::imp
+  CV --> SC["screen container<br/><i>kept — provider-made</i>"]:::notimp
+  SC --> T1["Text"]:::imp
+  SC --> ET["🔍 EditText (empty)<br/>children: 1"]:::imp
+  SC --> B1["Button"]:::imp
+  ET --> IN["internals — kept"]:::notimp
+  classDef imp fill:#d7f0dd,stroke:#3a9d5d,color:#0a3d1e;
+  classDef notimp fill:#e9e9ec,stroke:#9aa0a6,color:#3c4043;
+</pre>
+    <div class="verdict v-ok">identical tree to Flag OFF → EditText skipped ✓ — matches phone</div>
+  </div>
+</div>
+
+<p>With rule 2 in place, the rebuilt tree is the flag-OFF tree for these screens: the EditText keeps its provider-made
+child, the “children == 0?” answer matches the phone again, and the phantom focus stops on My Fitness Pal and Indian Oil
+disappear — while the native-scaffolding cleanup that this branch exists for still happens outside provider regions.</p>
+<p class="note">Scope: one class (<code>ImportantOnlyHierarchy</code>, ~60 lines). The virtual-vs-real marker is read via a
+restricted accessor; if a future Android blocks it, the rebuild logs once and degrades to its previous behaviour rather than
+failing. The pre-existing <code>noHideDescendants</code> gap documented on the class is unaffected. Device validation on the
+MFP / Indian Oil screens pending a rebuild.</p>
+
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'base', flowchart: { htmlLabels: true },
+                       themeVariables: { fontSize: '13.5px' } });
+</script>
+</body>
+</html>
