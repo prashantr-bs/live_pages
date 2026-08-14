@@ -284,6 +284,59 @@ provider-rendered app; gating on the shared tree-membership marker keeps them fu
 (reuses its existing keptness predicate), one stamped field in the serializer, and the eligibility gate in the rule
 (<code>BSAdditionalRules.kt</code>). Payloads from builds without the field default to “in the tree”, keeping legacy behaviour.</p>
 
+<h2>7 · The complete decision, end to end</h2>
+<p class="sub">Two independent decisions. <b>A</b> is what the phone does (and what our capture now reproduces): does this element become a focus stop?
+<b>B</b> is what the rule does with an interactive element, given the captured focus order.</p>
+
+<h3 style="font-size:15px;margin:18px 0 4px">A · Does the element end up in the focus order?</h3>
+<pre class="mermaid">
+flowchart TD
+  S(["Element on screen"]) --> Q0{"native view marked<br/><b>not important</b>?<br/><i>(provider-made elements —<br/>Compose/Flutter/WebView —<br/>skip this check: always kept)</i>"}
+  Q0 -- yes --> DEL["deleted by the OS —<br/>screen reader never sees it"]:::skip
+  DEL --> NEVER(["NOT in focus order<br/>— and never can be"]):::skipEnd
+  Q0 -- no --> Q1{"visible?"}
+  Q1 -- no --> SK1(["not in focus order"]):::skipEnd
+  Q1 -- yes --> Q2{"focusable or<br/>clickable?"}
+  Q2 -- yes --> Q3{"has children<br/><i>(in the screen-reader tree)</i>?"}
+  Q3 -- "no — childless control" --> IN1(["IN focus order<br/><i>announced even if unlabeled</i>"]):::inEnd
+  Q3 -- yes --> Q4{"anything to speak?<br/><i>own text/description, checkable,<br/>or text inside silent children</i>"}
+  Q4 -- yes --> IN2(["IN focus order"]):::inEnd
+  Q4 -- no --> SK2(["skipped — silent container<br/><i>its contents get focused instead</i>"]):::skipEnd
+  Q2 -- no --> Q5{"has text AND no<br/>focusable ancestor?"}
+  Q5 -- yes --> IN3(["IN focus order<br/><i>plain text gets read</i>"]):::inEnd
+  Q5 -- no --> SK3(["skipped — spoken as part of<br/>its focusable ancestor"]):::skipEnd
+  classDef inEnd fill:#d7f0dd,stroke:#3a9d5d,color:#0a3d1e,font-weight:600;
+  classDef skipEnd fill:#e9e9ec,stroke:#9aa0a6,color:#3c4043;
+  classDef skip fill:#e9e9ec,stroke:#9aa0a6,color:#3c4043;
+</pre>
+
+<h3 style="font-size:15px;margin:18px 0 4px">B · Given the captured focus order — does the rule raise a violation?</h3>
+<pre class="mermaid">
+flowchart TD
+  S(["Interactive element<br/><i>(clickable / long-pressable)</i>"]) --> R0{"visible and<br/>not covered?"}
+  R0 -- no --> NA0(["not checked"]):::naEnd
+  R0 -- yes --> R1{"has a clickable child?"}
+  R1 -- yes --> NA1(["not checked —<br/>the child is checked instead"]):::naEnd
+  R1 -- no --> R2{"ScrollView / DrawerLayout /<br/>browser web content?"}
+  R2 -- yes --> NA2(["not checked"]):::naEnd
+  R2 -- no --> R3{"in the screen-reader tree?<br/><i>the 11b25e4d gate</i>"}
+  R3 -- no --> NA3(["not checked ✓<br/><i>the phone deleted it — being in<br/>focus order was never possible</i>"]):::naEnd
+  R3 -- yes --> R4{"was any focus order<br/>captured for this screen?"}
+  R4 -- no --> P0(["PASS — nothing to compare"]):::passEnd
+  R4 -- yes --> R5{"element present in the<br/>captured focus order?"}
+  R5 -- yes --> P1(["PASS"]):::passEnd
+  R5 -- no --> V(["❌ VIOLATION<br/>“Element not part of focus order”"]):::failEnd
+  classDef passEnd fill:#d7f0dd,stroke:#3a9d5d,color:#0a3d1e,font-weight:600;
+  classDef naEnd fill:#e9e9ec,stroke:#9aa0a6,color:#3c4043;
+  classDef failEnd fill:#ffd7d4,stroke:#d9463b,stroke-width:2px,color:#6d130c,font-weight:600;
+</pre>
+
+<p class="note">How the two connect: <b>B</b>’s “in the screen-reader tree?” gate exists precisely because of <b>A</b>’s first
+question — an element the OS deletes exits diagram A at “never can be”, so the rule must not demand focus-order membership
+from it. Every other interactive element that reaches <b>B</b>’s final question and is missing from the focus order is a
+genuine finding: the phone either skipped it as a silent container (fix: give it a label — then A’s “anything to speak?”
+turns yes) or a developer override excluded it.</p>
+
 <script type="module">
   import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
   mermaid.initialize({ startOnLoad: true, theme: 'base', flowchart: { htmlLabels: true },
