@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>One signal, two truths — why static font inspection can't judge text scaling</title>
+<style>
+  body { margin:0 auto; max-width:1250px; padding:26px 26px 70px;
+         font:15px/1.55 -apple-system,"Segoe UI",Roboto,sans-serif; color:#1a1d21; background:#fff; }
+  h1 { font-size:22px; margin:0 0 4px; }
+  h2 { font-size:17px; margin:36px 0 6px; }
+  .sub { color:#5c6570; margin:0 0 14px; font-size:13.5px; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; align-items:start; }
+  .col { border:1px solid #e3e6ea; border-radius:10px; padding:10px 14px; background:#fafbfc; }
+  .col h3 { margin:2px 0 4px; font-size:14.5px; }
+  .verdict { font-size:12.5px; font-weight:600; border-radius:8px; padding:6px 10px; margin-top:8px; }
+  .v-ok { background:#d7f0dd; color:#0a5d2a; }
+  .v-bad { background:#ffd7d4; color:#8f1b13; }
+  pre.mermaid { background:transparent; text-align:center; margin:4px 0; }
+  code { background:#f0f2f4; padding:1px 5px; border-radius:4px; font-size:12.5px; }
+  .rulebox { border:1px solid #e3e6ea; border-left:4px solid #0b57d0; background:#f7f9fb;
+             border-radius:8px; padding:12px 16px; font-size:14px; margin:12px 0; }
+  .rulebox.warn { border-left-color:#c2410c; background:#fff8f4; }
+  table { border-collapse:collapse; width:100%; font-size:13.5px; margin:10px 0; }
+  th,td { border:1px solid #e3e6ea; padding:7px 10px; text-align:left; vertical-align:top; }
+  th { background:#f2f4f6; }
+  td.bad { background:#ffd7d4; }
+  td.ok { background:#d7f0dd; }
+  td.mono, .mono { font-family:ui-monospace,Menlo,monospace; font-size:12.5px; }
+  .note { color:#5c6570; font-size:12.5px; }
+</style>
+</head>
+<body>
+
+<h1>One signal, two truths — why static font inspection cannot judge text scaling</h1>
+<p class="sub">iOS App-A11y · <code>font-magnification-support</code> (Text Magnification) &amp; <code>text-truncation</code> · WCAG 1.4.4 ·
+running examples from the TM/TT eval corpus (26 scans, 8 apps, vendor + dev adjudicated)</p>
+
+<h2>1 · How the signal is manufactured</h2>
+<p class="sub">Capture inspects the element's <code>UIFont</code> at <b>default text size</b> and predicts scaling support per content-size category:</p>
+
+<pre class="mermaid">
+flowchart LR
+  A["UIFont<br/>(as rendered at default size,<br/>e.g. SpotifyMixUI-Bold 16pt)"] --> B["UIFontMetrics(.body)<br/>.scaledFont(for: font, at: category)"]
+  B --> C{"scaled pointSize<br/>== original?"}
+  C -- "yes ⇒ category marked<br/>'unsupported'" --> D["unsupportedFontSizes list"]
+  C -- no --> E["category supported"]
+  D --> F["rule fails element if<br/>list is non-empty"]
+  style D fill:#ffd7d4
+  style F fill:#ffd7d4
+</pre>
+
+<div class="rulebox warn">
+<b>The tautology:</b> <code>UICTContentSizeCategoryL</code> (<b>.large</b>) is the <i>reference point</i> of the UIFontMetrics curve —
+scaling at .large is scaling by 1.0×, so <code>scaledFont.pointSize == font.pointSize</code> holds there for <b>every font in existence</b>.
+Result: <b>408 of 408</b> font-bearing elements in the corpus carry <code>["…CategoryL"]</code>, and for <b>every one of the 38
+vendor/dev-marked rows it is the <i>entire</i> evidence</b>. The field is a constant, not a measurement.
+</div>
+
+<h2>2 · The problem: true and false positives are byte-identical</h2>
+<p class="sub">Two elements, captured on the same pipeline. Their rows are indistinguishable — their real behavior at 200% is opposite.</p>
+
+<div class="grid2">
+  <div class="col">
+    <h3>Spotify — "Continue with Apple"</h3>
+    <p class="mono">font=SpotifyMixUI-Bold 16.0pt<br/>supportsDynamicFont=0<br/>unsupportedFontSizes=[L]</p>
+    <p>At 200% the app <b>scales the text through its own mechanism</b> (and adaptively shortens the label to "Apple" — WCAG-compliant re-presentation, a11y label keeps the full string).</p>
+    <div class="verdict v-bad">Rule says: VIOLATION → <b>false positive</b></div>
+  </div>
+  <div class="col">
+    <h3>Smule — "Rock" (genre label)</h3>
+    <p class="mono">font=.SFUI-Semibold 15.0pt<br/>supportsDynamicFont=0<br/>unsupportedFontSizes=[L]</p>
+    <p>At 200% <b>nothing changes</b> — fixed-size <code>systemFont(ofSize:)</code>, no text style, no <code>adjustsFontForContentSizeCategory</code>, no custom scaler.</p>
+    <div class="verdict v-ok">Rule says: VIOLATION → <b>true positive</b></div>
+  </div>
+</div>
+
+<div class="rulebox warn">
+The separating fact — <b>does the rendered text grow at 200%?</b> — never enters the capture, because the scan renders the
+screen at default size only. Growth driven by app-custom scaling (Spotify) is invisible to <i>any</i> inspection of fonts,
+flags or properties. <b>Every static predicate therefore classifies these two elements identically.</b>
+</div>
+
+<h2>3 · What breaks if we "solve" the FP with static signals</h2>
+<p class="sub">Each candidate fix clears the Spotify row — and takes confirmed true positives (or a silent miss-class) with it:</p>
+
+<table>
+<tr><th>Candidate static fix</th><th>Clears the FP?</th><th>Collateral damage — concrete corpus examples</th></tr>
+<tr>
+  <td>Filter the <code>[L]</code> artifact out of the rule's input</td><td class="ok">yes</td>
+  <td class="bad"><b>All 17 dev-confirmed TM true positives go silent</b> — Smule genre labels ("Rock", "Pop", …),
+  PayPal "Pay Later" buttons (18pt), B&amp;BW search field (14pt), YouTube Music sign-in labels — their evidence is the identical <code>[L]</code>.</td>
+</tr>
+<tr>
+  <td>Gate on <code>supportsDynamicFont == 1</code> (mark N/A otherwise)</td><td class="ok">yes</td>
+  <td class="bad">Same wipeout: Smule/PayPal/B&amp;BW TPs also carry <code>supportsDynamicFont=0</code>. Plus every legacy/WDA-path
+  tree defaults the absent flag to <code>"0"</code> (<code>flagString</code> has no tri-state), so the rule dies wholesale off-device.</td>
+</tr>
+<tr>
+  <td>Gate on <code>adjustsFontForContentSizeCategory</code></td><td class="bad">no</td>
+  <td class="bad">Spotify scales <i>without</i> that flag (custom mechanism) — still misread. And labels using
+  <code>preferredFont(forTextStyle:)</code> without the flag scale <b>on next screen creation / relaunch</b> — real
+  violations of the opposite kind become invisible.</td>
+</tr>
+<tr>
+  <td>Capture more static properties (text style, metrics wrapper, …)</td><td class="bad">no</td>
+  <td class="bad">Still a prediction from a single default-size render; app-custom scalers and runtime re-labeling remain
+  out of reach. New fields inherit the same absent→"0" landmine on every non-fresh path.</td>
+</tr>
+</table>
+
+<div class="rulebox warn">
+<b>General statement:</b> any predicate computed from a single default-size capture that clears the Spotify false positive
+also clears the Smule true positive. This is not a tuning problem — the information needed to separate them is absent
+from the input.
+</div>
+
+<h2>4 · The only solution that actually works: measure, don't predict</h2>
+<p class="sub">Capture the same screen twice — default and <code>accessibilityLarge</code> (200%) — match elements, and compare what actually rendered. The device cloud already controls the device settings; the capture pipeline already extracts per-element rendered data; element-matching machinery (identity attrs / fingerprints) already exists.</p>
+
+<pre class="mermaid">
+flowchart LR
+  S["Session start:<br/>set text size BEFORE app launch"] --> A["Capture A<br/>default size"]
+  A --> T["Set accessibilityLarge<br/>(relaunch if app only<br/>applies size at launch)"]
+  T --> B2["Capture B<br/>200% size"]
+  A --> M["Element match<br/>(identity attrs / text / structure)"]
+  B2 --> M
+  M --> V1{"rendered text grew?"}
+  V1 -- "no" --> TM["text-magnification FAIL<br/>(measured, not predicted)"]
+  V1 -- "yes" --> V2{"content lost?<br/>(clipped / ellipsized /<br/>no equivalent)"}
+  V2 -- yes --> TT["text-truncation FAIL"]
+  V2 -- no --> P["PASS"]
+  style TM fill:#ffd7d4
+  style TT fill:#ffd7d4
+  style P fill:#d7f0dd
+</pre>
+
+<table>
+<tr><th>Hard case</th><th>Static signals</th><th>Differential measurement</th></tr>
+<tr><td>Spotify custom scaler (FP today)</td><td class="bad">indistinguishable from TP</td><td class="ok">growth measured → pass</td></tr>
+<tr><td>Smule fixed fonts (TP today)</td><td class="bad">indistinguishable from FP</td><td class="ok">no growth measured → fail</td></tr>
+<tr><td>Scales only after relaunch (<code>preferredFont</code>, no adjust flag)</td><td class="bad">invisible</td><td class="ok">size set before launch → growth captured</td></tr>
+<tr><td>Adaptive re-label ("Continue with Apple" → "Apple")</td><td class="bad">looks like truncation</td><td class="ok">grew + equivalent retained → pass; content diff flagged for the one remaining human judgement</td></tr>
+<tr><td>Truncation ("grows but clips")</td><td class="bad">guessed from <code>numberOfLines</code></td><td class="ok">observed: ellipsis / clipped extents at 200%</td></tr>
+</table>
+
+<p><b>Cost, honestly:</b> one extra render + capture per scan, an element-matching step across the two renders, and one
+residual judgement call (when text <i>changes</i> at 200%, is the shorter form an equivalent? — assistable via a11y-label
+containment). Everything else on the table is a cheaper way to be wrong: it predicts a behavior the capture never observed,
+from a field that is constant by construction.</p>
+
+<p class="note">Interim state until dual-capture ships: PR #277 (system-label exclusion) and PR #278 (removes the .large
+artifact from text-truncation's clip heuristic, on-device only) eliminate the systematic TT false-positive engine while
+deliberately leaving text-magnification's input untouched — precisely because of section 3.</p>
+
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'base', flowchart: { htmlLabels: true },
+                       themeVariables: { fontSize: '13.5px' } });
+</script>
+</body>
+</html>
