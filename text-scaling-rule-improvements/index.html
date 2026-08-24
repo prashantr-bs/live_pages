@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Text Magnification &amp; Text Truncation — what changed, and how to read the new verdicts</title>
+<style>
+  body { margin:0 auto; max-width:1250px; padding:26px 26px 70px;
+         font:15px/1.55 -apple-system,"Segoe UI",Roboto,sans-serif; color:#1a1d21; background:#fff; }
+  h1 { font-size:22px; margin:0 0 4px; }
+  h2 { font-size:17px; margin:36px 0 6px; }
+  .sub { color:#5c6570; margin:0 0 14px; font-size:13.5px; }
+  .legend { display:flex; gap:16px; flex-wrap:wrap; font-size:13px; margin:10px 0 6px; }
+  .legend span { display:flex; align-items:center; gap:6px; }
+  .sw { width:14px; height:14px; border-radius:4px; display:inline-block; border:1px solid #0003; }
+  .ok{background:#d7f0dd} .bad{background:#ffd7d4} .nr{background:#fff3cd} .na{background:#e9e9ec}
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; align-items:start; }
+  .col { border:1px solid #e3e6ea; border-radius:10px; padding:10px 14px; background:#fafbfc; }
+  .col h3 { margin:2px 0 4px; font-size:14.5px; }
+  .verdict { font-size:12.5px; font-weight:600; border-radius:8px; padding:6px 10px; margin-top:8px; }
+  .v-ok { background:#d7f0dd; color:#0a5d2a; }
+  .v-bad { background:#ffd7d4; color:#8f1b13; }
+  .v-nr { background:#fff3cd; color:#7a5b00; }
+  pre.mermaid { background:transparent; text-align:center; margin:4px 0; }
+  code { background:#f0f2f4; padding:1px 5px; border-radius:4px; font-size:12.5px; }
+  .rulebox { border:1px solid #e3e6ea; border-left:4px solid #0b57d0; background:#f7f9fb;
+             border-radius:8px; padding:12px 16px; font-size:14px; margin:12px 0; }
+  .rulebox.warn { border-left-color:#c2410c; background:#fff8f4; }
+  table { border-collapse:collapse; width:100%; font-size:13.5px; margin:10px 0; }
+  th,td { border:1px solid #e3e6ea; padding:7px 10px; text-align:left; vertical-align:top; }
+  th { background:#f2f4f6; }
+  td.bad { background:#ffd7d4; } td.ok { background:#d7f0dd; } td.nr { background:#fff3cd; } td.na { background:#e9e9ec; }
+  .note { color:#5c6570; font-size:12.5px; }
+</style>
+</head>
+<body>
+
+<h1>Text Magnification &amp; Text Truncation — what changed, and how to read the new verdicts</h1>
+<p class="sub">iOS App Accessibility · <code>font-magnification-support</code> &amp; <code>text-truncation</code> · WCAG&nbsp;1.4.4 (text must be resizable to 200% without losing content) ·
+deep-dive on the underlying signal problem: <a href="../text-scaling-signal-problem/">one signal, two truths</a></p>
+
+<h2>1 · The problem, in one picture</h2>
+<p class="sub">Both rules leaned on a single captured field that was supposed to say "this font can't scale" — but the way it was computed made one entry appear for <b>every font in every app</b>:</p>
+
+<pre class="mermaid">
+flowchart LR
+  A["Any font, any app"] --> B["ask the scaling calculator:<br/>'would the size change at each setting?'"]
+  B --> C["at the DEFAULT setting the answer is<br/>always 'no change' — by definition"]
+  C --> D["'unsupported size' recorded<br/>for 408 of 408 fonts"]
+  D --> E["Text Magnification fails almost any text<br/>Text Truncation flags almost any bounded label"]
+  style D fill:#ffd7d4
+  style E fill:#ffd7d4
+</pre>
+
+<div class="rulebox warn">
+Vendor adjudication of two eval sets put numbers on it: <b>39 of 39</b> Text Truncation findings were false positives
+(zero true ones existed), and <b>15 of 36</b> Text Magnification findings were false — with the true and false ones
+carrying <b>byte-identical evidence</b>, so no simple filter could separate them.
+</div>
+
+<h2>2 · What we changed — judge the element, not the font curve</h2>
+<p class="sub">Instead of asking a calculator a question whose answer is the same for every font, the engine now asks, per element: <b>"would <i>this</i> view actually render bigger text at larger settings?"</b> — using the same conditions iOS itself applies.</p>
+
+<pre class="mermaid">
+flowchart TD
+  A["Text element"] --> B{"What kind of font?"}
+  B -- "real text style<br/>(Apple's Dynamic Type fonts)" --> C{"Did the app opt the view in?"}
+  B -- "custom size built the<br/>recommended way (UIFontMetrics)" --> C
+  B -- "plain fixed font<br/>(iOS will never scale it)" --> F["does NOT scale"]
+  C -- yes --> D["scales — check every setting<br/>from XL up to the 200% point"]
+  C -- no --> F
+  D --> E{"any setting where<br/>it would not grow?"}
+  E -- no --> P["Text Magnification: PASS"]
+  E -- yes --> V["fails exactly those settings —<br/>they are listed in the finding"]
+  F --> V2{"can we be sure? see §3"}
+  V2 -- yes --> FAIL["VIOLATION"]
+  V2 -- no --> NR["NEEDS REVIEW"]
+  style P fill:#d7f0dd
+  style FAIL fill:#ffd7d4
+  style NR fill:#fff3cd
+</pre>
+
+<p>Text Truncation now builds on the same answer: <b>only text that will actually grow can newly get cut off.</b>
+For growing text it measures the enlarged string against the element's real space — and treats wrapping,
+scrolling and shrink-to-fit as what they are: ways of accommodating growth, not losing content. Text that never
+grows can't truncate at 200% (it has the <i>other</i> problem, which Text Magnification reports — one root cause,
+one finding, not two).</p>
+
+<h2>3 · The new verdict: Needs Review — and when you'll see it</h2>
+<p class="sub">Some apps scale text through their own code, in ways no automated check can observe without physically changing the device's text-size setting. Asserting a violation there would be guessing. Three patterns route to <b>Needs Review</b> instead:</p>
+
+<table>
+<tr><th>Pattern</th><th>Example from the eval apps</th><th>Why automation can't be sure</th></tr>
+<tr><td><b>App-custom text machinery</b> — the element or its wrapper is the app's own class</td>
+    <td class="nr">Spotify wraps every label in its own <code>OBJC_ONLY_Label</code> — and really does scale text through its own pipeline (verified on device at 200%)</td>
+    <td>Custom code can react to the real settings change while ignoring a per-element probe</td></tr>
+<tr><td><b>System chrome</b> — text inside navigation / search bars</td>
+    <td class="nr">Navigation titles, search-bar placeholders</td>
+    <td>iOS owns their rendering and provides its own large-type affordances (like the tab-bar long-press viewer)</td></tr>
+<tr><td><b>Editable-input text</b> — a field or its placeholder</td>
+    <td class="nr">Discord / B&amp;BW / noplace input fields</td>
+    <td>Placeholder rendering is field-managed; Text Truncation already excludes inputs for the same reason</td></tr>
+</table>
+
+<div class="legend">
+<span><i class="sw bad"></i><b>Violation</b> — measured: this element will not scale, and the app owns the fix</span>
+<span><i class="sw nr"></i><b>Needs Review</b> — verify manually at 200% text size</span>
+<span><i class="sw ok"></i><b>Pass</b> — measured: scales across the whole band</span>
+<span><i class="sw na"></i><b>Not considered</b> — system-owned labels (tab bars, buttons, segments)</span>
+</div>
+
+<h2>4 · Same data, opposite truths — why Needs Review is honest</h2>
+<div class="grid2">
+  <div class="col">
+    <h3>Spotify — "Continue with Apple"</h3>
+    <p>Fixed custom font, no opt-in flag. <b>Really does scale at 200%</b> (own machinery). Old rule: violation. </p>
+    <div class="verdict v-nr">Now: NEEDS REVIEW — custom machinery detected, verify manually</div>
+  </div>
+  <div class="col">
+    <h3>Smule — "Fixed 17pt" style labels</h3>
+    <p>Fixed font, no opt-in, plain UIKit label — <b>really does not scale</b>. Old rule: violation (for the wrong reason).</p>
+    <div class="verdict v-bad">Now: VIOLATION — measured per element, for the right reason</div>
+  </div>
+</div>
+<p class="note">The two used to be indistinguishable in the data — the fix is that indistinguishable cases are now <i>labeled</i> as such rather than guessed.</p>
+
+<h2>5 · Findings got more informative, too</h2>
+<p class="sub">The "unsupported font sizes" list in each finding is now a per-setting measurement across the whole range between default and 200% — not a constant:</p>
+<table>
+<tr><th>Element</th><th>Old finding said</th><th>New finding says</th></tr>
+<tr><td>Fully non-scaling label</td><td class="bad">one meaningless entry (the same for every font)</td><td class="ok">all five failing settings, XL → 200%</td></tr>
+<tr><td>4pt fine-print label (rounding quirk)</td><td class="bad">same meaningless entry</td><td class="ok">exactly the one setting it really fails (XL)</td></tr>
+<tr><td>Properly scaling label</td><td class="bad">same meaningless entry → false violation</td><td class="ok">empty — passes</td></tr>
+</table>
+
+<h2>6 · Proof: a purpose-built test app</h2>
+<p class="sub">A fixture app with 21 labeled cases (every scaling pattern: text styles, UIFontMetrics fonts, fixed fonts, opt-in-without-scalable-font, capped fonts, shrink-to-fit, self-sizing, custom scalers, system controls, inputs) now runs as the regression bench. Current score:</p>
+<table>
+<tr><th>Metric</th><th>Before this work</th><th>After</th></tr>
+<tr><td>False positives on the fixture</td><td class="bad">5 hard + 2 noise rows</td><td class="ok">0 (noise rows routed to Needs Review)</td></tr>
+<tr><td>Vendor-marked Text Truncation FPs (39)</td><td class="bad">all firing</td><td class="ok">none firing — with zero true positives at risk (the set contained none)</td></tr>
+<tr><td>Vendor/dev-confirmed Text Magnification TPs</td><td class="bad">firing on a meaningless constant</td><td class="ok">still firing — now on per-element measurement (custom-class ones surface as Needs Review)</td></tr>
+</table>
+
+<h2>7 · What's deliberately left open</h2>
+<div class="rulebox">
+<b>The endgame is measurement, not prediction:</b> scanning the same screen at default and at 200% and comparing what
+actually rendered would resolve every Needs Review automatically — including app-custom scalers — and is the one
+approach that can't be fooled. Design and trade-offs: <a href="../text-scaling-signal-problem/">the companion page</a>.
+Also tracked: system-control detection by ancestry rather than class names (new iOS versions rename internal classes),
+and fonts capped by the app below the 200% size, which today read as scaling.
+</div>
+
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'base', flowchart: { htmlLabels: true },
+                       themeVariables: { fontSize: '13.5px' } });
+</script>
+</body>
+</html>
