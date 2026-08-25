@@ -31,6 +31,9 @@
   th { background:#f2f4f6; }
   td.bad { background:#ffd7d4; } td.ok { background:#d7f0dd; } td.nr { background:#fff3cd; } td.na { background:#e9e9ec; }
   .note { color:#5c6570; font-size:12.5px; }
+  .fixmap { display:grid; grid-template-columns:auto 1fr; gap:6px 12px; font-size:13.5px;
+            border:1px solid #e3e6ea; border-radius:10px; padding:12px 16px; background:#fafbfc; margin:10px 0; }
+  .fixmap b.n { color:#8f1b13; } .fixmap b.f { color:#0a5d2a; }
 </style>
 </head>
 <body>
@@ -58,7 +61,35 @@ Vendor adjudication of two eval sets put numbers on it: <b>39 of 39</b> Text Tru
 carrying <b>byte-identical evidence</b>, so no simple filter could separate them.
 </div>
 
-<h2>2 · What we changed — judge the element, not the font curve</h2>
+<h2>2 · Inside the old flow — one loop, three wrong answers</h2>
+<p class="sub">The production check ran the loop below for every text element. The scaling math itself was correct — the three failures are in what the loop <b>never asked</b>:</p>
+
+<pre class="mermaid">
+flowchart TD
+  A["Text element captured"] --> B["take its font"]
+  B --> LOOP["for EVERY size setting — all 12,<br/>xSmall … AX3, below the default included"]
+  LOOP --> CALC["ask the scaling calculator:<br/>'what size would this font be there?'"]
+  CALC --> EQ{"computed size ==<br/>current size?"}
+  EQ -- "different" --> SUP["setting recorded as supported"]
+  EQ -- "same" --> UNSUP["setting recorded as UNSUPPORTED"]
+  SUP --> V["rule verdict built from the list"]
+  UNSUP --> V
+  UNSUP -.-> R1["① at the DEFAULT setting the two sizes are equal<br/>BY DEFINITION → one 'unsupported' entry for every<br/>font in every app — the constant artifact"]
+  SUP -.-> R2["② plain fixed font: the calculator happily computes<br/>bigger numbers → 'supported' — but the label NEVER<br/>re-renders, because the opt-in flag and the font's origin<br/>are never checked. Real violations reported as fine"]
+  UNSUP -.-> R3["③ correctly-built Dynamic Type font (UIFontMetrics):<br/>the calculator refuses to re-scale its own product →<br/>'same size' at EVERY setting → the app that did it<br/>RIGHT gets the worst score on the page"]
+  style UNSUP fill:#ffd7d4,stroke:#d9463b,stroke-width:2px
+  style R1 fill:#fff,stroke:#d9463b,stroke-dasharray:4 4
+  style R2 fill:#fff,stroke:#d9463b,stroke-dasharray:4 4
+  style R3 fill:#fff,stroke:#d9463b,stroke-dasharray:4 4
+</pre>
+
+<div class="rulebox warn">
+The root defect, in one line: the loop measured <b>what the calculator can compute</b>, which is a property of
+iOS's scaling curve and nearly identical for every font — instead of <b>what this label would render</b>, which
+depends on two things the loop never read: the app's opt-in flag, and whether iOS itself created the font.
+</div>
+
+<h2>3 · What we changed — judge the element, not the font curve</h2>
 <p class="sub">Instead of asking a calculator a question whose answer is the same for every font, the engine now asks, per element: <b>"would <i>this</i> view actually render bigger text at larger settings?"</b> — using the same conditions iOS itself applies.</p>
 
 <pre class="mermaid">
@@ -72,7 +103,7 @@ flowchart TD
   D --> E{"any setting where<br/>it would not grow?"}
   E -- no --> P["Text Magnification: PASS"]
   E -- yes --> V["fails exactly those settings —<br/>they are listed in the finding"]
-  F --> V2{"can we be sure? see §3"}
+  F --> V2{"can we be sure? see §5"}
   V2 -- yes --> FAIL["VIOLATION"]
   V2 -- no --> NR["NEEDS REVIEW"]
   style P fill:#d7f0dd
@@ -80,13 +111,43 @@ flowchart TD
   style NR fill:#fff3cd
 </pre>
 
+<div class="fixmap">
+  <b class="n">①</b><span><b class="f">fixed by the band</b> — the default setting is the curve's fixed point, so it is excluded; the check runs only where text is supposed to grow: XL up to the 200% point</span>
+  <b class="n">②</b><span><b class="f">fixed by the two new questions</b> — did the app opt the view in, and did iOS vend the font? A plain fixed font now correctly fails every band setting</span>
+  <b class="n">③</b><span><b class="f">fixed by re-reading the refusal</b> — "refuses to re-scale" is exactly the fingerprint of a font that was built the right way; it now classifies the font as scalable instead of condemning it</span>
+</div>
+
+<h2>4 · The same three fonts, before → after</h2>
+<p class="sub">Every red verdict below was wrong or meaningless; every green one is measured and correct — including the violation:</p>
+
+<pre class="mermaid">
+flowchart LR
+  subgraph NEWF ["NEW — classified, opt-in checked, band measured"]
+    N1["Apple text-style font,<br/>opted in"] --> NV1["PASS — grows at every<br/>band setting ✓"]
+    N2["plain fixed font<br/>systemFont(16)"] --> NV2["VIOLATION — all five band<br/>settings listed, XL → 200% ✓"]
+    N3["UIFontMetrics font<br/>(built the right way)"] --> NV3["PASS — projected on the<br/>real scaling curve ✓"]
+  end
+  subgraph OLDF ["OLD — one rule for every font"]
+    O1["Apple text-style font,<br/>opted in"] --> OV1["'unsupported: [default]'<br/>— meaningless constant"]
+    O2["plain fixed font<br/>systemFont(16)"] --> OV2["'unsupported: [default]'<br/>— identical evidence, no signal"]
+    O3["UIFontMetrics font<br/>(built the right way)"] --> OV3["'unsupported: ALL 12'<br/>— best practice, worst score"]
+  end
+  style OV1 fill:#ffd7d4,stroke:#d9463b
+  style OV2 fill:#ffd7d4,stroke:#d9463b
+  style OV3 fill:#ffd7d4,stroke:#d9463b,stroke-width:2px
+  style NV1 fill:#d7f0dd,stroke:#3a9d5d
+  style NV2 fill:#d7f0dd,stroke:#3a9d5d
+  style NV3 fill:#d7f0dd,stroke:#3a9d5d
+</pre>
+<p class="note">Old flow: a healthy label, a broken label and a best-practice label were indistinguishable (byte-identical or inverted evidence). New flow: three different, correct answers — and the violation now names the exact settings that fail.</p>
+
 <p>Text Truncation now builds on the same answer: <b>only text that will actually grow can newly get cut off.</b>
 For growing text it measures the enlarged string against the element's real space — and treats wrapping,
 scrolling and shrink-to-fit as what they are: ways of accommodating growth, not losing content. Text that never
 grows can't truncate at 200% (it has the <i>other</i> problem, which Text Magnification reports — one root cause,
 one finding, not two).</p>
 
-<h2>3 · The new verdict: Needs Review — and when you'll see it</h2>
+<h2>5 · The new verdict: Needs Review — and when you'll see it</h2>
 <p class="sub">Some apps scale text through their own code, in ways no automated check can observe without physically changing the device's text-size setting. Asserting a violation there would be guessing. Three patterns route to <b>Needs Review</b> instead:</p>
 
 <table>
@@ -109,7 +170,7 @@ one finding, not two).</p>
 <span><i class="sw na"></i><b>Not considered</b> — system-owned labels (tab bars, buttons, segments)</span>
 </div>
 
-<h2>4 · Same data, opposite truths — why Needs Review is honest</h2>
+<h2>6 · Same data, opposite truths — why Needs Review is honest</h2>
 <div class="grid2">
   <div class="col">
     <h3>Spotify — "Continue with Apple"</h3>
@@ -124,7 +185,7 @@ one finding, not two).</p>
 </div>
 <p class="note">The two used to be indistinguishable in the data — the fix is that indistinguishable cases are now <i>labeled</i> as such rather than guessed.</p>
 
-<h2>5 · Findings got more informative, too</h2>
+<h2>7 · Findings got more informative, too</h2>
 <p class="sub">The "unsupported font sizes" list in each finding is now a per-setting measurement across the whole range between default and 200% — not a constant:</p>
 <table>
 <tr><th>Element</th><th>Old finding said</th><th>New finding says</th></tr>
@@ -133,7 +194,7 @@ one finding, not two).</p>
 <tr><td>Properly scaling label</td><td class="bad">same meaningless entry → false violation</td><td class="ok">empty — passes</td></tr>
 </table>
 
-<h2>6 · Proof: a purpose-built test app</h2>
+<h2>8 · Proof: a purpose-built test app</h2>
 <p class="sub">A fixture app with 21 labeled cases (every scaling pattern: text styles, UIFontMetrics fonts, fixed fonts, opt-in-without-scalable-font, capped fonts, shrink-to-fit, self-sizing, custom scalers, system controls, inputs) now runs as the regression bench. Current score:</p>
 <table>
 <tr><th>Metric</th><th>Before this work</th><th>After</th></tr>
@@ -142,7 +203,7 @@ one finding, not two).</p>
 <tr><td>Vendor/dev-confirmed Text Magnification TPs</td><td class="bad">firing on a meaningless constant</td><td class="ok">still firing — now on per-element measurement (custom-class ones surface as Needs Review)</td></tr>
 </table>
 
-<h2>7 · What's deliberately left open</h2>
+<h2>9 · What's deliberately left open</h2>
 <div class="rulebox">
 <b>The endgame is measurement, not prediction:</b> scanning the same screen at default and at 200% and comparing what
 actually rendered would resolve every Needs Review automatically — including app-custom scalers — and is the one
