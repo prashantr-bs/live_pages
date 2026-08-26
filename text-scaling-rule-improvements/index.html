@@ -34,22 +34,6 @@
   .fixmap { display:grid; grid-template-columns:auto 1fr; gap:6px 12px; font-size:13.5px;
             border:1px solid #e3e6ea; border-radius:10px; padding:12px 16px; background:#fafbfc; margin:10px 0; }
   .fixmap b.n { color:#8f1b13; } .fixmap b.f { color:#0a5d2a; }
-  .appr { border:1px solid #e3e6ea; border-radius:10px; padding:12px 16px; margin:10px 0; background:#fafbfc; }
-  .appr h3 { margin:0 0 4px; font-size:15px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-  .tag { font-size:11px; font-weight:700; border-radius:20px; padding:2px 9px; letter-spacing:.02em; }
-  .tag.ship { background:#d7f0dd; color:#0a5d2a; }
-  .tag.drop { background:#ffd7d4; color:#8f1b13; }
-  .tag.idea { background:#e6ecff; color:#1a3a8f; }
-  .tag.par  { background:#fff3cd; color:#7a5b00; }
-  .appr .pc { display:grid; grid-template-columns:auto 1fr; gap:2px 10px; font-size:13.5px; margin-top:6px; }
-  .appr .pc b { white-space:nowrap; }
-  .appr .pro { color:#0a5d2a; } .appr .con { color:#8f1b13; }
-  details.more { margin-top:8px; border-top:1px dashed #d5d9de; padding-top:7px; }
-  details.more summary { cursor:pointer; font-size:12.5px; color:#0b57d0; font-weight:600; list-style:none; }
-  details.more summary::-webkit-details-marker { display:none; }
-  details.more summary::before { content:"▸ "; }
-  details.more[open] summary::before { content:"▾ "; }
-  details.more div { font-size:13px; color:#3c4043; margin-top:7px; }
 </style>
 </head>
 <body>
@@ -219,62 +203,13 @@ one finding, not two).</p>
 <tr><td>Vendor/dev-confirmed Text Magnification TPs</td><td class="bad">firing on a meaningless constant</td><td class="ok">still firing — now on per-element measurement (custom-class ones surface as Needs Review)</td></tr>
 </table>
 
-<h2>9 · Approaches we explored</h2>
-<p class="sub">Four ways to answer "will this text actually grow?", from the one that shipped to the ones that didn't. Each card is the short version; expand for the detail.</p>
-
-<div class="appr">
-  <h3>① Static probe <span class="tag ship">SHIPPED</span></h3>
-  <div>Resolve, in memory, the font each element <i>would</i> render across the size band using UIKit's own rules — a pure read, no change to the app.</div>
-  <div class="pc">
-    <b class="pro">Pros</b><span>Zero side effects on the running app; fast; works on the pinned Xcode 12.4 SDK; can't be fooled into a false pass.</span>
-    <b class="con">Cons</b><span>Can't see app-custom scaling machinery, so those genuinely-scaling cases land in Needs Review rather than clearing.</span>
-  </div>
-  <details class="more"><summary>How it decides</summary><div>
-  Classifies the font (Apple text-style / metrics-vended / plain) via the descriptor's <code>UICTFontTextStyle</code> prefix and UIFontMetrics' refusal to re-scale its own product, checks the app's opt-in flag, and evaluates every category from XL to the 200% point. A caught scaling exception makes it abstain rather than guess. This is the version in the PR.
-  </div></details>
-</div>
-
-<div class="appr">
-  <h3>② Listener detection <span class="tag par">PARTIAL</span></h3>
-  <div>Swizzle <code>NotificationCenter.addObserver</code> at load and check each element's ancestry for a <code>traitCollectionDidChange</code> override — evidence that the app <i>has</i> text-size machinery.</div>
-  <div class="pc">
-    <b class="pro">Pros</b><span>Still observation-only (no app mutation); replaces the blunt "any custom class" heuristic with real evidence, shrinking Needs Review without risking true positives.</span>
-    <b class="con">Cons</b><span>Proves the app <i>can</i> scale, not that <i>this element</i> did — so it narrows Needs Review but can't empty it.</span>
-  </div>
-  <details class="more"><summary>Why it can't clear a finding on its own</summary><div>
-  A registered listener is app-wide capability; a single missed label inside a well-behaved app is still a real defect. Detection can confidently downgrade "custom class, no machinery at all" back to a hard verdict, but it can't confirm any specific element grew. Built and kept for reference, not part of the shipped rule.
-  </div></details>
-</div>
-
-<div class="appr">
-  <h3>③ In-process simulation <span class="tag drop">REVERTED</span></h3>
-  <div>Once per scan, fake a settings change inside the process — post the system text-size notification and report a larger category — let the app's own code react, then measure which fonts actually grew.</div>
-  <div class="pc">
-    <b class="pro">Pros</b><span>Actually measures growth, so it could clear custom-scaler apps to <i>no finding at all</i> — the outcome we wanted.</span>
-    <b class="con">Cons</b><span>Broadcasts a real "settings changed" event into a live app: caused React-Native apps to re-render (Discord's login reset to the first screen) and a visible text-size blip. Wrong tradeoff for a customer session.</span>
-  </div>
-  <details class="more"><summary>Why it disturbs the app</summary><div>
-  The scanner cannot tell an app "pretend the setting changed, just for measurement." The notification it posts is indistinguishable from the OS's real one, so every listener reacts for real — React Native's <code>RCTAccessibilityManager</code> pushes the change across the bridge into JavaScript, and a JS-driven navigator that doesn't preserve state across that re-render snaps back to its initial route. Reverted for this reason; preserved on a branch for reference.
-  </div></details>
-</div>
-
-<div class="appr">
-  <h3>④ Harness dual-capture <span class="tag idea">FUTURE</span></h3>
-  <div>Scan the same screen twice — once at the default text size, once at 200% set in real device Settings by the harness — and diff what actually rendered.</div>
-  <div class="pc">
-    <b class="pro">Pros</b><span>The only approach that measures real growth with <i>no</i> in-app side effects: the OS delivers exactly one genuine settings change, at a moment the harness controls. Resolves every case, including custom scalers.</span>
-    <b class="con">Cons</b><span>Needs harness orchestration (settings toggle + two synced captures), so it's a larger, cross-repo change — not a dylib-only fix.</span>
-  </div>
-  <details class="more"><summary>Why this is the clean version of ③</summary><div>
-  It gets the measurement that ③ wanted, but the settings change is real and comes from the OS between two separate scans — the app reacts exactly as it would for a real user, once, outside the capture — instead of a synthetic event fired mid-scan. This is the endgame direction for eliminating Needs Review entirely.
-  </div></details>
-</div>
-
-<h2>10 · What's deliberately left open</h2>
+<h2>9 · What's deliberately left open</h2>
 <div class="rulebox">
-<b>Smaller items still tracked:</b> system-control detection by ancestry rather than class names (new iOS versions rename
-internal classes), and fonts an app caps below the 200% size, which today read as scaling. Deeper design notes on the
-measurement direction: <a href="../text-scaling-signal-problem/">the companion page</a>.
+<b>The endgame is measurement, not prediction:</b> scanning the same screen at default and at 200% and comparing what
+actually rendered would resolve every Needs Review automatically — including app-custom scalers — and is the one
+approach that can't be fooled. Design and trade-offs: <a href="../text-scaling-signal-problem/">the companion page</a>.
+Also tracked: system-control detection by ancestry rather than class names (new iOS versions rename internal classes),
+and fonts capped by the app below the 200% size, which today read as scaling.
 </div>
 
 <script type="module">
