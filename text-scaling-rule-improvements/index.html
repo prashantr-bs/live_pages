@@ -38,6 +38,11 @@
   .defs h4 { margin:12px 0 4px; font-size:14px; }
   .defs p { margin:0 0 4px; font-size:13.5px; }
   .defs .eg { color:#5c6570; font-size:12.5px; }
+  .shots { display:flex; gap:16px; flex-wrap:wrap; margin:12px 0 4px; }
+  .shots figure { margin:0; flex:1 1 220px; max-width:260px; }
+  .shots img { width:100%; height:auto; border:1px solid #d5d9de; border-radius:8px; display:block; background:#000; }
+  .shots figcaption { font-size:12.5px; color:#3c4043; margin-top:6px; }
+  .shots figcaption b { color:#7a5b00; }
 </style>
 </head>
 <body>
@@ -188,6 +193,22 @@ one finding, not two).</p>
 <span><i class="sw nr"></i><b>Needs Review</b> — verify manually at 200% text size</span>
 <span><i class="sw ok"></i><b>Pass</b> — measured: scales across the whole band</span>
 <span><i class="sw na"></i><b>Not considered</b> — system-owned labels (tab bars, buttons, segments)</span>
+</div>
+
+<p class="sub" style="margin-top:14px">Real captures from the eval set — the boxed elements are what the rule marked <b>Needs Review</b> (verify manually at 200%), not a hard fail:</p>
+<div class="shots">
+  <figure>
+    <img src="img/spotify-landing.png" alt="Spotify landing screen with the headline and buttons boxed">
+    <figcaption>Spotify, Landing. "Millions of songs.", "Sign up free", "Log in" are Spotify's <code>Encore</code> class — <b>custom machinery</b>: fixed fonts that scale through the app's own pipeline, so automation can't assert a fail.</figcaption>
+  </figure>
+  <figure>
+    <img src="img/spotify-create-account.png" alt="Spotify create-account screen with labels and buttons boxed">
+    <figcaption>Spotify, Create account. Same <code>Encore</code> <b>custom machinery</b> across the title, field labels and "Continue with…" rows.</figcaption>
+  </figure>
+  <figure>
+    <img src="img/smule-password-input.png" alt="Smule create-password screen with the password field boxed">
+    <figcaption>Smule, Choose a password. The boxed "Enter Password" field is <b>editable-input text</b> — input rendering is field-managed, so its scaling is a field question, routed to review.</figcaption>
+  </figure>
 </div>
 
 <h2>6 · Same data, opposite truths — why Needs Review is honest</h2>
