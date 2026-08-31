@@ -34,6 +34,10 @@
   .fixmap { display:grid; grid-template-columns:auto 1fr; gap:6px 12px; font-size:13.5px;
             border:1px solid #e3e6ea; border-radius:10px; padding:12px 16px; background:#fafbfc; margin:10px 0; }
   .fixmap b.n { color:#8f1b13; } .fixmap b.f { color:#0a5d2a; }
+  .defs { border:1px solid #e3e6ea; border-radius:10px; padding:6px 16px 12px; background:#fafbfc; margin:12px 0; }
+  .defs h4 { margin:12px 0 4px; font-size:14px; }
+  .defs p { margin:0 0 4px; font-size:13.5px; }
+  .defs .eg { color:#5c6570; font-size:12.5px; }
 </style>
 </head>
 <body>
@@ -110,6 +114,22 @@ flowchart TD
   style FAIL fill:#ffd7d4
   style NR fill:#fff3cd
 </pre>
+
+<div class="defs">
+<p class="sub" style="margin:8px 0 2px">What the four boxes in the tree mean:</p>
+
+<h4>Real text style <span class="eg">— Apple's Dynamic Type fonts</span></h4>
+<p>A font the app asked iOS for <b>by role</b> — "give me Body / Headline / Caption text" — rather than by a fixed point size. iOS owns the size for each role and already publishes a bigger value at every larger setting, so these are built to grow. In code: <code>UIFont.preferredFont(forTextStyle: .body)</code>. We detect them by a tag iOS stamps on the font (a text-style marker on its descriptor).</p>
+
+<h4>Custom size built the recommended way <span class="eg">— UIFontMetrics</span></h4>
+<p>The app wanted a <b>specific</b> size (say a 15pt brand font) but still made it grow, by running it through Apple's <code>UIFontMetrics</code> — the official "take my font and scale it with the system" tool. These <i>do</i> scale correctly; they're just harder to spot, because iOS won't re-report their size on demand (it refuses to re-scale a font it already scaled). That refusal is exactly how we recognise them.</p>
+
+<h4>Did the app opt the view in?</h4>
+<p>Having a scalable font is not enough — the label must also be <b>told to react</b> to live text-size changes. That switch is one property, <code>adjustsFontForContentSizeCategory = true</code>. If it's off, iOS leaves the text at its current size even for a Dynamic Type font, so the element does not scale in practice. The tree checks this before ever calling something a pass.</p>
+
+<h4>Plain fixed font <span class="eg">— iOS will never scale it</span></h4>
+<p>A font pinned to a hard number and handed straight to the label — e.g. <code>UIFont.systemFont(ofSize: 16)</code> — with no text style and no <code>UIFontMetrics</code>. iOS renders these at exactly that size forever; the opt-in switch has no effect on a font iOS didn't vend. A calculator can still <i>compute</i> a bigger number for it, but the screen never changes — which is why the old rule's "the number changed, so it's fine" was wrong. This is the genuine non-scaling case.</p>
+</div>
 
 <div class="fixmap">
   <b class="n">①</b><span><b class="f">fixed by the band</b> — the default setting is the curve's fixed point, so it is excluded; the check runs only where text is supposed to grow: XL up to the 200% point</span>
