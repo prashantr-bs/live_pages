@@ -41,8 +41,20 @@
   details.raw pre { background:var(--code-bg); padding:10px; border-radius:6px; font-size:11px; line-height:1.35; overflow-x:auto; max-height:400px; }
   .empty { color:var(--muted); font-style:italic; padding:16px; }
   /* Image + overlay */
-  .image-row { display:grid; grid-template-columns: minmax(0,1fr) auto; gap:12px; align-items:flex-start; }
+  .image-row { display:grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); gap:12px; align-items:flex-start; }
   .col-info { min-width:0; }
+  .col-response { min-width:0; font-size:12px; background:color-mix(in srgb, var(--accent) 5%, transparent); border:1px solid var(--border); border-radius:6px; padding:8px 10px; }
+  .response-title { font-weight:600; color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.5px; margin-bottom:4px; }
+  .resp-row { margin: 6px 0 2px; display:flex; align-items:center; flex-wrap:wrap; gap:6px; }
+  .svc { font-family:"SF Mono",ui-monospace,Menlo,monospace; font-size:10px; color:var(--muted); background:var(--code-bg); padding:1px 4px; border-radius:3px; }
+  .bucket-tag { font-size:11px; font-weight:700; padding:2px 6px; border-radius:3px; }
+  .bucket-viol { background:#ff3b30; color:#fff; }
+  .bucket-pass { background:#28a745; color:#fff; }
+  .bucket-none { background:var(--code-bg); color:var(--muted); }
+  .cache { font-size:11px; color:var(--muted); font-family:"SF Mono",ui-monospace,Menlo,monospace; }
+  .resp-kv { font-size:11px; margin:2px 0; }
+  .resp-kv code { font-size:10px; }
+  .resp-raw pre { max-height:180px; }
   .col-img a { text-decoration:none; }
   .thumb-wrap { position:relative; display:inline-block; line-height:0; border:1px solid var(--border); border-radius:4px; overflow:hidden; }
   .thumb-wrap img { display:block; max-width:220px; max-height:280px; width:auto; height:auto; }
@@ -163,6 +175,30 @@
             <div class="hilite highlighted" style="left:6.667%; top:77.949%; width:86.667%; height:4.615%;" data-n="#1"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-viol">Needs Review Issue</span>
+            <span class="cache">cache: accessibilityLabelGeneration=miss, accessibilityLabelScoring=miss</span>
+          </div>
+          <div class="resp-kv">generatedAccessibilitylabel: <code>Allow coop.fi to send notifications</code></div>
+          <div class="resp-kv">rules_violated: <code>[&quot;Meaningful Label&quot;]</code></div>
+          <div class="resp-kv">reason: <code>The label includes extra information about the UI structure that is unnecessary for a screen reader user, as simply identifying the button as &#x27;Allow&#x27; is sufficient for its purpose in this context.</code></div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelGeneration&quot;: &quot;miss&quot;,
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;Allow coop.fi to send notifications&quot;,
+  &quot;reason&quot;: &quot;The label includes extra information about the UI structure that is unnecessary for a screen reader user, as simply identifying the button as &#x27;Allow&#x27; is sufficient for its purpose in this context.&quot;,
+  &quot;rules_violated&quot;: [
+    &quot;Meaningful Label&quot;
+  ],
+  &quot;scoreBucket&quot;: &quot;Needs Review Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row">
         <div class="col-info">
@@ -178,6 +214,31 @@
             <div class="hilite highlighted" style="left:6.667%; top:84.615%; width:86.667%; height:4.615%;" data-n="#2"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-viol">Needs Review Issue</span>
+            <span class="cache">cache: accessibilityLabelGeneration=miss, accessibilityLabelScoring=miss</span>
+          </div>
+          <div class="resp-kv">generatedAccessibilitylabel: <code>Don&#x27;t allow notifications from coop.fi</code></div>
+          <div class="resp-kv">rules_violated: <code>[&quot;Meaningful Label&quot;]</code></div>
+          <div class="resp-kv">reason: <code>The label accurately describes the action of the button, although it includes unnecessary information about the component type and screen position which should be handled by the assistive technology automatically.</code></div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelGeneration&quot;: &quot;miss&quot;,
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;Don&#x27;t allow notifications from coop.fi&quot;,
+  &quot;reason&quot;: &quot;The label accurately describes the action of the button, although it includes unnecessary information about the component type and screen position which should be handled by the assistive technology automatically.&quot;,
+  &quot;rules_violated&quot;: [
+    &quot;Meaningful Label&quot;
+  ],
+  &quot;scoreBucket&quot;: &quot;Needs Review Issue&quot;,
+  &quot;status&quot;: true,
+  &quot;webhookStatusCode&quot;: 200
+}</pre>
+          </details>
+        </div>
       </div>
     </div>
     <details class="raw"><summary>raw request_body JSON</summary>
@@ -246,6 +307,25 @@
             <div class="hilite highlighted" style="left:4.444%; top:76.282%; width:91.111%; height:5.769%;" data-n="#1"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true,
+  &quot;webhookStatusCode&quot;: 200
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row">
         <div class="col-info">
@@ -261,6 +341,24 @@
             <div class="hilite highlighted" style="left:4.444%; top:83.974%; width:91.111%; height:5.769%;" data-n="#2"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
     </div>
     <details class="raw"><summary>raw request_body JSON</summary>
@@ -342,6 +440,24 @@
             <div class="hilite no-viol" style="left:4.444%; top:6.966%; width:6.667%; height:3.077%;" data-n="#1"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -357,6 +473,24 @@
             <div class="hilite no-viol" style="left:77.778%; top:6.966%; width:6.667%; height:3.077%;" data-n="#2"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-only-mine">
         <div class="col-info">
@@ -372,6 +506,30 @@
             <div class="hilite only-mine" style="left:88.889%; top:6.966%; width:6.667%; height:3.077%;" data-n="#3"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-viol">Needs Review Issue</span>
+            <span class="cache">cache: accessibilityLabelGeneration=miss, accessibilityLabelScoring=miss</span>
+          </div>
+          <div class="resp-kv">generatedAccessibilitylabel: <code>Apri carta fedeltà</code></div>
+          <div class="resp-kv">rules_violated: <code>[&quot;Meaningful Label&quot;]</code></div>
+          <div class="resp-kv">reason: <code>The label accurately identifies the element as a card, which corresponds to the icon&#x27;s appearance, and correctly identifies it as a button.</code></div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelGeneration&quot;: &quot;miss&quot;,
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;Apri carta fedelt\u00e0&quot;,
+  &quot;reason&quot;: &quot;The label accurately identifies the element as a card, which corresponds to the icon&#x27;s appearance, and correctly identifies it as a button.&quot;,
+  &quot;rules_violated&quot;: [
+    &quot;Meaningful Label&quot;
+  ],
+  &quot;scoreBucket&quot;: &quot;Needs Review Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-only-mine">
         <div class="col-info">
@@ -387,6 +545,30 @@
             <div class="hilite only-mine" style="left:0.0%; top:17.222%; width:73.704%; height:13.974%;" data-n="#4"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-viol">Needs Review Issue</span>
+            <span class="cache">cache: accessibilityLabelGeneration=miss, accessibilityLabelScoring=miss</span>
+          </div>
+          <div class="resp-kv">generatedAccessibilitylabel: <code>Categorie di interesse: Cultura, Ben-Essere e Ambiente</code></div>
+          <div class="resp-kv">rules_violated: <code>[&quot;Meaningful Label&quot;]</code></div>
+          <div class="resp-kv">reason: <code>The label accurately describes the function of the section as a container for stories and indicates the number of items available, which is helpful context for a screen reader user.</code></div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelGeneration&quot;: &quot;miss&quot;,
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;Categorie di interesse: Cultura, Ben-Essere e Ambiente&quot;,
+  &quot;reason&quot;: &quot;The label accurately describes the function of the section as a container for stories and indicates the number of items available, which is helpful context for a screen reader user.&quot;,
+  &quot;rules_violated&quot;: [
+    &quot;Meaningful Label&quot;
+  ],
+  &quot;scoreBucket&quot;: &quot;Needs Review Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -402,6 +584,24 @@
             <div class="hilite no-viol" style="left:68.981%; top:41.325%; width:22.13%; height:3.077%;" data-n="#5"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -417,6 +617,25 @@
             <div class="hilite no-viol" style="left:13.333%; top:64.915%; width:38.333%; height:3.077%;" data-n="#6"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true,
+  &quot;webhookStatusCode&quot;: 200
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -432,6 +651,24 @@
             <div class="hilite no-viol" style="left:8.889%; top:82.051%; width:27.407%; height:11.795%;" data-n="#7"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -447,6 +684,24 @@
             <div class="hilite no-viol" style="left:36.296%; top:82.051%; width:27.407%; height:11.795%;" data-n="#8"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -462,6 +717,24 @@
             <div class="hilite no-viol" style="left:63.704%; top:82.051%; width:27.407%; height:11.795%;" data-n="#9"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
     </div>
     <details class="raw"><summary>raw request_body JSON</summary>
@@ -634,6 +907,20 @@
             <div class="hilite no-viol" style="left:4.444%; top:6.966%; width:6.667%; height:3.077%;" data-n="#1"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {},
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -649,6 +936,24 @@
             <div class="hilite no-viol" style="left:77.778%; top:6.966%; width:6.667%; height:3.077%;" data-n="#2"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-only-mine">
         <div class="col-info">
@@ -664,6 +969,31 @@
             <div class="hilite only-mine" style="left:88.889%; top:6.966%; width:6.667%; height:3.077%;" data-n="#3"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-viol">Needs Review Issue</span>
+            <span class="cache">cache: accessibilityLabelGeneration=miss, accessibilityLabelScoring=miss</span>
+          </div>
+          <div class="resp-kv">generatedAccessibilitylabel: <code>Apri menù principale</code></div>
+          <div class="resp-kv">rules_violated: <code>[&quot;Meaningful Label&quot;]</code></div>
+          <div class="resp-kv">reason: <code>The label &quot;Carta, Button&quot; is somewhat descriptive as it identifies the element as a card or menu button, but it is slightly ambiguous because it does not explicitly describe that it opens the user&#x27;s digital card or membership menu. Adding the word &quot;Button&quot; is redundant for screen reader users as they are typically informed of the element type automatically.</code></div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelGeneration&quot;: &quot;miss&quot;,
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;Apri men\u00f9 principale&quot;,
+  &quot;reason&quot;: &quot;The label \&quot;Carta, Button\&quot; is somewhat descriptive as it identifies the element as a card or menu button, but it is slightly ambiguous because it does not explicitly describe that it opens the user&#x27;s digital card or membership menu. Adding the word \&quot;Button\&quot; is redundant for screen reader users as they are typically informed of the element type automatically.&quot;,
+  &quot;rules_violated&quot;: [
+    &quot;Meaningful Label&quot;
+  ],
+  &quot;scoreBucket&quot;: &quot;Needs Review Issue&quot;,
+  &quot;status&quot;: true,
+  &quot;webhookStatusCode&quot;: 200
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -679,6 +1009,24 @@
             <div class="hilite no-viol" style="left:8.889%; top:34.957%; width:82.222%; height:5.769%;" data-n="#4"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -694,6 +1042,24 @@
             <div class="hilite no-viol" style="left:8.889%; top:56.88%; width:39.537%; height:3.077%;" data-n="#5"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -709,6 +1075,24 @@
             <div class="hilite no-viol" style="left:8.889%; top:82.051%; width:27.407%; height:11.795%;" data-n="#6"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -724,6 +1108,24 @@
             <div class="hilite no-viol" style="left:36.296%; top:82.051%; width:27.407%; height:11.795%;" data-n="#7"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -739,6 +1141,24 @@
             <div class="hilite no-viol" style="left:63.704%; top:82.051%; width:27.407%; height:11.795%;" data-n="#8"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
     </div>
     <details class="raw"><summary>raw request_body JSON</summary>
@@ -899,6 +1319,24 @@
             <div class="hilite no-viol" style="left:4.444%; top:6.966%; width:6.667%; height:3.077%;" data-n="#1"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -914,6 +1352,24 @@
             <div class="hilite no-viol" style="left:77.778%; top:6.966%; width:6.667%; height:3.077%;" data-n="#2"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -929,6 +1385,24 @@
             <div class="hilite no-viol" style="left:88.889%; top:6.966%; width:6.667%; height:3.077%;" data-n="#3"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -944,6 +1418,24 @@
             <div class="hilite no-viol" style="left:8.889%; top:35.897%; width:32.593%; height:3.077%;" data-n="#4"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -959,6 +1451,24 @@
             <div class="hilite no-viol" style="left:69.167%; top:47.65%; width:26.389%; height:3.077%;" data-n="#5"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-only-mine">
         <div class="col-info">
@@ -974,6 +1484,31 @@
             <div class="hilite only-mine" style="left:4.444%; top:53.205%; width:44.444%; height:28.846%;" data-n="#6"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-viol">Needs Review Issue</span>
+            <span class="cache">cache: accessibilityLabelGeneration=miss, accessibilityLabelScoring=miss</span>
+          </div>
+          <div class="resp-kv">generatedAccessibilitylabel: <code>Scopri di più sul nucleo soci</code></div>
+          <div class="resp-kv">rules_violated: <code>[&quot;Meaningful Label&quot;]</code></div>
+          <div class="resp-kv">reason: <code>The label is descriptive and provides the necessary information for a user to understand the purpose of the card, but it incorrectly includes the word &quot;Button&quot; at the end, which is redundant as screen readers automatically announce interactive element types.</code></div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelGeneration&quot;: &quot;miss&quot;,
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;Scopri di pi\u00f9 sul nucleo soci&quot;,
+  &quot;reason&quot;: &quot;The label is descriptive and provides the necessary information for a user to understand the purpose of the card, but it incorrectly includes the word \&quot;Button\&quot; at the end, which is redundant as screen readers automatically announce interactive element types.&quot;,
+  &quot;rules_violated&quot;: [
+    &quot;Meaningful Label&quot;
+  ],
+  &quot;scoreBucket&quot;: &quot;Needs Review Issue&quot;,
+  &quot;status&quot;: true,
+  &quot;webhookStatusCode&quot;: 200
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-only-mine">
         <div class="col-info">
@@ -989,6 +1524,30 @@
             <div class="hilite only-mine" style="left:51.111%; top:53.205%; width:44.444%; height:28.846%;" data-n="#7"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-viol">Needs Review Issue</span>
+            <span class="cache">cache: accessibilityLabelGeneration=miss, accessibilityLabelScoring=miss</span>
+          </div>
+          <div class="resp-kv">generatedAccessibilitylabel: <code>Scopri il prestito sociale per far fruttare i tuoi risparmi e sostenere la crescita di Coop.Fi</code></div>
+          <div class="resp-kv">rules_violated: <code>[&quot;Meaningful Label&quot;]</code></div>
+          <div class="resp-kv">reason: <code>The accessibility label includes the visible text of the card and clearly describes its purpose. However, it unnecessarily appends the word &#x27;Button&#x27; at the end, which is redundant as screen readers automatically announce the element&#x27;s type.</code></div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelGeneration&quot;: &quot;miss&quot;,
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;Scopri il prestito sociale per far fruttare i tuoi risparmi e sostenere la crescita di Coop.Fi&quot;,
+  &quot;reason&quot;: &quot;The accessibility label includes the visible text of the card and clearly describes its purpose. However, it unnecessarily appends the word &#x27;Button&#x27; at the end, which is redundant as screen readers automatically announce the element&#x27;s type.&quot;,
+  &quot;rules_violated&quot;: [
+    &quot;Meaningful Label&quot;
+  ],
+  &quot;scoreBucket&quot;: &quot;Needs Review Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -1004,6 +1563,24 @@
             <div class="hilite no-viol" style="left:8.889%; top:82.051%; width:27.407%; height:11.795%;" data-n="#8"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -1019,6 +1596,24 @@
             <div class="hilite no-viol" style="left:36.296%; top:82.051%; width:27.407%; height:11.795%;" data-n="#9"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -1034,6 +1629,24 @@
             <div class="hilite no-viol" style="left:63.704%; top:82.051%; width:27.407%; height:11.795%;" data-n="#10"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
     </div>
     <details class="raw"><summary>raw request_body JSON</summary>
@@ -1222,6 +1835,24 @@
             <div class="hilite highlighted" style="left:4.444%; top:6.966%; width:6.667%; height:3.077%;" data-n="#1"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row">
         <div class="col-info">
@@ -1237,6 +1868,24 @@
             <div class="hilite highlighted" style="left:77.778%; top:6.966%; width:6.667%; height:3.077%;" data-n="#2"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row">
         <div class="col-info">
@@ -1252,6 +1901,24 @@
             <div class="hilite highlighted" style="left:88.889%; top:6.966%; width:6.667%; height:3.077%;" data-n="#3"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row">
         <div class="col-info">
@@ -1267,6 +1934,24 @@
             <div class="hilite highlighted" style="left:8.889%; top:25.513%; width:32.593%; height:3.077%;" data-n="#4"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row">
         <div class="col-info">
@@ -1282,6 +1967,24 @@
             <div class="hilite highlighted" style="left:69.167%; top:37.265%; width:26.389%; height:3.077%;" data-n="#5"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row">
         <div class="col-info">
@@ -1297,6 +2000,31 @@
             <div class="hilite highlighted" style="left:4.444%; top:42.821%; width:44.444%; height:36.154%;" data-n="#6"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-viol">Needs Review Issue</span>
+            <span class="cache">cache: accessibilityLabelGeneration=miss, accessibilityLabelScoring=miss</span>
+          </div>
+          <div class="resp-kv">generatedAccessibilitylabel: <code>Nucleo soci, scopri come unire familiari e amici in un unico nucleo soci.</code></div>
+          <div class="resp-kv">rules_violated: <code>[&quot;Meaningful Label&quot;]</code></div>
+          <div class="resp-kv">reason: <code>The accessibility label is clear and informative, but it includes the word &#x27;Button&#x27; at the end, which is unnecessary as screen readers typically announce the element type automatically. Removing this redundant word would make the label cleaner.</code></div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelGeneration&quot;: &quot;miss&quot;,
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;Nucleo soci, scopri come unire familiari e amici in un unico nucleo soci.&quot;,
+  &quot;reason&quot;: &quot;The accessibility label is clear and informative, but it includes the word &#x27;Button&#x27; at the end, which is unnecessary as screen readers typically announce the element type automatically. Removing this redundant word would make the label cleaner.&quot;,
+  &quot;rules_violated&quot;: [
+    &quot;Meaningful Label&quot;
+  ],
+  &quot;scoreBucket&quot;: &quot;Needs Review Issue&quot;,
+  &quot;status&quot;: true,
+  &quot;webhookStatusCode&quot;: 200
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row">
         <div class="col-info">
@@ -1312,6 +2040,30 @@
             <div class="hilite highlighted" style="left:51.111%; top:42.821%; width:44.444%; height:36.154%;" data-n="#7"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-viol">Needs Review Issue</span>
+            <span class="cache">cache: accessibilityLabelGeneration=miss, accessibilityLabelScoring=miss</span>
+          </div>
+          <div class="resp-kv">generatedAccessibilitylabel: <code>Prestito sociale, scopri come far fruttare i tuoi risparmi e sostenere la crescita di Coop.Fi</code></div>
+          <div class="resp-kv">rules_violated: <code>[&quot;Meaningful Label&quot;]</code></div>
+          <div class="resp-kv">reason: <code>The accessibility label includes the visible text and the function of the card, which is helpful. However, it redundantly includes the word &#x27;Button&#x27; at the end, which is unnecessary as screen readers announce the element type automatically.</code></div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelGeneration&quot;: &quot;miss&quot;,
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;Prestito sociale, scopri come far fruttare i tuoi risparmi e sostenere la crescita di Coop.Fi&quot;,
+  &quot;reason&quot;: &quot;The accessibility label includes the visible text and the function of the card, which is helpful. However, it redundantly includes the word &#x27;Button&#x27; at the end, which is unnecessary as screen readers announce the element type automatically.&quot;,
+  &quot;rules_violated&quot;: [
+    &quot;Meaningful Label&quot;
+  ],
+  &quot;scoreBucket&quot;: &quot;Needs Review Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row">
         <div class="col-info">
@@ -1327,6 +2079,24 @@
             <div class="hilite highlighted" style="left:8.889%; top:82.051%; width:27.407%; height:11.795%;" data-n="#8"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row">
         <div class="col-info">
@@ -1342,6 +2112,24 @@
             <div class="hilite highlighted" style="left:36.296%; top:82.051%; width:27.407%; height:11.795%;" data-n="#9"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row">
         <div class="col-info">
@@ -1357,6 +2145,24 @@
             <div class="hilite highlighted" style="left:63.704%; top:82.051%; width:27.407%; height:11.795%;" data-n="#10"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
     </div>
     <details class="raw"><summary>raw request_body JSON</summary>
@@ -1541,6 +2347,25 @@
             <div class="hilite no-viol" style="left:6.667%; top:77.949%; width:86.667%; height:4.615%;" data-n="#1"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true,
+  &quot;webhookStatusCode&quot;: 200
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -1556,6 +2381,24 @@
             <div class="hilite no-viol" style="left:6.667%; top:84.615%; width:86.667%; height:4.615%;" data-n="#2"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
     </div>
     <details class="raw"><summary>raw request_body JSON</summary>
@@ -1624,6 +2467,20 @@
             <div class="hilite highlighted" style="left:4.444%; top:76.282%; width:91.111%; height:5.769%;" data-n="#1"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {},
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row">
         <div class="col-info">
@@ -1639,6 +2496,25 @@
             <div class="hilite highlighted" style="left:4.444%; top:83.974%; width:91.111%; height:5.769%;" data-n="#2"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true,
+  &quot;webhookStatusCode&quot;: 200
+}</pre>
+          </details>
+        </div>
       </div>
     </div>
     <details class="raw"><summary>raw request_body JSON</summary>
@@ -1732,6 +2608,24 @@
             <div class="hilite no-viol" style="left:4.444%; top:6.966%; width:6.667%; height:3.077%;" data-n="#1"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -1747,6 +2641,24 @@
             <div class="hilite no-viol" style="left:77.778%; top:6.966%; width:6.667%; height:3.077%;" data-n="#2"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -1762,6 +2674,24 @@
             <div class="hilite no-viol" style="left:88.889%; top:6.966%; width:6.667%; height:3.077%;" data-n="#3"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-only-mine">
         <div class="col-info">
@@ -1777,6 +2707,31 @@
             <div class="hilite only-mine" style="left:0.0%; top:17.222%; width:73.704%; height:13.974%;" data-n="#4"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-viol">Needs Review Issue</span>
+            <span class="cache">cache: accessibilityLabelGeneration=miss, accessibilityLabelScoring=miss</span>
+          </div>
+          <div class="resp-kv">generatedAccessibilitylabel: <code>Sezione categorie, visualizza contenuti su Cultura, Ben-Essere e Ambiente</code></div>
+          <div class="resp-kv">rules_violated: <code>[&quot;Meaningful Label&quot;]</code></div>
+          <div class="resp-kv">reason: <code>The label describes the container as a section for stories with three items, which is helpful, but it doesn&#x27;t clearly identify the individual interactive buttons (Cultura, Ben-Essere, Ambiente) within that section. It focuses on the container level rather than the specific actions provided by these circular icons.</code></div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelGeneration&quot;: &quot;miss&quot;,
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;Sezione categorie, visualizza contenuti su Cultura, Ben-Essere e Ambiente&quot;,
+  &quot;reason&quot;: &quot;The label describes the container as a section for stories with three items, which is helpful, but it doesn&#x27;t clearly identify the individual interactive buttons (Cultura, Ben-Essere, Ambiente) within that section. It focuses on the container level rather than the specific actions provided by these circular icons.&quot;,
+  &quot;rules_violated&quot;: [
+    &quot;Meaningful Label&quot;
+  ],
+  &quot;scoreBucket&quot;: &quot;Needs Review Issue&quot;,
+  &quot;status&quot;: true,
+  &quot;webhookStatusCode&quot;: 200
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -1792,6 +2747,24 @@
             <div class="hilite no-viol" style="left:68.981%; top:41.325%; width:22.13%; height:3.077%;" data-n="#5"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -1807,6 +2780,24 @@
             <div class="hilite no-viol" style="left:13.333%; top:64.915%; width:38.333%; height:3.077%;" data-n="#6"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -1822,6 +2813,24 @@
             <div class="hilite no-viol" style="left:8.889%; top:82.051%; width:27.407%; height:11.795%;" data-n="#7"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -1837,6 +2846,24 @@
             <div class="hilite no-viol" style="left:36.296%; top:82.051%; width:27.407%; height:11.795%;" data-n="#8"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -1852,6 +2879,24 @@
             <div class="hilite no-viol" style="left:63.704%; top:82.051%; width:27.407%; height:11.795%;" data-n="#9"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
     </div>
     <details class="raw"><summary>raw request_body JSON</summary>
@@ -2024,6 +3069,24 @@
             <div class="hilite highlighted" style="left:4.444%; top:6.966%; width:6.667%; height:3.077%;" data-n="#1"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row">
         <div class="col-info">
@@ -2039,6 +3102,24 @@
             <div class="hilite highlighted" style="left:77.778%; top:6.966%; width:6.667%; height:3.077%;" data-n="#2"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row">
         <div class="col-info">
@@ -2054,6 +3135,24 @@
             <div class="hilite highlighted" style="left:88.889%; top:6.966%; width:6.667%; height:3.077%;" data-n="#3"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row">
         <div class="col-info">
@@ -2069,6 +3168,24 @@
             <div class="hilite highlighted" style="left:8.889%; top:40.043%; width:82.222%; height:5.769%;" data-n="#4"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row">
         <div class="col-info">
@@ -2084,6 +3201,24 @@
             <div class="hilite highlighted" style="left:8.889%; top:61.966%; width:39.537%; height:3.077%;" data-n="#5"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row">
         <div class="col-info">
@@ -2099,6 +3234,25 @@
             <div class="hilite highlighted" style="left:8.889%; top:82.051%; width:27.407%; height:11.795%;" data-n="#6"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true,
+  &quot;webhookStatusCode&quot;: 200
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row">
         <div class="col-info">
@@ -2114,6 +3268,24 @@
             <div class="hilite highlighted" style="left:36.296%; top:82.051%; width:27.407%; height:11.795%;" data-n="#7"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row">
         <div class="col-info">
@@ -2129,6 +3301,24 @@
             <div class="hilite highlighted" style="left:63.704%; top:82.051%; width:27.407%; height:11.795%;" data-n="#8"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
     </div>
     <details class="raw"><summary>raw request_body JSON</summary>
@@ -2287,6 +3477,24 @@
             <div class="hilite no-viol" style="left:4.444%; top:6.966%; width:6.667%; height:3.077%;" data-n="#1"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -2302,6 +3510,24 @@
             <div class="hilite no-viol" style="left:77.778%; top:6.966%; width:6.667%; height:3.077%;" data-n="#2"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -2317,6 +3543,24 @@
             <div class="hilite no-viol" style="left:88.889%; top:6.966%; width:6.667%; height:3.077%;" data-n="#3"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -2332,6 +3576,24 @@
             <div class="hilite no-viol" style="left:8.889%; top:34.103%; width:82.222%; height:5.769%;" data-n="#4"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -2347,6 +3609,24 @@
             <div class="hilite no-viol" style="left:8.889%; top:56.026%; width:39.537%; height:3.077%;" data-n="#5"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -2362,6 +3642,24 @@
             <div class="hilite no-viol" style="left:8.889%; top:82.051%; width:27.407%; height:11.795%;" data-n="#6"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -2377,6 +3675,25 @@
             <div class="hilite no-viol" style="left:36.296%; top:82.051%; width:27.407%; height:11.795%;" data-n="#7"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true,
+  &quot;webhookStatusCode&quot;: 200
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -2392,6 +3709,24 @@
             <div class="hilite no-viol" style="left:63.704%; top:82.051%; width:27.407%; height:11.795%;" data-n="#8"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
     </div>
     <details class="raw"><summary>raw request_body JSON</summary>
@@ -2552,6 +3887,24 @@
             <div class="hilite no-viol" style="left:4.444%; top:6.966%; width:6.667%; height:3.077%;" data-n="#1"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -2567,6 +3920,24 @@
             <div class="hilite no-viol" style="left:77.778%; top:6.966%; width:6.667%; height:3.077%;" data-n="#2"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -2582,6 +3953,24 @@
             <div class="hilite no-viol" style="left:88.889%; top:6.966%; width:6.667%; height:3.077%;" data-n="#3"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -2597,6 +3986,24 @@
             <div class="hilite no-viol" style="left:8.889%; top:33.974%; width:32.593%; height:3.077%;" data-n="#4"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -2612,6 +4019,24 @@
             <div class="hilite no-viol" style="left:69.167%; top:45.726%; width:26.389%; height:3.077%;" data-n="#5"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-only-mine">
         <div class="col-info">
@@ -2627,6 +4052,30 @@
             <div class="hilite only-mine" style="left:4.444%; top:51.282%; width:44.444%; height:30.769%;" data-n="#6"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-viol">Needs Review Issue</span>
+            <span class="cache">cache: accessibilityLabelGeneration=miss, accessibilityLabelScoring=miss</span>
+          </div>
+          <div class="resp-kv">generatedAccessibilitylabel: <code>Nucleo soci, scopri come unirti con familiari e amici per formare un unico nucleo, vai alla sezione dedicata</code></div>
+          <div class="resp-kv">rules_violated: <code>[&quot;Meaningful Label&quot;]</code></div>
+          <div class="resp-kv">reason: <code>The label is very descriptive, but it includes the word &quot;Button&quot; which is unnecessary as screen readers announce the element type automatically. Removing this redundancy would improve the experience.</code></div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelGeneration&quot;: &quot;miss&quot;,
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;Nucleo soci, scopri come unirti con familiari e amici per formare un unico nucleo, vai alla sezione dedicata&quot;,
+  &quot;reason&quot;: &quot;The label is very descriptive, but it includes the word \&quot;Button\&quot; which is unnecessary as screen readers announce the element type automatically. Removing this redundancy would improve the experience.&quot;,
+  &quot;rules_violated&quot;: [
+    &quot;Meaningful Label&quot;
+  ],
+  &quot;scoreBucket&quot;: &quot;Needs Review Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-only-mine">
         <div class="col-info">
@@ -2642,6 +4091,31 @@
             <div class="hilite only-mine" style="left:51.111%; top:51.282%; width:44.444%; height:30.769%;" data-n="#7"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-viol">Needs Review Issue</span>
+            <span class="cache">cache: accessibilityLabelGeneration=miss, accessibilityLabelScoring=miss</span>
+          </div>
+          <div class="resp-kv">generatedAccessibilitylabel: <code>Scopri di più sul prestito sociale per far fruttare i tuoi risparmi e sostenere Coop.Fi</code></div>
+          <div class="resp-kv">rules_violated: <code>[&quot;Meaningful Label&quot;]</code></div>
+          <div class="resp-kv">reason: <code>The label includes the full text visible on the element, but it includes the word &quot;Button&quot; at the end, which is redundant as screen readers automatically announce the element type.</code></div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelGeneration&quot;: &quot;miss&quot;,
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;Scopri di pi\u00f9 sul prestito sociale per far fruttare i tuoi risparmi e sostenere Coop.Fi&quot;,
+  &quot;reason&quot;: &quot;The label includes the full text visible on the element, but it includes the word \&quot;Button\&quot; at the end, which is redundant as screen readers automatically announce the element type.&quot;,
+  &quot;rules_violated&quot;: [
+    &quot;Meaningful Label&quot;
+  ],
+  &quot;scoreBucket&quot;: &quot;Needs Review Issue&quot;,
+  &quot;status&quot;: true,
+  &quot;webhookStatusCode&quot;: 200
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-only-mine">
         <div class="col-info">
@@ -2657,6 +4131,30 @@
             <div class="hilite only-mine" style="left:8.889%; top:82.051%; width:27.407%; height:11.795%;" data-n="#8"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-viol">Needs Review Issue</span>
+            <span class="cache">cache: accessibilityLabelGeneration=miss, accessibilityLabelScoring=miss</span>
+          </div>
+          <div class="resp-kv">generatedAccessibilitylabel: <code>Pagina iniziale, torna alla schermata principale</code></div>
+          <div class="resp-kv">rules_violated: <code>[&quot;Meaningful Label&quot;]</code></div>
+          <div class="resp-kv">reason: <code>The label includes the state and the name of the button, which is helpful. However, including the role &quot;Button&quot; is generally redundant as screen readers automatically announce that information for interactive elements.</code></div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelGeneration&quot;: &quot;miss&quot;,
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;Pagina iniziale, torna alla schermata principale&quot;,
+  &quot;reason&quot;: &quot;The label includes the state and the name of the button, which is helpful. However, including the role \&quot;Button\&quot; is generally redundant as screen readers automatically announce that information for interactive elements.&quot;,
+  &quot;rules_violated&quot;: [
+    &quot;Meaningful Label&quot;
+  ],
+  &quot;scoreBucket&quot;: &quot;Needs Review Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -2672,6 +4170,24 @@
             <div class="hilite no-viol" style="left:36.296%; top:82.051%; width:27.407%; height:11.795%;" data-n="#9"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -2687,6 +4203,24 @@
             <div class="hilite no-viol" style="left:63.704%; top:82.051%; width:27.407%; height:11.795%;" data-n="#10"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
     </div>
     <details class="raw"><summary>raw request_body JSON</summary>
@@ -2875,6 +4409,30 @@
             <div class="hilite highlighted" style="left:4.444%; top:6.966%; width:6.667%; height:3.077%;" data-n="#1"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-viol">Needs Review Issue</span>
+            <span class="cache">cache: accessibilityLabelGeneration=miss, accessibilityLabelScoring=miss</span>
+          </div>
+          <div class="resp-kv">generatedAccessibilitylabel: <code>Accedi al profilo utente</code></div>
+          <div class="resp-kv">rules_violated: <code>[&quot;Meaningful Label&quot;]</code></div>
+          <div class="resp-kv">reason: <code>The label includes redundant and technical information like &quot;In list, 2 items&quot; which is not helpful to a user. Additionally, while &quot;Profilo&quot; is appropriate, the inclusion of &quot;Button&quot; is generally unnecessary as assistive technologies automatically announce the element&#x27;s role.</code></div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelGeneration&quot;: &quot;miss&quot;,
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;Accedi al profilo utente&quot;,
+  &quot;reason&quot;: &quot;The label includes redundant and technical information like \&quot;In list, 2 items\&quot; which is not helpful to a user. Additionally, while \&quot;Profilo\&quot; is appropriate, the inclusion of \&quot;Button\&quot; is generally unnecessary as assistive technologies automatically announce the element&#x27;s role.&quot;,
+  &quot;rules_violated&quot;: [
+    &quot;Meaningful Label&quot;
+  ],
+  &quot;scoreBucket&quot;: &quot;Needs Review Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row">
         <div class="col-info">
@@ -2890,6 +4448,30 @@
             <div class="hilite highlighted" style="left:77.778%; top:6.966%; width:6.667%; height:3.077%;" data-n="#2"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-viol">Needs Review Issue</span>
+            <span class="cache">cache: accessibilityLabelGeneration=miss, accessibilityLabelScoring=miss</span>
+          </div>
+          <div class="resp-kv">generatedAccessibilitylabel: <code>Apri le notifiche</code></div>
+          <div class="resp-kv">rules_violated: <code>[&quot;Meaningful Label&quot;]</code></div>
+          <div class="resp-kv">reason: <code>The label includes unnecessary technical information like &#x27;Button&#x27;, &#x27;In list&#x27;, and &#x27;2 items&#x27;, which clutters the information. While &#x27;Avvisi&#x27; (Notifications) accurately identifies the element, the extra words detract from the clarity of the label.</code></div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelGeneration&quot;: &quot;miss&quot;,
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;Apri le notifiche&quot;,
+  &quot;reason&quot;: &quot;The label includes unnecessary technical information like &#x27;Button&#x27;, &#x27;In list&#x27;, and &#x27;2 items&#x27;, which clutters the information. While &#x27;Avvisi&#x27; (Notifications) accurately identifies the element, the extra words detract from the clarity of the label.&quot;,
+  &quot;rules_violated&quot;: [
+    &quot;Meaningful Label&quot;
+  ],
+  &quot;scoreBucket&quot;: &quot;Needs Review Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row">
         <div class="col-info">
@@ -2905,6 +4487,30 @@
             <div class="hilite highlighted" style="left:88.889%; top:6.966%; width:6.667%; height:3.077%;" data-n="#3"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-viol">Needs Review Issue</span>
+            <span class="cache">cache: accessibilityLabelGeneration=miss, accessibilityLabelScoring=miss</span>
+          </div>
+          <div class="resp-kv">generatedAccessibilitylabel: <code>Apri il menu della tessera socio</code></div>
+          <div class="resp-kv">rules_violated: <code>[&quot;Meaningful Label&quot;]</code></div>
+          <div class="resp-kv">reason: <code>The label includes redundant information like &quot;In list, 2 items,&quot; which is often automatically provided by screen readers and should not be part of the text label. &quot;Carta&quot; is a reasonable description, but the overall label is cluttered with non-essential information.</code></div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelGeneration&quot;: &quot;miss&quot;,
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;Apri il menu della tessera socio&quot;,
+  &quot;reason&quot;: &quot;The label includes redundant information like \&quot;In list, 2 items,\&quot; which is often automatically provided by screen readers and should not be part of the text label. \&quot;Carta\&quot; is a reasonable description, but the overall label is cluttered with non-essential information.&quot;,
+  &quot;rules_violated&quot;: [
+    &quot;Meaningful Label&quot;
+  ],
+  &quot;scoreBucket&quot;: &quot;Needs Review Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row">
         <div class="col-info">
@@ -2920,6 +4526,31 @@
             <div class="hilite highlighted" style="left:8.889%; top:28.59%; width:32.593%; height:3.077%;" data-n="#4"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-viol">Needs Review Issue</span>
+            <span class="cache">cache: accessibilityLabelGeneration=miss, accessibilityLabelScoring=miss</span>
+          </div>
+          <div class="resp-kv">generatedAccessibilitylabel: <code>Inizia il test del tuo archetipo di spesa</code></div>
+          <div class="resp-kv">rules_violated: <code>[&quot;Meaningful Label&quot;]</code></div>
+          <div class="resp-kv">reason: <code>The label includes unnecessary technical information like &#x27;Button&#x27;, &#x27;In list&#x27;, and &#x27;2 items&#x27;, which clutters the information and is not part of the functional description. While it correctly identifies the action &#x27;Inizia il test&#x27;, these extra details can be confusing for screen reader users.</code></div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelGeneration&quot;: &quot;miss&quot;,
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;Inizia il test del tuo archetipo di spesa&quot;,
+  &quot;reason&quot;: &quot;The label includes unnecessary technical information like &#x27;Button&#x27;, &#x27;In list&#x27;, and &#x27;2 items&#x27;, which clutters the information and is not part of the functional description. While it correctly identifies the action &#x27;Inizia il test&#x27;, these extra details can be confusing for screen reader users.&quot;,
+  &quot;rules_violated&quot;: [
+    &quot;Meaningful Label&quot;
+  ],
+  &quot;scoreBucket&quot;: &quot;Needs Review Issue&quot;,
+  &quot;status&quot;: true,
+  &quot;webhookStatusCode&quot;: 200
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row">
         <div class="col-info">
@@ -2935,6 +4566,24 @@
             <div class="hilite highlighted" style="left:69.167%; top:40.342%; width:26.389%; height:3.077%;" data-n="#5"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row">
         <div class="col-info">
@@ -2950,6 +4599,30 @@
             <div class="hilite highlighted" style="left:4.444%; top:45.897%; width:44.444%; height:36.154%;" data-n="#6"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-viol">Needs Review Issue</span>
+            <span class="cache">cache: accessibilityLabelGeneration=miss, accessibilityLabelScoring=miss</span>
+          </div>
+          <div class="resp-kv">generatedAccessibilitylabel: <code>Nucleo soci, scopri come unire familiari e amici in un unico nucleo soci, vedi dettagli</code></div>
+          <div class="resp-kv">rules_violated: <code>[&quot;Meaningful Label&quot;]</code></div>
+          <div class="resp-kv">reason: <code>The label includes redundant information like &quot;Button&quot;, &quot;In list&quot;, and &quot;2 items&quot; which should be handled by the screen reader itself rather than being part of the accessibility label. While it communicates the content well, these extra details make it cluttered.</code></div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelGeneration&quot;: &quot;miss&quot;,
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;Nucleo soci, scopri come unire familiari e amici in un unico nucleo soci, vedi dettagli&quot;,
+  &quot;reason&quot;: &quot;The label includes redundant information like \&quot;Button\&quot;, \&quot;In list\&quot;, and \&quot;2 items\&quot; which should be handled by the screen reader itself rather than being part of the accessibility label. While it communicates the content well, these extra details make it cluttered.&quot;,
+  &quot;rules_violated&quot;: [
+    &quot;Meaningful Label&quot;
+  ],
+  &quot;scoreBucket&quot;: &quot;Needs Review Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row">
         <div class="col-info">
@@ -2965,6 +4638,30 @@
             <div class="hilite highlighted" style="left:51.111%; top:45.897%; width:44.444%; height:36.154%;" data-n="#7"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-viol">Needs Review Issue</span>
+            <span class="cache">cache: accessibilityLabelGeneration=miss, accessibilityLabelScoring=miss</span>
+          </div>
+          <div class="resp-kv">generatedAccessibilitylabel: <code>Prestito sociale, scopri come far fruttare i tuoi risparmi e aiutare Coop.Fi a crescere, vedi dettagli</code></div>
+          <div class="resp-kv">rules_violated: <code>[&quot;Meaningful Label&quot;]</code></div>
+          <div class="resp-kv">reason: <code>The label is very comprehensive, but it includes unnecessary structural information like &#x27;Button&#x27;, &#x27;In list&#x27;, and &#x27;2 items&#x27; which are typically provided automatically by screen readers and should not be part of the manually defined accessibility label.</code></div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelGeneration&quot;: &quot;miss&quot;,
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;Prestito sociale, scopri come far fruttare i tuoi risparmi e aiutare Coop.Fi a crescere, vedi dettagli&quot;,
+  &quot;reason&quot;: &quot;The label is very comprehensive, but it includes unnecessary structural information like &#x27;Button&#x27;, &#x27;In list&#x27;, and &#x27;2 items&#x27; which are typically provided automatically by screen readers and should not be part of the manually defined accessibility label.&quot;,
+  &quot;rules_violated&quot;: [
+    &quot;Meaningful Label&quot;
+  ],
+  &quot;scoreBucket&quot;: &quot;Needs Review Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row">
         <div class="col-info">
@@ -2980,6 +4677,25 @@
             <div class="hilite highlighted" style="left:8.889%; top:82.051%; width:27.407%; height:11.795%;" data-n="#8"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelGeneration=miss, accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelGeneration&quot;: &quot;miss&quot;,
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: &quot;&quot;,
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row">
         <div class="col-info">
@@ -2995,6 +4711,30 @@
             <div class="hilite highlighted" style="left:36.296%; top:82.051%; width:27.407%; height:11.795%;" data-n="#9"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-viol">Needs Review Issue</span>
+            <span class="cache">cache: accessibilityLabelGeneration=miss, accessibilityLabelScoring=miss</span>
+          </div>
+          <div class="resp-kv">generatedAccessibilitylabel: <code>Visualizza le informazioni sui negozi nelle vicinanze</code></div>
+          <div class="resp-kv">rules_violated: <code>[&quot;Meaningful Label&quot;]</code></div>
+          <div class="resp-kv">reason: <code>The accessibility label contains extraneous information like the role and list position, which is redundant for screen reader users as this information is already provided by the operating system. Including the visible text &#x27;In negozio&#x27; is correct, but the additional technical details should be omitted.</code></div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelGeneration&quot;: &quot;miss&quot;,
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;Visualizza le informazioni sui negozi nelle vicinanze&quot;,
+  &quot;reason&quot;: &quot;The accessibility label contains extraneous information like the role and list position, which is redundant for screen reader users as this information is already provided by the operating system. Including the visible text &#x27;In negozio&#x27; is correct, but the additional technical details should be omitted.&quot;,
+  &quot;rules_violated&quot;: [
+    &quot;Meaningful Label&quot;
+  ],
+  &quot;scoreBucket&quot;: &quot;Needs Review Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row">
         <div class="col-info">
@@ -3010,6 +4750,30 @@
             <div class="hilite highlighted" style="left:63.704%; top:82.051%; width:27.407%; height:11.795%;" data-n="#10"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-viol">Needs Review Issue</span>
+            <span class="cache">cache: accessibilityLabelGeneration=miss, accessibilityLabelScoring=miss</span>
+          </div>
+          <div class="resp-kv">generatedAccessibilitylabel: <code>Accedi alla sezione dei servizi disponibili</code></div>
+          <div class="resp-kv">rules_violated: <code>[&quot;Meaningful Label&quot;]</code></div>
+          <div class="resp-kv">reason: <code>The label is descriptive enough to identify the function, but including technical information like &#x27;Button&#x27; or &#x27;In list, 2 items&#x27; is redundant and unnecessary for screen reader users, as these are automatically announced by the software.</code></div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelGeneration&quot;: &quot;miss&quot;,
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;Accedi alla sezione dei servizi disponibili&quot;,
+  &quot;reason&quot;: &quot;The label is descriptive enough to identify the function, but including technical information like &#x27;Button&#x27; or &#x27;In list, 2 items&#x27; is redundant and unnecessary for screen reader users, as these are automatically announced by the software.&quot;,
+  &quot;rules_violated&quot;: [
+    &quot;Meaningful Label&quot;
+  ],
+  &quot;scoreBucket&quot;: &quot;Needs Review Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
     </div>
     <details class="raw"><summary>raw request_body JSON</summary>
@@ -3198,6 +4962,30 @@
             <div class="hilite only-mine" style="left:4.444%; top:6.966%; width:6.667%; height:3.077%;" data-n="#1"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-viol">Needs Review Issue</span>
+            <span class="cache">cache: accessibilityLabelGeneration=miss, accessibilityLabelScoring=miss</span>
+          </div>
+          <div class="resp-kv">generatedAccessibilitylabel: <code>Accedi al profilo personale</code></div>
+          <div class="resp-kv">rules_violated: <code>[&quot;Meaningful Label&quot;]</code></div>
+          <div class="resp-kv">reason: <code>The label accurately describes the function of the icon as a profile button. Including &quot;Button&quot; and &quot;Out of list&quot; is redundant and unnecessary information for a screen reader user.</code></div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelGeneration&quot;: &quot;miss&quot;,
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;Accedi al profilo personale&quot;,
+  &quot;reason&quot;: &quot;The label accurately describes the function of the icon as a profile button. Including \&quot;Button\&quot; and \&quot;Out of list\&quot; is redundant and unnecessary information for a screen reader user.&quot;,
+  &quot;rules_violated&quot;: [
+    &quot;Meaningful Label&quot;
+  ],
+  &quot;scoreBucket&quot;: &quot;Needs Review Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-only-mine">
         <div class="col-info">
@@ -3213,6 +5001,30 @@
             <div class="hilite only-mine" style="left:77.778%; top:6.966%; width:6.667%; height:3.077%;" data-n="#2"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-viol">Needs Review Issue</span>
+            <span class="cache">cache: accessibilityLabelGeneration=miss, accessibilityLabelScoring=miss</span>
+          </div>
+          <div class="resp-kv">generatedAccessibilitylabel: <code>Visualizza le notifiche</code></div>
+          <div class="resp-kv">rules_violated: <code>[&quot;Meaningful Label&quot;]</code></div>
+          <div class="resp-kv">reason: <code>The label correctly identifies the function of the icon as a notification area, though it includes redundant technical information like &#x27;Button&#x27; and &#x27;Out of list&#x27; which are typically announced automatically by screen readers and shouldn&#x27;t be part of the custom label.</code></div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelGeneration&quot;: &quot;miss&quot;,
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;Visualizza le notifiche&quot;,
+  &quot;reason&quot;: &quot;The label correctly identifies the function of the icon as a notification area, though it includes redundant technical information like &#x27;Button&#x27; and &#x27;Out of list&#x27; which are typically announced automatically by screen readers and shouldn&#x27;t be part of the custom label.&quot;,
+  &quot;rules_violated&quot;: [
+    &quot;Meaningful Label&quot;
+  ],
+  &quot;scoreBucket&quot;: &quot;Needs Review Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -3228,6 +5040,24 @@
             <div class="hilite no-viol" style="left:88.889%; top:6.966%; width:6.667%; height:3.077%;" data-n="#3"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -3243,6 +5073,24 @@
             <div class="hilite no-viol" style="left:8.889%; top:25.513%; width:32.593%; height:3.077%;" data-n="#4"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -3258,6 +5106,24 @@
             <div class="hilite no-viol" style="left:69.167%; top:37.265%; width:26.389%; height:3.077%;" data-n="#5"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-only-mine">
         <div class="col-info">
@@ -3273,6 +5139,30 @@
             <div class="hilite only-mine" style="left:4.444%; top:42.821%; width:44.444%; height:36.154%;" data-n="#6"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-viol">Needs Review Issue</span>
+            <span class="cache">cache: accessibilityLabelGeneration=miss, accessibilityLabelScoring=miss</span>
+          </div>
+          <div class="resp-kv">generatedAccessibilitylabel: <code>Scopri di più sul nucleo soci</code></div>
+          <div class="resp-kv">rules_violated: <code>[&quot;Meaningful Label&quot;]</code></div>
+          <div class="resp-kv">reason: <code>The label includes unnecessary technical information such as the element type and list position, which are automatically provided by screen readers and should not be part of the text alternative. While the content itself is accurate, this extra information creates redundancy for the user.</code></div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelGeneration&quot;: &quot;miss&quot;,
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;Scopri di pi\u00f9 sul nucleo soci&quot;,
+  &quot;reason&quot;: &quot;The label includes unnecessary technical information such as the element type and list position, which are automatically provided by screen readers and should not be part of the text alternative. While the content itself is accurate, this extra information creates redundancy for the user.&quot;,
+  &quot;rules_violated&quot;: [
+    &quot;Meaningful Label&quot;
+  ],
+  &quot;scoreBucket&quot;: &quot;Needs Review Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-only-mine">
         <div class="col-info">
@@ -3288,6 +5178,31 @@
             <div class="hilite only-mine" style="left:51.111%; top:42.821%; width:44.444%; height:36.154%;" data-n="#7"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-viol">Needs Review Issue</span>
+            <span class="cache">cache: accessibilityLabelGeneration=miss, accessibilityLabelScoring=miss</span>
+          </div>
+          <div class="resp-kv">generatedAccessibilitylabel: <code>Scopri di più sul prestito sociale per far fruttare i tuoi risparmi e sostenere Coop.Fi</code></div>
+          <div class="resp-kv">rules_violated: <code>[&quot;Meaningful Label&quot;]</code></div>
+          <div class="resp-kv">reason: <code>The label includes all the necessary information present in the card, but it is too verbose for a single interactive element. It includes the button role and redundant list information, which clutter the reading experience for screen reader users.</code></div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelGeneration&quot;: &quot;miss&quot;,
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;Scopri di pi\u00f9 sul prestito sociale per far fruttare i tuoi risparmi e sostenere Coop.Fi&quot;,
+  &quot;reason&quot;: &quot;The label includes all the necessary information present in the card, but it is too verbose for a single interactive element. It includes the button role and redundant list information, which clutter the reading experience for screen reader users.&quot;,
+  &quot;rules_violated&quot;: [
+    &quot;Meaningful Label&quot;
+  ],
+  &quot;scoreBucket&quot;: &quot;Needs Review Issue&quot;,
+  &quot;status&quot;: true,
+  &quot;webhookStatusCode&quot;: 200
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-only-mine">
         <div class="col-info">
@@ -3303,6 +5218,30 @@
             <div class="hilite only-mine" style="left:8.889%; top:82.051%; width:27.407%; height:11.795%;" data-n="#8"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-viol">Needs Review Issue</span>
+            <span class="cache">cache: accessibilityLabelGeneration=miss, accessibilityLabelScoring=miss</span>
+          </div>
+          <div class="resp-kv">generatedAccessibilitylabel: <code>Home, naviga alla schermata principale</code></div>
+          <div class="resp-kv">rules_violated: <code>[&quot;Meaningful Label&quot;]</code></div>
+          <div class="resp-kv">reason: <code>The label includes the visible text and clearly identifies the element&#x27;s purpose and its current selected state, making it very helpful for screen reader users.</code></div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelGeneration&quot;: &quot;miss&quot;,
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;Home, naviga alla schermata principale&quot;,
+  &quot;reason&quot;: &quot;The label includes the visible text and clearly identifies the element&#x27;s purpose and its current selected state, making it very helpful for screen reader users.&quot;,
+  &quot;rules_violated&quot;: [
+    &quot;Meaningful Label&quot;
+  ],
+  &quot;scoreBucket&quot;: &quot;Needs Review Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-only-mine">
         <div class="col-info">
@@ -3318,6 +5257,30 @@
             <div class="hilite only-mine" style="left:36.296%; top:82.051%; width:27.407%; height:11.795%;" data-n="#9"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-viol">Needs Review Issue</span>
+            <span class="cache">cache: accessibilityLabelGeneration=miss, accessibilityLabelScoring=miss</span>
+          </div>
+          <div class="resp-kv">generatedAccessibilitylabel: <code>Trova il punto vendita più vicino</code></div>
+          <div class="resp-kv">rules_violated: <code>[&quot;Meaningful Label&quot;]</code></div>
+          <div class="resp-kv">reason: <code>The label correctly identifies the navigation item&#x27;s purpose, but including technical descriptions like &quot;Button&quot; and &quot;Out of list&quot; is redundant as these are automatically announced by screen readers.</code></div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelGeneration&quot;: &quot;miss&quot;,
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;Trova il punto vendita pi\u00f9 vicino&quot;,
+  &quot;reason&quot;: &quot;The label correctly identifies the navigation item&#x27;s purpose, but including technical descriptions like \&quot;Button\&quot; and \&quot;Out of list\&quot; is redundant as these are automatically announced by screen readers.&quot;,
+  &quot;rules_violated&quot;: [
+    &quot;Meaningful Label&quot;
+  ],
+  &quot;scoreBucket&quot;: &quot;Needs Review Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
       <div class="image-row row-no-viol">
         <div class="col-info">
@@ -3333,6 +5296,24 @@
             <div class="hilite no-viol" style="left:63.704%; top:82.051%; width:27.407%; height:11.795%;" data-n="#10"></div>
           </div>
         </a></div>
+        <div class="col-response">
+          <div class="response-title">AI response</div>
+          <div class="resp-row"><span class="svc">accessibilityLabelSuggestionWorker</span> <span class="bucket-tag bucket-pass">Not an Issue</span>
+            <span class="cache">cache: accessibilityLabelScoring=miss</span>
+          </div>
+          <details class="raw resp-raw"><summary>raw response JSON (accessibilityLabelSuggestionWorker)</summary>
+            <pre>{
+  &quot;cacheStatus&quot;: {
+    &quot;accessibilityLabelScoring&quot;: &quot;miss&quot;
+  },
+  &quot;generatedAccessibilitylabel&quot;: &quot;&quot;,
+  &quot;reason&quot;: &quot;&quot;,
+  &quot;rules_violated&quot;: [],
+  &quot;scoreBucket&quot;: &quot;Not an Issue&quot;,
+  &quot;status&quot;: true
+}</pre>
+          </details>
+        </div>
       </div>
     </div>
     <details class="raw"><summary>raw request_body JSON</summary>
