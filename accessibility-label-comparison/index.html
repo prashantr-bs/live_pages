@@ -70,22 +70,28 @@
   /* Diff highlights on overlays */
   .hilite.only-mine { border-color:#ff3b30; background: rgba(255,59,48,0.22); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.95), 0 0 0 2px rgba(255,59,48,0.9); }
   .hilite.in-both { border-color:#28a745; background: rgba(40,167,69,0.14); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.95), 0 0 0 1px rgba(40,167,69,0.65); }
+  .hilite.label-diff { border-color:#ff9800; background: rgba(255,152,0,0.20); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.95), 0 0 0 2px rgba(255,152,0,0.9); }
   .hilite.no-viol { border-color:#9ca3af; background: rgba(156,163,175,0.08); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.75), 0 0 0 1px rgba(156,163,175,0.35); opacity:.75; }
   .hilite.only-mine::before { background:#ff3b30; }
   .hilite.in-both::before { background:#28a745; }
+  .hilite.label-diff::before { background:#ff9800; color:#111; }
   .hilite.no-viol::before { background:#9ca3af; color:#111; }
   /* Row highlights */
   .image-row.row-only-mine { background: color-mix(in srgb, #ff3b30 6%, transparent); border:1px solid rgba(255,59,48,0.5); border-radius:6px; padding:6px; margin:6px 0; }
   .image-row.row-in-both { background: color-mix(in srgb, #28a745 5%, transparent); border:1px solid rgba(40,167,69,0.45); border-radius:6px; padding:6px; margin:6px 0; }
+  .image-row.row-label-diff { background: color-mix(in srgb, #ff9800 8%, transparent); border:1.5px solid rgba(255,152,0,0.7); border-radius:6px; padding:6px; margin:6px 0; }
   .image-row.row-no-viol { opacity:0.55; }
   .row-badge { display:inline-block; font-size:10px; font-weight:700; padding:1px 5px; border-radius:3px; margin-left:6px; letter-spacing:0.4px; }
   .diff-only-mine { background:#ff3b30; color:#fff; }
   .diff-in-both { background:#28a745; color:#fff; }
+  .diff-label { background:#ff9800; color:#111; }
   .diff-no-viol { background:#9ca3af; color:#111; font-weight:600; }
+  .kv.counterpart { background: rgba(255,152,0,0.08); border-left: 3px solid #ff9800; padding: 3px 6px; margin-top: 4px; font-size: 11px; }
+  .kv.counterpart small { color:#c47c00; font-weight:600; text-transform:uppercase; letter-spacing:.4px; }
   .bucket { display:inline-block; background:var(--code-bg); color:var(--ink); font-size:11px; padding:1px 5px; border-radius:3px; font-family:"SF Mono",ui-monospace,Menlo,monospace; }
   /* Diff-only view (a follow-up on top of focus-only) */
   body.diff-only section.snapshot:not(.focused) { display:none; }
-  body.diff-only .image-row:not(.row-only-mine) { display:none; }
+  body.diff-only .image-row:not(.row-only-mine):not(.row-label-diff) { display:none; }
   body.diff-only .overview-wrap { display:none; }
   .hilite::before {
     content:attr(data-n);
@@ -127,17 +133,19 @@
   <label><input type="checkbox" id="focus-only" /> Show <b>only focused scans</b></label>
   <label><input type="checkbox" id="diff-only" /> Show <b>only diff (only-here) elements</b></label>
   <span style="color:var(--muted); font-size:12px;">
-    <span class="row-badge diff-only-mine">ONLY HERE</span> = element flagged on this side but not on the paired product;
-    <span class="row-badge diff-in-both">IN BOTH</span> = flagged the same on both;
-    <span class="row-badge diff-no-viol">not flagged</span> = AI returned "Not an Issue" for this element.
+    <span class="row-badge diff-only-mine">ONLY HERE</span> element flagged on this side, no match on the other ·
+    <span class="row-badge diff-label">LABEL DIFFERS</span> same on-screen element but different accessibilityLabel/visibleName ·
+    <span class="row-badge diff-in-both">IN BOTH</span> matched same element + same label ·
+    <span class="row-badge diff-no-viol">not flagged</span> AI returned "Not an Issue".
   </span>
 </div>
 
 <div class="focus-index">
   <h2>Focused scan pairs — violation diff</h2>
+  <p style="font-size:12px;color:var(--muted);margin:0 0 8px;">Matching uses <b>rounded coordinates + elementType</b> (loose) so that same on-screen elements with different labels still pair up.</p>
   <table>
-    <thead><tr><th>WFA</th><th>Automate</th><th>Matched</th><th>Only in WFA</th><th>Only in Automate</th><th>Jump</th></tr></thead>
-    <tbody><tr><td>WFA <b>#1</b><br/><small>(0 viol.)</small></td><td>Automate <b>#1</b><br/><small>(0 viol.)</small></td><td><span class="row-badge diff-in-both">IN BOTH</span> 0</td><td><span class="row-badge diff-only-mine">ONLY WFA</span> 0</td><td><span class="row-badge diff-only-mine">ONLY AUTOMATE</span> 0</td><td><a href="#manual-scan-1">Manual ↗</a> · <a href="#automate-scan-1">Automate ↗</a></td></tr><tr><td>WFA <b>#5</b><br/><small>(0 viol.)</small></td><td>Automate <b>#9</b><br/><small>(1 viol.)</small></td><td><span class="row-badge diff-in-both">IN BOTH</span> 0</td><td><span class="row-badge diff-only-mine">ONLY WFA</span> 0</td><td><span class="row-badge diff-only-mine">ONLY AUTOMATE</span> 1</td><td><a href="#manual-scan-5">Manual ↗</a> · <a href="#automate-scan-9">Automate ↗</a></td></tr><tr><td>WFA <b>#6</b><br/><small>(2 viol.)</small></td><td>Automate <b>#11</b><br/><small>(0 viol.)</small></td><td><span class="row-badge diff-in-both">IN BOTH</span> 0</td><td><span class="row-badge diff-only-mine">ONLY WFA</span> 2</td><td><span class="row-badge diff-only-mine">ONLY AUTOMATE</span> 0</td><td><a href="#manual-scan-6">Manual ↗</a> · <a href="#automate-scan-11">Automate ↗</a></td></tr><tr><td>WFA <b>#7</b><br/><small>(1 viol.)</small></td><td>Automate <b>#12</b><br/><small>(3 viol.)</small></td><td><span class="row-badge diff-in-both">IN BOTH</span> 0</td><td><span class="row-badge diff-only-mine">ONLY WFA</span> 1</td><td><span class="row-badge diff-only-mine">ONLY AUTOMATE</span> 3</td><td><a href="#manual-scan-7">Manual ↗</a> · <a href="#automate-scan-12">Automate ↗</a></td></tr><tr><td>WFA <b>#8</b><br/><small>(2 viol.)</small></td><td>Automate <b>#14</b><br/><small>(6 viol.)</small></td><td><span class="row-badge diff-in-both">IN BOTH</span> 0</td><td><span class="row-badge diff-only-mine">ONLY WFA</span> 2</td><td><span class="row-badge diff-only-mine">ONLY AUTOMATE</span> 6</td><td><a href="#manual-scan-8">Manual ↗</a> · <a href="#automate-scan-14">Automate ↗</a></td></tr></tbody>
+    <thead><tr><th>WFA</th><th>Automate</th><th>Same</th><th>Label differs</th><th>Only in WFA</th><th>Only in Automate</th><th>Jump</th></tr></thead>
+    <tbody><tr><td>WFA <b>#1</b><br/><small>(0 viol.)</small></td><td>Automate <b>#1</b><br/><small>(2 viol.)</small></td><td><span class="row-badge diff-in-both">SAME</span> 0</td><td><span class="row-badge diff-label">LABEL DIFFERS</span> 0</td><td><span class="row-badge diff-only-mine">ONLY WFA</span> 0</td><td><span class="row-badge diff-only-mine">ONLY AUTOMATE</span> 0</td><td><a href="#manual-scan-1">Manual ↗</a> · <a href="#automate-scan-1">Automate ↗</a></td></tr><tr><td>WFA <b>#5</b><br/><small>(0 viol.)</small></td><td>Automate <b>#9</b><br/><small>(9 viol.)</small></td><td><span class="row-badge diff-in-both">SAME</span> 0</td><td><span class="row-badge diff-label">LABEL DIFFERS</span> 0</td><td><span class="row-badge diff-only-mine">ONLY WFA</span> 0</td><td><span class="row-badge diff-only-mine">ONLY AUTOMATE</span> 1</td><td><a href="#manual-scan-5">Manual ↗</a> · <a href="#automate-scan-9">Automate ↗</a></td></tr><tr><td>WFA <b>#6</b><br/><small>(9 viol.)</small></td><td>Automate <b>#11</b><br/><small>(8 viol.)</small></td><td><span class="row-badge diff-in-both">SAME</span> 0</td><td><span class="row-badge diff-label">LABEL DIFFERS</span> 0</td><td><span class="row-badge diff-only-mine">ONLY WFA</span> 1</td><td><span class="row-badge diff-only-mine">ONLY AUTOMATE</span> 0</td><td><a href="#manual-scan-6">Manual ↗</a> · <a href="#automate-scan-11">Automate ↗</a></td></tr><tr><td>WFA <b>#7</b><br/><small>(8 viol.)</small></td><td>Automate <b>#12</b><br/><small>(10 viol.)</small></td><td><span class="row-badge diff-in-both">SAME</span> 0</td><td><span class="row-badge diff-label">LABEL DIFFERS</span> 0</td><td><span class="row-badge diff-only-mine">ONLY WFA</span> 0</td><td><span class="row-badge diff-only-mine">ONLY AUTOMATE</span> 2</td><td><a href="#manual-scan-7">Manual ↗</a> · <a href="#automate-scan-12">Automate ↗</a></td></tr><tr><td>WFA <b>#8</b><br/><small>(10 viol.)</small></td><td>Automate <b>#14</b><br/><small>(10 viol.)</small></td><td><span class="row-badge diff-in-both">SAME</span> 0</td><td><span class="row-badge diff-label">LABEL DIFFERS</span> 6</td><td><span class="row-badge diff-only-mine">ONLY WFA</span> 2</td><td><span class="row-badge diff-only-mine">ONLY AUTOMATE</span> 2</td><td><a href="#manual-scan-8">Manual ↗</a> · <a href="#automate-scan-14">Automate ↗</a></td></tr></tbody>
   </table>
 </div>
 
@@ -417,7 +425,7 @@
         <div class="thumb-wrap big"><a href="https://app-accessibility-assets.browserstack.com/18a25e600c57d5ed9fa2818ef1fae7aa3ab5cf94/screenshot-2c3e50d6.jpeg" target="_blank"><img src="https://app-accessibility-assets.browserstack.com/18a25e600c57d5ed9fa2818ef1fae7aa3ab5cf94/screenshot-2c3e50d6.jpeg" loading="lazy"/></a>
           <div class="hilite no-viol" style="left:4.444%; top:6.966%; width:6.667%; height:3.077%;" data-n="#1"></div>
           <div class="hilite no-viol" style="left:77.778%; top:6.966%; width:6.667%; height:3.077%;" data-n="#2"></div>
-          <div class="hilite only-mine" style="left:88.889%; top:6.966%; width:6.667%; height:3.077%;" data-n="#3"></div>
+          <div class="hilite in-both" style="left:88.889%; top:6.966%; width:6.667%; height:3.077%;" data-n="#3"></div>
           <div class="hilite only-mine" style="left:0.0%; top:17.222%; width:73.704%; height:13.974%;" data-n="#4"></div>
           <div class="hilite no-viol" style="left:68.981%; top:41.325%; width:22.13%; height:3.077%;" data-n="#5"></div>
           <div class="hilite no-viol" style="left:13.333%; top:64.915%; width:38.333%; height:3.077%;" data-n="#6"></div>
@@ -492,9 +500,9 @@
           </details>
         </div>
       </div>
-      <div class="image-row row-only-mine">
+      <div class="image-row row-in-both">
         <div class="col-info">
-          <div class="kv"><b>#3</b> id=<code>1199153715-ef527236-6bb7-464b-bae3-43b9eeacc67a</code> <span class="bucket">→ Needs Review Issue</span> <span class="row-badge diff-only-mine">ONLY HERE</span></div>
+          <div class="kv"><b>#3</b> id=<code>1199153715-ef527236-6bb7-464b-bae3-43b9eeacc67a</code> <span class="bucket">→ Needs Review Issue</span> <span class="row-badge diff-in-both">IN BOTH</span></div>
           <div class="kv">elementType: <code>android.widget.Button,Button</code></div>
           <div class="kv">visibleName: <code>&mdash;</code></div>
           <div class="kv">accessibilityLabel: <code>Carta, Button</code></div>
@@ -503,7 +511,7 @@
         </div>
         <div class="col-img"><a href="https://app-accessibility-assets.browserstack.com/18a25e600c57d5ed9fa2818ef1fae7aa3ab5cf94/screenshot-2c3e50d6.jpeg" target="_blank">
           <div class="thumb-wrap"><img src="https://app-accessibility-assets.browserstack.com/18a25e600c57d5ed9fa2818ef1fae7aa3ab5cf94/screenshot-2c3e50d6.jpeg" loading="lazy"/>
-            <div class="hilite only-mine" style="left:88.889%; top:6.966%; width:6.667%; height:3.077%;" data-n="#3"></div>
+            <div class="hilite in-both" style="left:88.889%; top:6.966%; width:6.667%; height:3.077%;" data-n="#3"></div>
           </div>
         </a></div>
         <div class="col-response">
@@ -885,7 +893,7 @@
         <div class="thumb-wrap big"><a href="https://app-accessibility-assets.browserstack.com/18a25e600c57d5ed9fa2818ef1fae7aa3ab5cf94/screenshot-b1c7faf1.jpeg" target="_blank"><img src="https://app-accessibility-assets.browserstack.com/18a25e600c57d5ed9fa2818ef1fae7aa3ab5cf94/screenshot-b1c7faf1.jpeg" loading="lazy"/></a>
           <div class="hilite no-viol" style="left:4.444%; top:6.966%; width:6.667%; height:3.077%;" data-n="#1"></div>
           <div class="hilite no-viol" style="left:77.778%; top:6.966%; width:6.667%; height:3.077%;" data-n="#2"></div>
-          <div class="hilite only-mine" style="left:88.889%; top:6.966%; width:6.667%; height:3.077%;" data-n="#3"></div>
+          <div class="hilite in-both" style="left:88.889%; top:6.966%; width:6.667%; height:3.077%;" data-n="#3"></div>
           <div class="hilite no-viol" style="left:8.889%; top:34.957%; width:82.222%; height:5.769%;" data-n="#4"></div>
           <div class="hilite no-viol" style="left:8.889%; top:56.88%; width:39.537%; height:3.077%;" data-n="#5"></div>
           <div class="hilite no-viol" style="left:8.889%; top:82.051%; width:27.407%; height:11.795%;" data-n="#6"></div>
@@ -955,9 +963,9 @@
           </details>
         </div>
       </div>
-      <div class="image-row row-only-mine">
+      <div class="image-row row-in-both">
         <div class="col-info">
-          <div class="kv"><b>#3</b> id=<code>1199153715-21578436-4687-4891-8c4a-e6c43e297e6b</code> <span class="bucket">→ Needs Review Issue</span> <span class="row-badge diff-only-mine">ONLY HERE</span></div>
+          <div class="kv"><b>#3</b> id=<code>1199153715-21578436-4687-4891-8c4a-e6c43e297e6b</code> <span class="bucket">→ Needs Review Issue</span> <span class="row-badge diff-in-both">IN BOTH</span></div>
           <div class="kv">elementType: <code>android.widget.Button,Button</code></div>
           <div class="kv">visibleName: <code>&mdash;</code></div>
           <div class="kv">accessibilityLabel: <code>Carta, Button</code></div>
@@ -966,7 +974,7 @@
         </div>
         <div class="col-img"><a href="https://app-accessibility-assets.browserstack.com/18a25e600c57d5ed9fa2818ef1fae7aa3ab5cf94/screenshot-b1c7faf1.jpeg" target="_blank">
           <div class="thumb-wrap"><img src="https://app-accessibility-assets.browserstack.com/18a25e600c57d5ed9fa2818ef1fae7aa3ab5cf94/screenshot-b1c7faf1.jpeg" loading="lazy"/>
-            <div class="hilite only-mine" style="left:88.889%; top:6.966%; width:6.667%; height:3.077%;" data-n="#3"></div>
+            <div class="hilite in-both" style="left:88.889%; top:6.966%; width:6.667%; height:3.077%;" data-n="#3"></div>
           </div>
         </a></div>
         <div class="col-response">
@@ -1293,30 +1301,31 @@
       <h4>Images (10)</h4>
       <div class="overview-wrap"><span class="overview-label">All elements overlaid</span>
         <div class="thumb-wrap big"><a href="https://app-accessibility-assets.browserstack.com/18a25e600c57d5ed9fa2818ef1fae7aa3ab5cf94/screenshot-68dc6912.jpeg" target="_blank"><img src="https://app-accessibility-assets.browserstack.com/18a25e600c57d5ed9fa2818ef1fae7aa3ab5cf94/screenshot-68dc6912.jpeg" loading="lazy"/></a>
-          <div class="hilite no-viol" style="left:4.444%; top:6.966%; width:6.667%; height:3.077%;" data-n="#1"></div>
-          <div class="hilite no-viol" style="left:77.778%; top:6.966%; width:6.667%; height:3.077%;" data-n="#2"></div>
-          <div class="hilite no-viol" style="left:88.889%; top:6.966%; width:6.667%; height:3.077%;" data-n="#3"></div>
+          <div class="hilite label-diff" style="left:4.444%; top:6.966%; width:6.667%; height:3.077%;" data-n="#1"></div>
+          <div class="hilite label-diff" style="left:77.778%; top:6.966%; width:6.667%; height:3.077%;" data-n="#2"></div>
+          <div class="hilite label-diff" style="left:88.889%; top:6.966%; width:6.667%; height:3.077%;" data-n="#3"></div>
           <div class="hilite no-viol" style="left:8.889%; top:35.897%; width:32.593%; height:3.077%;" data-n="#4"></div>
           <div class="hilite no-viol" style="left:69.167%; top:47.65%; width:26.389%; height:3.077%;" data-n="#5"></div>
           <div class="hilite only-mine" style="left:4.444%; top:53.205%; width:44.444%; height:28.846%;" data-n="#6"></div>
           <div class="hilite only-mine" style="left:51.111%; top:53.205%; width:44.444%; height:28.846%;" data-n="#7"></div>
-          <div class="hilite no-viol" style="left:8.889%; top:82.051%; width:27.407%; height:11.795%;" data-n="#8"></div>
-          <div class="hilite no-viol" style="left:36.296%; top:82.051%; width:27.407%; height:11.795%;" data-n="#9"></div>
-          <div class="hilite no-viol" style="left:63.704%; top:82.051%; width:27.407%; height:11.795%;" data-n="#10"></div>
+          <div class="hilite label-diff" style="left:8.889%; top:82.051%; width:27.407%; height:11.795%;" data-n="#8"></div>
+          <div class="hilite label-diff" style="left:36.296%; top:82.051%; width:27.407%; height:11.795%;" data-n="#9"></div>
+          <div class="hilite label-diff" style="left:63.704%; top:82.051%; width:27.407%; height:11.795%;" data-n="#10"></div>
         </div>
       </div>
-      <div class="image-row row-no-viol">
+      <div class="image-row row-label-diff">
         <div class="col-info">
-          <div class="kv"><b>#1</b> id=<code>1198469607-8f45e7ea-5073-49c2-a450-319eb6eeee93</code> <span class="bucket">→ Not an Issue</span> <span class="row-badge diff-no-viol">not flagged</span></div>
+          <div class="kv"><b>#1</b> id=<code>1198469607-8f45e7ea-5073-49c2-a450-319eb6eeee93</code> <span class="bucket">→ Not an Issue</span> <span class="row-badge diff-label">LABEL DIFFERS</span></div>
           <div class="kv">elementType: <code>android.widget.Button,Button</code></div>
           <div class="kv">visibleName: <code>&mdash;</code></div>
           <div class="kv">accessibilityLabel: <code>Profilo, Button</code></div>
           <div class="kv">language: <code>English</code></div>
           <div class="kv">coords: <code>x=4.444 y=6.966 w=6.667 h=3.077</code></div>
+          <div class="kv counterpart"><small>on Automate:</small> accessibilityLabel=<code>Profilo, Button, Out of list</code> · visibleName=<code>&mdash;</code></div>
         </div>
         <div class="col-img"><a href="https://app-accessibility-assets.browserstack.com/18a25e600c57d5ed9fa2818ef1fae7aa3ab5cf94/screenshot-68dc6912.jpeg" target="_blank">
           <div class="thumb-wrap"><img src="https://app-accessibility-assets.browserstack.com/18a25e600c57d5ed9fa2818ef1fae7aa3ab5cf94/screenshot-68dc6912.jpeg" loading="lazy"/>
-            <div class="hilite no-viol" style="left:4.444%; top:6.966%; width:6.667%; height:3.077%;" data-n="#1"></div>
+            <div class="hilite label-diff" style="left:4.444%; top:6.966%; width:6.667%; height:3.077%;" data-n="#1"></div>
           </div>
         </a></div>
         <div class="col-response">
@@ -1338,18 +1347,19 @@
           </details>
         </div>
       </div>
-      <div class="image-row row-no-viol">
+      <div class="image-row row-label-diff">
         <div class="col-info">
-          <div class="kv"><b>#2</b> id=<code>1198472521-09d970a3-a8ef-4024-9f0c-4d77ec1c5fc7</code> <span class="bucket">→ Not an Issue</span> <span class="row-badge diff-no-viol">not flagged</span></div>
+          <div class="kv"><b>#2</b> id=<code>1198472521-09d970a3-a8ef-4024-9f0c-4d77ec1c5fc7</code> <span class="bucket">→ Not an Issue</span> <span class="row-badge diff-label">LABEL DIFFERS</span></div>
           <div class="kv">elementType: <code>android.widget.Button,Button</code></div>
           <div class="kv">visibleName: <code>&mdash;</code></div>
           <div class="kv">accessibilityLabel: <code>Avvisi, Button</code></div>
           <div class="kv">language: <code>English</code></div>
           <div class="kv">coords: <code>x=77.778 y=6.966 w=6.667 h=3.077</code></div>
+          <div class="kv counterpart"><small>on Automate:</small> accessibilityLabel=<code>Avvisi, Button, Out of list</code> · visibleName=<code>&mdash;</code></div>
         </div>
         <div class="col-img"><a href="https://app-accessibility-assets.browserstack.com/18a25e600c57d5ed9fa2818ef1fae7aa3ab5cf94/screenshot-68dc6912.jpeg" target="_blank">
           <div class="thumb-wrap"><img src="https://app-accessibility-assets.browserstack.com/18a25e600c57d5ed9fa2818ef1fae7aa3ab5cf94/screenshot-68dc6912.jpeg" loading="lazy"/>
-            <div class="hilite no-viol" style="left:77.778%; top:6.966%; width:6.667%; height:3.077%;" data-n="#2"></div>
+            <div class="hilite label-diff" style="left:77.778%; top:6.966%; width:6.667%; height:3.077%;" data-n="#2"></div>
           </div>
         </a></div>
         <div class="col-response">
@@ -1371,18 +1381,19 @@
           </details>
         </div>
       </div>
-      <div class="image-row row-no-viol">
+      <div class="image-row row-label-diff">
         <div class="col-info">
-          <div class="kv"><b>#3</b> id=<code>1199153715-30fbe79c-31fb-416f-8c39-9b82d1eb2478</code> <span class="bucket">→ Not an Issue</span> <span class="row-badge diff-no-viol">not flagged</span></div>
+          <div class="kv"><b>#3</b> id=<code>1199153715-30fbe79c-31fb-416f-8c39-9b82d1eb2478</code> <span class="bucket">→ Not an Issue</span> <span class="row-badge diff-label">LABEL DIFFERS</span></div>
           <div class="kv">elementType: <code>android.widget.Button,Button</code></div>
           <div class="kv">visibleName: <code>&mdash;</code></div>
           <div class="kv">accessibilityLabel: <code>Carta, Button</code></div>
           <div class="kv">language: <code>English</code></div>
           <div class="kv">coords: <code>x=88.889 y=6.966 w=6.667 h=3.077</code></div>
+          <div class="kv counterpart"><small>on Automate:</small> accessibilityLabel=<code>Carta, Button, Out of list</code> · visibleName=<code>&mdash;</code></div>
         </div>
         <div class="col-img"><a href="https://app-accessibility-assets.browserstack.com/18a25e600c57d5ed9fa2818ef1fae7aa3ab5cf94/screenshot-68dc6912.jpeg" target="_blank">
           <div class="thumb-wrap"><img src="https://app-accessibility-assets.browserstack.com/18a25e600c57d5ed9fa2818ef1fae7aa3ab5cf94/screenshot-68dc6912.jpeg" loading="lazy"/>
-            <div class="hilite no-viol" style="left:88.889%; top:6.966%; width:6.667%; height:3.077%;" data-n="#3"></div>
+            <div class="hilite label-diff" style="left:88.889%; top:6.966%; width:6.667%; height:3.077%;" data-n="#3"></div>
           </div>
         </a></div>
         <div class="col-response">
@@ -1549,18 +1560,19 @@
           </details>
         </div>
       </div>
-      <div class="image-row row-no-viol">
+      <div class="image-row row-label-diff">
         <div class="col-info">
-          <div class="kv"><b>#8</b> id=<code>1199124141-0d6da2d4-fe21-41ba-a1c0-6b1fe153ca03</code> <span class="bucket">→ Not an Issue</span> <span class="row-badge diff-no-viol">not flagged</span></div>
+          <div class="kv"><b>#8</b> id=<code>1199124141-0d6da2d4-fe21-41ba-a1c0-6b1fe153ca03</code> <span class="bucket">→ Not an Issue</span> <span class="row-badge diff-label">LABEL DIFFERS</span></div>
           <div class="kv">elementType: <code>android.widget.Button,Button</code></div>
           <div class="kv">visibleName: <code>&mdash;</code></div>
           <div class="kv">accessibilityLabel: <code>selected, Home, Button</code></div>
           <div class="kv">language: <code>English</code></div>
           <div class="kv">coords: <code>x=8.889 y=82.051 w=27.407 h=11.795</code></div>
+          <div class="kv counterpart"><small>on Automate:</small> accessibilityLabel=<code>selected, Home, Button, Out of list</code> · visibleName=<code>&mdash;</code></div>
         </div>
         <div class="col-img"><a href="https://app-accessibility-assets.browserstack.com/18a25e600c57d5ed9fa2818ef1fae7aa3ab5cf94/screenshot-68dc6912.jpeg" target="_blank">
           <div class="thumb-wrap"><img src="https://app-accessibility-assets.browserstack.com/18a25e600c57d5ed9fa2818ef1fae7aa3ab5cf94/screenshot-68dc6912.jpeg" loading="lazy"/>
-            <div class="hilite no-viol" style="left:8.889%; top:82.051%; width:27.407%; height:11.795%;" data-n="#8"></div>
+            <div class="hilite label-diff" style="left:8.889%; top:82.051%; width:27.407%; height:11.795%;" data-n="#8"></div>
           </div>
         </a></div>
         <div class="col-response">
@@ -1582,18 +1594,19 @@
           </details>
         </div>
       </div>
-      <div class="image-row row-no-viol">
+      <div class="image-row row-label-diff">
         <div class="col-info">
-          <div class="kv"><b>#9</b> id=<code>1199127055-b0353ab4-a65a-44bd-a3cf-4f0237a663cf</code> <span class="bucket">→ Not an Issue</span> <span class="row-badge diff-no-viol">not flagged</span></div>
+          <div class="kv"><b>#9</b> id=<code>1199127055-b0353ab4-a65a-44bd-a3cf-4f0237a663cf</code> <span class="bucket">→ Not an Issue</span> <span class="row-badge diff-label">LABEL DIFFERS</span></div>
           <div class="kv">elementType: <code>android.widget.Button,Button</code></div>
           <div class="kv">visibleName: <code>&mdash;</code></div>
           <div class="kv">accessibilityLabel: <code>In negozio, Button</code></div>
           <div class="kv">language: <code>English</code></div>
           <div class="kv">coords: <code>x=36.296 y=82.051 w=27.407 h=11.795</code></div>
+          <div class="kv counterpart"><small>on Automate:</small> accessibilityLabel=<code>In negozio, Button, Out of list</code> · visibleName=<code>&mdash;</code></div>
         </div>
         <div class="col-img"><a href="https://app-accessibility-assets.browserstack.com/18a25e600c57d5ed9fa2818ef1fae7aa3ab5cf94/screenshot-68dc6912.jpeg" target="_blank">
           <div class="thumb-wrap"><img src="https://app-accessibility-assets.browserstack.com/18a25e600c57d5ed9fa2818ef1fae7aa3ab5cf94/screenshot-68dc6912.jpeg" loading="lazy"/>
-            <div class="hilite no-viol" style="left:36.296%; top:82.051%; width:27.407%; height:11.795%;" data-n="#9"></div>
+            <div class="hilite label-diff" style="left:36.296%; top:82.051%; width:27.407%; height:11.795%;" data-n="#9"></div>
           </div>
         </a></div>
         <div class="col-response">
@@ -1615,18 +1628,19 @@
           </details>
         </div>
       </div>
-      <div class="image-row row-no-viol">
+      <div class="image-row row-label-diff">
         <div class="col-info">
-          <div class="kv"><b>#10</b> id=<code>1199130620-09164154-b5ee-4eb7-b105-5d463ea351ce</code> <span class="bucket">→ Not an Issue</span> <span class="row-badge diff-no-viol">not flagged</span></div>
+          <div class="kv"><b>#10</b> id=<code>1199130620-09164154-b5ee-4eb7-b105-5d463ea351ce</code> <span class="bucket">→ Not an Issue</span> <span class="row-badge diff-label">LABEL DIFFERS</span></div>
           <div class="kv">elementType: <code>android.widget.Button,Button</code></div>
           <div class="kv">visibleName: <code>&mdash;</code></div>
           <div class="kv">accessibilityLabel: <code>Servizi, Button</code></div>
           <div class="kv">language: <code>English</code></div>
           <div class="kv">coords: <code>x=63.704 y=82.051 w=27.407 h=11.795</code></div>
+          <div class="kv counterpart"><small>on Automate:</small> accessibilityLabel=<code>Servizi, Button, Out of list</code> · visibleName=<code>&mdash;</code></div>
         </div>
         <div class="col-img"><a href="https://app-accessibility-assets.browserstack.com/18a25e600c57d5ed9fa2818ef1fae7aa3ab5cf94/screenshot-68dc6912.jpeg" target="_blank">
           <div class="thumb-wrap"><img src="https://app-accessibility-assets.browserstack.com/18a25e600c57d5ed9fa2818ef1fae7aa3ab5cf94/screenshot-68dc6912.jpeg" loading="lazy"/>
-            <div class="hilite no-viol" style="left:63.704%; top:82.051%; width:27.407%; height:11.795%;" data-n="#10"></div>
+            <div class="hilite label-diff" style="left:63.704%; top:82.051%; width:27.407%; height:11.795%;" data-n="#10"></div>
           </div>
         </a></div>
         <div class="col-response">
@@ -3868,7 +3882,7 @@
           <div class="hilite no-viol" style="left:69.167%; top:45.726%; width:26.389%; height:3.077%;" data-n="#5"></div>
           <div class="hilite only-mine" style="left:4.444%; top:51.282%; width:44.444%; height:30.769%;" data-n="#6"></div>
           <div class="hilite only-mine" style="left:51.111%; top:51.282%; width:44.444%; height:30.769%;" data-n="#7"></div>
-          <div class="hilite only-mine" style="left:8.889%; top:82.051%; width:27.407%; height:11.795%;" data-n="#8"></div>
+          <div class="hilite in-both" style="left:8.889%; top:82.051%; width:27.407%; height:11.795%;" data-n="#8"></div>
           <div class="hilite no-viol" style="left:36.296%; top:82.051%; width:27.407%; height:11.795%;" data-n="#9"></div>
           <div class="hilite no-viol" style="left:63.704%; top:82.051%; width:27.407%; height:11.795%;" data-n="#10"></div>
         </div>
@@ -4117,9 +4131,9 @@
           </details>
         </div>
       </div>
-      <div class="image-row row-only-mine">
+      <div class="image-row row-in-both">
         <div class="col-info">
-          <div class="kv"><b>#8</b> id=<code>1341493160-c191f2b8-a0da-46a5-a04e-21350aa7d77c</code> <span class="bucket">→ Needs Review Issue</span> <span class="row-badge diff-only-mine">ONLY HERE</span></div>
+          <div class="kv"><b>#8</b> id=<code>1341493160-c191f2b8-a0da-46a5-a04e-21350aa7d77c</code> <span class="bucket">→ Needs Review Issue</span> <span class="row-badge diff-in-both">IN BOTH</span></div>
           <div class="kv">elementType: <code>android.widget.Button,Button</code></div>
           <div class="kv">visibleName: <code>&mdash;</code></div>
           <div class="kv">accessibilityLabel: <code>selected, Home, Button</code></div>
@@ -4128,7 +4142,7 @@
         </div>
         <div class="col-img"><a href="https://app-accessibility-assets.browserstack.com/mfijqnxmzu363t5appxlkasilf5skvssa114l3ty/290e92f8-1741-49c9-962a-03949520815b/screenshot-ecfd2752.jpeg" target="_blank">
           <div class="thumb-wrap"><img src="https://app-accessibility-assets.browserstack.com/mfijqnxmzu363t5appxlkasilf5skvssa114l3ty/290e92f8-1741-49c9-962a-03949520815b/screenshot-ecfd2752.jpeg" loading="lazy"/>
-            <div class="hilite only-mine" style="left:8.889%; top:82.051%; width:27.407%; height:11.795%;" data-n="#8"></div>
+            <div class="hilite in-both" style="left:8.889%; top:82.051%; width:27.407%; height:11.795%;" data-n="#8"></div>
           </div>
         </a></div>
         <div class="col-response">
@@ -4936,30 +4950,31 @@
       <h4>Images (10)</h4>
       <div class="overview-wrap"><span class="overview-label">All elements overlaid</span>
         <div class="thumb-wrap big"><a href="https://app-accessibility-assets.browserstack.com/mfijqnxmzu363t5appxlkasilf5skvssa114l3ty/290e92f8-1741-49c9-962a-03949520815b/screenshot-c3dab829.jpeg" target="_blank"><img src="https://app-accessibility-assets.browserstack.com/mfijqnxmzu363t5appxlkasilf5skvssa114l3ty/290e92f8-1741-49c9-962a-03949520815b/screenshot-c3dab829.jpeg" loading="lazy"/></a>
-          <div class="hilite only-mine" style="left:4.444%; top:6.966%; width:6.667%; height:3.077%;" data-n="#1"></div>
-          <div class="hilite only-mine" style="left:77.778%; top:6.966%; width:6.667%; height:3.077%;" data-n="#2"></div>
-          <div class="hilite no-viol" style="left:88.889%; top:6.966%; width:6.667%; height:3.077%;" data-n="#3"></div>
+          <div class="hilite label-diff" style="left:4.444%; top:6.966%; width:6.667%; height:3.077%;" data-n="#1"></div>
+          <div class="hilite label-diff" style="left:77.778%; top:6.966%; width:6.667%; height:3.077%;" data-n="#2"></div>
+          <div class="hilite label-diff" style="left:88.889%; top:6.966%; width:6.667%; height:3.077%;" data-n="#3"></div>
           <div class="hilite no-viol" style="left:8.889%; top:25.513%; width:32.593%; height:3.077%;" data-n="#4"></div>
           <div class="hilite no-viol" style="left:69.167%; top:37.265%; width:26.389%; height:3.077%;" data-n="#5"></div>
           <div class="hilite only-mine" style="left:4.444%; top:42.821%; width:44.444%; height:36.154%;" data-n="#6"></div>
           <div class="hilite only-mine" style="left:51.111%; top:42.821%; width:44.444%; height:36.154%;" data-n="#7"></div>
-          <div class="hilite only-mine" style="left:8.889%; top:82.051%; width:27.407%; height:11.795%;" data-n="#8"></div>
-          <div class="hilite only-mine" style="left:36.296%; top:82.051%; width:27.407%; height:11.795%;" data-n="#9"></div>
-          <div class="hilite no-viol" style="left:63.704%; top:82.051%; width:27.407%; height:11.795%;" data-n="#10"></div>
+          <div class="hilite label-diff" style="left:8.889%; top:82.051%; width:27.407%; height:11.795%;" data-n="#8"></div>
+          <div class="hilite label-diff" style="left:36.296%; top:82.051%; width:27.407%; height:11.795%;" data-n="#9"></div>
+          <div class="hilite label-diff" style="left:63.704%; top:82.051%; width:27.407%; height:11.795%;" data-n="#10"></div>
         </div>
       </div>
-      <div class="image-row row-only-mine">
+      <div class="image-row row-label-diff">
         <div class="col-info">
-          <div class="kv"><b>#1</b> id=<code>1341463586-76de4dcd-8d7e-4801-92e3-8c2c9b3e30c0</code> <span class="bucket">→ Needs Review Issue</span> <span class="row-badge diff-only-mine">ONLY HERE</span></div>
+          <div class="kv"><b>#1</b> id=<code>1341463586-76de4dcd-8d7e-4801-92e3-8c2c9b3e30c0</code> <span class="bucket">→ Needs Review Issue</span> <span class="row-badge diff-label">LABEL DIFFERS</span></div>
           <div class="kv">elementType: <code>android.widget.Button,Button</code></div>
           <div class="kv">visibleName: <code>&mdash;</code></div>
           <div class="kv">accessibilityLabel: <code>Profilo, Button, Out of list</code></div>
           <div class="kv">language: <code>English</code></div>
           <div class="kv">coords: <code>x=4.444 y=6.966 w=6.667 h=3.077</code></div>
+          <div class="kv counterpart"><small>on WFA:</small> accessibilityLabel=<code>Profilo, Button</code> · visibleName=<code>&mdash;</code></div>
         </div>
         <div class="col-img"><a href="https://app-accessibility-assets.browserstack.com/mfijqnxmzu363t5appxlkasilf5skvssa114l3ty/290e92f8-1741-49c9-962a-03949520815b/screenshot-c3dab829.jpeg" target="_blank">
           <div class="thumb-wrap"><img src="https://app-accessibility-assets.browserstack.com/mfijqnxmzu363t5appxlkasilf5skvssa114l3ty/290e92f8-1741-49c9-962a-03949520815b/screenshot-c3dab829.jpeg" loading="lazy"/>
-            <div class="hilite only-mine" style="left:4.444%; top:6.966%; width:6.667%; height:3.077%;" data-n="#1"></div>
+            <div class="hilite label-diff" style="left:4.444%; top:6.966%; width:6.667%; height:3.077%;" data-n="#1"></div>
           </div>
         </a></div>
         <div class="col-response">
@@ -4987,18 +5002,19 @@
           </details>
         </div>
       </div>
-      <div class="image-row row-only-mine">
+      <div class="image-row row-label-diff">
         <div class="col-info">
-          <div class="kv"><b>#2</b> id=<code>1341466500-b52f9256-4856-43cb-aae3-29f86cb76385</code> <span class="bucket">→ Needs Review Issue</span> <span class="row-badge diff-only-mine">ONLY HERE</span></div>
+          <div class="kv"><b>#2</b> id=<code>1341466500-b52f9256-4856-43cb-aae3-29f86cb76385</code> <span class="bucket">→ Needs Review Issue</span> <span class="row-badge diff-label">LABEL DIFFERS</span></div>
           <div class="kv">elementType: <code>android.widget.Button,Button</code></div>
           <div class="kv">visibleName: <code>&mdash;</code></div>
           <div class="kv">accessibilityLabel: <code>Avvisi, Button, Out of list</code></div>
           <div class="kv">language: <code>English</code></div>
           <div class="kv">coords: <code>x=77.778 y=6.966 w=6.667 h=3.077</code></div>
+          <div class="kv counterpart"><small>on WFA:</small> accessibilityLabel=<code>Avvisi, Button</code> · visibleName=<code>&mdash;</code></div>
         </div>
         <div class="col-img"><a href="https://app-accessibility-assets.browserstack.com/mfijqnxmzu363t5appxlkasilf5skvssa114l3ty/290e92f8-1741-49c9-962a-03949520815b/screenshot-c3dab829.jpeg" target="_blank">
           <div class="thumb-wrap"><img src="https://app-accessibility-assets.browserstack.com/mfijqnxmzu363t5appxlkasilf5skvssa114l3ty/290e92f8-1741-49c9-962a-03949520815b/screenshot-c3dab829.jpeg" loading="lazy"/>
-            <div class="hilite only-mine" style="left:77.778%; top:6.966%; width:6.667%; height:3.077%;" data-n="#2"></div>
+            <div class="hilite label-diff" style="left:77.778%; top:6.966%; width:6.667%; height:3.077%;" data-n="#2"></div>
           </div>
         </a></div>
         <div class="col-response">
@@ -5026,18 +5042,19 @@
           </details>
         </div>
       </div>
-      <div class="image-row row-no-viol">
+      <div class="image-row row-label-diff">
         <div class="col-info">
-          <div class="kv"><b>#3</b> id=<code>1341501902-3718d4e2-4828-4476-807a-e41c1ca808ea</code> <span class="bucket">→ Not an Issue</span> <span class="row-badge diff-no-viol">not flagged</span></div>
+          <div class="kv"><b>#3</b> id=<code>1341501902-3718d4e2-4828-4476-807a-e41c1ca808ea</code> <span class="bucket">→ Not an Issue</span> <span class="row-badge diff-label">LABEL DIFFERS</span></div>
           <div class="kv">elementType: <code>android.widget.Button,Button</code></div>
           <div class="kv">visibleName: <code>&mdash;</code></div>
           <div class="kv">accessibilityLabel: <code>Carta, Button, Out of list</code></div>
           <div class="kv">language: <code>English</code></div>
           <div class="kv">coords: <code>x=88.889 y=6.966 w=6.667 h=3.077</code></div>
+          <div class="kv counterpart"><small>on WFA:</small> accessibilityLabel=<code>Carta, Button</code> · visibleName=<code>&mdash;</code></div>
         </div>
         <div class="col-img"><a href="https://app-accessibility-assets.browserstack.com/mfijqnxmzu363t5appxlkasilf5skvssa114l3ty/290e92f8-1741-49c9-962a-03949520815b/screenshot-c3dab829.jpeg" target="_blank">
           <div class="thumb-wrap"><img src="https://app-accessibility-assets.browserstack.com/mfijqnxmzu363t5appxlkasilf5skvssa114l3ty/290e92f8-1741-49c9-962a-03949520815b/screenshot-c3dab829.jpeg" loading="lazy"/>
-            <div class="hilite no-viol" style="left:88.889%; top:6.966%; width:6.667%; height:3.077%;" data-n="#3"></div>
+            <div class="hilite label-diff" style="left:88.889%; top:6.966%; width:6.667%; height:3.077%;" data-n="#3"></div>
           </div>
         </a></div>
         <div class="col-response">
@@ -5204,18 +5221,19 @@
           </details>
         </div>
       </div>
-      <div class="image-row row-only-mine">
+      <div class="image-row row-label-diff">
         <div class="col-info">
-          <div class="kv"><b>#8</b> id=<code>1341493160-d676ceaf-14df-41f6-8915-bf68ec33ec4e</code> <span class="bucket">→ Needs Review Issue</span> <span class="row-badge diff-only-mine">ONLY HERE</span></div>
+          <div class="kv"><b>#8</b> id=<code>1341493160-d676ceaf-14df-41f6-8915-bf68ec33ec4e</code> <span class="bucket">→ Needs Review Issue</span> <span class="row-badge diff-label">LABEL DIFFERS</span></div>
           <div class="kv">elementType: <code>android.widget.Button,Button</code></div>
           <div class="kv">visibleName: <code>&mdash;</code></div>
           <div class="kv">accessibilityLabel: <code>selected, Home, Button, Out of list</code></div>
           <div class="kv">language: <code>English</code></div>
           <div class="kv">coords: <code>x=8.889 y=82.051 w=27.407 h=11.795</code></div>
+          <div class="kv counterpart"><small>on WFA:</small> accessibilityLabel=<code>selected, Home, Button</code> · visibleName=<code>&mdash;</code></div>
         </div>
         <div class="col-img"><a href="https://app-accessibility-assets.browserstack.com/mfijqnxmzu363t5appxlkasilf5skvssa114l3ty/290e92f8-1741-49c9-962a-03949520815b/screenshot-c3dab829.jpeg" target="_blank">
           <div class="thumb-wrap"><img src="https://app-accessibility-assets.browserstack.com/mfijqnxmzu363t5appxlkasilf5skvssa114l3ty/290e92f8-1741-49c9-962a-03949520815b/screenshot-c3dab829.jpeg" loading="lazy"/>
-            <div class="hilite only-mine" style="left:8.889%; top:82.051%; width:27.407%; height:11.795%;" data-n="#8"></div>
+            <div class="hilite label-diff" style="left:8.889%; top:82.051%; width:27.407%; height:11.795%;" data-n="#8"></div>
           </div>
         </a></div>
         <div class="col-response">
@@ -5243,18 +5261,19 @@
           </details>
         </div>
       </div>
-      <div class="image-row row-only-mine">
+      <div class="image-row row-label-diff">
         <div class="col-info">
-          <div class="kv"><b>#9</b> id=<code>1341496074-ceb16af0-673d-405e-8b05-2ac2188ce894</code> <span class="bucket">→ Needs Review Issue</span> <span class="row-badge diff-only-mine">ONLY HERE</span></div>
+          <div class="kv"><b>#9</b> id=<code>1341496074-ceb16af0-673d-405e-8b05-2ac2188ce894</code> <span class="bucket">→ Needs Review Issue</span> <span class="row-badge diff-label">LABEL DIFFERS</span></div>
           <div class="kv">elementType: <code>android.widget.Button,Button</code></div>
           <div class="kv">visibleName: <code>&mdash;</code></div>
           <div class="kv">accessibilityLabel: <code>In negozio, Button, Out of list</code></div>
           <div class="kv">language: <code>English</code></div>
           <div class="kv">coords: <code>x=36.296 y=82.051 w=27.407 h=11.795</code></div>
+          <div class="kv counterpart"><small>on WFA:</small> accessibilityLabel=<code>In negozio, Button</code> · visibleName=<code>&mdash;</code></div>
         </div>
         <div class="col-img"><a href="https://app-accessibility-assets.browserstack.com/mfijqnxmzu363t5appxlkasilf5skvssa114l3ty/290e92f8-1741-49c9-962a-03949520815b/screenshot-c3dab829.jpeg" target="_blank">
           <div class="thumb-wrap"><img src="https://app-accessibility-assets.browserstack.com/mfijqnxmzu363t5appxlkasilf5skvssa114l3ty/290e92f8-1741-49c9-962a-03949520815b/screenshot-c3dab829.jpeg" loading="lazy"/>
-            <div class="hilite only-mine" style="left:36.296%; top:82.051%; width:27.407%; height:11.795%;" data-n="#9"></div>
+            <div class="hilite label-diff" style="left:36.296%; top:82.051%; width:27.407%; height:11.795%;" data-n="#9"></div>
           </div>
         </a></div>
         <div class="col-response">
@@ -5282,18 +5301,19 @@
           </details>
         </div>
       </div>
-      <div class="image-row row-no-viol">
+      <div class="image-row row-label-diff">
         <div class="col-info">
-          <div class="kv"><b>#10</b> id=<code>1341498988-58010949-8614-4359-a5ba-3f6b0b1042a0</code> <span class="bucket">→ Not an Issue</span> <span class="row-badge diff-no-viol">not flagged</span></div>
+          <div class="kv"><b>#10</b> id=<code>1341498988-58010949-8614-4359-a5ba-3f6b0b1042a0</code> <span class="bucket">→ Not an Issue</span> <span class="row-badge diff-label">LABEL DIFFERS</span></div>
           <div class="kv">elementType: <code>android.widget.Button,Button</code></div>
           <div class="kv">visibleName: <code>&mdash;</code></div>
           <div class="kv">accessibilityLabel: <code>Servizi, Button, Out of list</code></div>
           <div class="kv">language: <code>English</code></div>
           <div class="kv">coords: <code>x=63.704 y=82.051 w=27.407 h=11.795</code></div>
+          <div class="kv counterpart"><small>on WFA:</small> accessibilityLabel=<code>Servizi, Button</code> · visibleName=<code>&mdash;</code></div>
         </div>
         <div class="col-img"><a href="https://app-accessibility-assets.browserstack.com/mfijqnxmzu363t5appxlkasilf5skvssa114l3ty/290e92f8-1741-49c9-962a-03949520815b/screenshot-c3dab829.jpeg" target="_blank">
           <div class="thumb-wrap"><img src="https://app-accessibility-assets.browserstack.com/mfijqnxmzu363t5appxlkasilf5skvssa114l3ty/290e92f8-1741-49c9-962a-03949520815b/screenshot-c3dab829.jpeg" loading="lazy"/>
-            <div class="hilite no-viol" style="left:63.704%; top:82.051%; width:27.407%; height:11.795%;" data-n="#10"></div>
+            <div class="hilite label-diff" style="left:63.704%; top:82.051%; width:27.407%; height:11.795%;" data-n="#10"></div>
           </div>
         </a></div>
         <div class="col-response">
