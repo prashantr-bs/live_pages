@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>iOS run — Angular Rule Lab</title>
+<style>
+  body { margin:0 auto; max-width:1250px; padding:26px 26px 70px; font:15px/1.55 -apple-system,"Segoe UI",Roboto,sans-serif; color:#1a1d21; background:#fff; }
+  h1 { font-size:22px; margin:0 0 4px; } h2 { font-size:17px; margin:34px 0 6px; padding-top:6px; border-top:1px solid #eef0f2; }
+  h3 { font-size:15.5px; margin:0; }
+  .sub { color:#5c6570; margin:0 0 14px; font-size:13.5px; } .sub2 { color:#5c6570; margin:2px 0 8px; }
+  a { color:#0b57d0; }
+  code { background:#f0f2f4; padding:1px 5px; border-radius:4px; font-size:12.5px; }
+  .mono { font-family:ui-monospace,Menlo,monospace; font-size:12.5px; }
+  .rulebox { border:1px solid #e3e6ea; border-left:4px solid #0b57d0; background:#f7f9fb; border-radius:8px; padding:12px 16px; font-size:14px; margin:12px 0; }
+  .rulebox.warn { border-left-color:#c2410c; background:#fff8f4; }
+  .kpis { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin:12px 0; }
+  .kpi { border:1px solid #e3e6ea; border-radius:10px; padding:10px 12px; background:#fafbfc; }
+  .kpi b { display:block; font-size:24px; } .kpi span { font-size:12.5px; color:#5c6570; }
+  table { border-collapse:collapse; width:100%; font-size:13px; }
+  th,td { border:1px solid #e3e6ea; padding:5px 8px; text-align:left; vertical-align:top; } th { background:#f2f4f6; }
+  td.bad { background:#ffd7d4; } td.ok { background:#d7f0dd; } td.na { background:#f4f5f7; color:#5c6570; }
+  .chip { font-size:11px; font-weight:700; border-radius:5px; padding:1px 6px; }
+  .c-fail { background:#fde2e1; color:#8a1c14; } .c-pass { background:#dcf2e3; color:#0b5a2a; } .c-edge { background:#fdf0c8; color:#6b4700; }
+  .rule { border:1px solid #e3e6ea; border-radius:12px; padding:14px 16px; margin:16px 0; }
+  .rule-head { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
+  .verdict { font-size:12px; font-weight:700; border-radius:8px; padding:3px 10px; }
+  .v-bad { background:#ffd7d4; color:#8f1b13; } .v-ok { background:#d7f0dd; color:#0a5d2a; } .v-mid { background:#fff1c9; color:#7a5200; } .v-na { background:#eef0f2; color:#4b5563; }
+  .grid2 { display:grid; grid-template-columns:1fr 1.25fr; gap:16px; align-items:start; }
+  .why { background:#fff8f4; border-left:3px solid #c2410c; padding:6px 10px; border-radius:6px; }
+  .tblwrap { overflow-x:auto; }
+  .shots { display:flex; gap:12px; overflow-x:auto; margin-top:10px; padding-bottom:4px; }
+  figure { margin:0; flex:0 0 220px; } figure img { width:220px; border:1px solid #d9dde3; border-radius:8px; }
+  figcaption { font-size:11.5px; color:#5c6570; }
+  nav.toc { columns:3; column-gap:24px; font-size:13px; } nav.toc a { display:block; text-decoration:none; padding:1px 0; }
+  .dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:6px; }
+  .dot.v-bad { background:#dc2626; } .dot.v-ok { background:#16a34a; } .dot.v-mid { background:#d97706; } .dot.v-na { background:#9ca3af; }
+  details summary { cursor:pointer; color:#0b57d0; font-size:13px; }
+  @media (max-width:860px) { .grid2 { grid-template-columns:1fr; } .kpis { grid-template-columns:repeat(2,1fr); } nav.toc { columns:1; } body { padding:18px 16px 60px; } }
+</style>
+</head>
+<body>
+<p class="sub"><a href="../">← iOS WebView &amp; Angular support analysis</a></p>
+<h1>iOS run: AppA11y Rule Lab (Angular + Ionic in WKWebView)</h1>
+<p class="sub">On-device scan of every rule page · iPad Air 11" (M2), iPadOS 26.5 · <code>BrowserStackInjector</code> v119 (codesigner master @ bb6b75d4, 30 Sep 2026) ·
+on-device rule engine 2.4.0 · app: Angular 22.2 + Ionic 9.0.5 + Capacitor 8.5.2 (<code>~/Work/AngularFrameworkPOC</code> on the Mac mini) · Android talkback run: <i>to follow</i></p>
+
+<div class="kpis">
+  <div class="kpi"><b>47</b><span>scans (every scroll position of 41 rule pages)</span></div>
+  <div class="kpi"><b>208</b><span>test cases, all fully on screen in ≥1 scan (127 expect FAIL)</span></div>
+  <div class="kpi"><b>1,263</b><span>nodes captured, all WebKit layer / UIKit plumbing</span></div>
+  <div class="kpi"><b>0</b><span>nodes carrying web-derived label / text / value</span></div>
+  <div class="kpi"><b>0</b><span>FAIL results emitted (vs 127 expected)</span></div>
+</div>
+
+<div class="rulebox warn"><b>Root cause, common to every rule:</b> Web content never becomes nodes: the walk (<code>processViewIteratively</code> over <code>UIView.subviews</code> + <code>accessibilityChildrenOf</code>) only sees WebKit's layer views; WKWebView text/colour/font is nil (<code>extractTextColorFontAndMetrics</code>, :3400); no JS / DOM access anywhere. Result: of 41 rules, <b>34 emit nothing at all</b>;
+<b>overlapping-interactive-elements</b> and <b>responsive-containers</b> emit only vacuous / misleading PASS rows on <code>UIWindow</code> / <code>WK*</code> containers;
+<b>app-orientation-support</b> is the one rule that genuinely works (app-level plist check); 4 rules are Android-only and do not exist in the iOS engine.</div>
+
+<h2>Method</h2>
+<ol>
+  <li>Built the unsigned device IPA and injected <code>codesigner/bin/BrowserStackInjector</code> (v119) as <code>@executable_path/Frameworks/BrowserStackInjector</code>.
+  <code>reveal-inject/reveal-install.sh --skip-reveal</code> wrapped it as <code>BSI.framework</code>, signed it with plumesign (free Apple ID, <code>com.commonbundle.someapp</code>) and installed it.</li>
+  <li>Enabled Web Inspector on the iPad; the app sets <code>webContentsDebuggingEnabled</code>. <code>pymobiledevice3 webinspector cdp</code> exposed the WKWebView as a CDP target.</li>
+  <li><code>scripts/ios-scan-all.mjs</code> (POC repo): for each rule, navigate the WebView to <code>/rule/&lt;id&gt;</code>, step <code>ion-content</code> by 85% of the viewport,
+  record which test cases are fully visible, then run <code>reveal-inject/a11y-scan.sh</code> (<code>GET :1234/accessibility_info?on_device=true&amp;framework=native</code>) → <code>snapshot.json</code> + <code>screenshot.png</code>.</li>
+  <li><code>scripts/score-ios-scans.py</code> joins the rule results with <code>docs/TEST_CASES.md</code> (expected verdicts) and walks every snapshot tree for web-derived content.</li>
+</ol>
+<p class="sub">Gotcha observed: the dylib dedupes on tree-MD5 <i>or</i> screenshot-MD5 across the whole app process (<code>AppAccessibility.swift:1188</code>), so re-scanning an already-seen page returns <code>status: duplicate</code> until the app is relaunched.
+Two such re-scans were redone after a relaunch.</p>
+
+<h2>Rules <span class="sub">(● silent · ● vacuous/misleading PASS · ● works · ● not an iOS rule)</span></h2>
+<nav class="toc"><a href="#label-at-front"><span class="dot v-bad"></span>Accessibility Label at front</a><a href="#accessible-input-field-label"><span class="dot v-bad"></span>Accessible Input Field Labels</a><a href="#interactive-element-accessibility"><span class="dot v-bad"></span>Accessible Interactive Elements</a><a href="#app-orientation-support"><span class="dot v-ok"></span>App Orientation Lock</a><a href="#button-element-content-label-capitalization"><span class="dot v-bad"></span>Button Element Accessibility Label Capitalization</a><a href="#checkbox-element-content-label"><span class="dot v-na"></span>Checkbox Element Content Label</a><a href="#duplicate-element-content-label"><span class="dot v-bad"></span>Duplicate Accessibility Label on Screen</a><a href="#state-in-content-label"><span class="dot v-bad"></span>Duplicate State Info in Spoken Output</a><a href="#view-type-in-content-label"><span class="dot v-bad"></span>Duplicate Type Info in Spoken Output</a><a href="#editable-element-content-label"><span class="dot v-bad"></span>Editable Element Accessibility Label</a><a href="#editable-element-no-content-description"><span class="dot v-na"></span>Editable Element Label Not Announced</a><a href="#text-magnification"><span class="dot v-bad"></span>Font Magnification Support</a><a href="#images-of-text"><span class="dot v-bad"></span>Images with Text</a><a href="#incorrect-heading"><span class="dot v-bad"></span>Incorrect Heading</a><a href="#input-type-for-input-field"><span class="dot v-bad"></span>Input type for Input Fields</a><a href="#interactable-element-content-label"><span class="dot v-bad"></span>Interactive Element Accessibility Label</a><a href="#interactive-element-unsupported-type"><span class="dot v-bad"></span>Interactive Elements with Unsupported Type</a><a href="#keyboard-focus-for-interactive-elements"><span class="dot v-bad"></span>Keyboard Focus for Interactive Elements</a><a href="#label-in-name"><span class="dot v-bad"></span>Label in Name</a><a href="#link-text-purpose"><span class="dot v-bad"></span>Link Text Purpose</a><a href="#imageview-element-content-label"><span class="dot v-bad"></span>Meaningful accessibility label for images</a><a href="#meaningful-reading-order"><span class="dot v-bad"></span>Meaningful Reading Order</a><a href="#meaningful-visual-order"><span class="dot v-bad"></span>Meaningful Visual Order</a><a href="#missing-heading"><span class="dot v-bad"></span>Missing Heading</a><a href="#missing-view-type-in-spoken-output"><span class="dot v-bad"></span>Missing View Type in Spoken Output</a><a href="#non-text-color-contrast"><span class="dot v-bad"></span>Non-Text Element Color Contrast</a><a href="#overlapping-interactive-elements"><span class="dot v-mid"></span>Overlapping Interactive Elements</a><a href="#readable-text-size"><span class="dot v-na"></span>Readable Text Size</a><a href="#readable-text-spacing"><span class="dot v-na"></span>Readable Text Spacing</a><a href="#responsive-containers"><span class="dot v-mid"></span>Responsive Containers</a><a href="#focus-order-for-interactive-elements"><span class="dot v-bad"></span>Screen Reader Focus for Interactive Elements</a><a href="#special-character-element-content-label"><span class="dot v-bad"></span>Special-Character Element Accessibility Label</a><a href="#screen-reader-for-interactive-elements"><span class="dot v-bad"></span>Spoken Description not Meaningful</a><a href="#screen-orientation"><span class="dot v-bad"></span>Supported Screen Orientations</a><a href="#switch-element-content-label"><span class="dot v-bad"></span>Switch Element Accessibility Label</a><a href="#text-color-contrast"><span class="dot v-bad"></span>Text Element Color Contrast (Minimum)</a><a href="#text-truncation"><span class="dot v-bad"></span>Text Truncation</a><a href="#touch-target-size"><span class="dot v-bad"></span>Touch Target Size</a><a href="#touch-target-size-and-spacing"><span class="dot v-bad"></span>Touch Target Size &amp; Spacing</a><a href="#traversal-order-cycle"><span class="dot v-bad"></span>Traversal Order Cycle</a><a href="#two-dimensional-scroll"><span class="dot v-bad"></span>Two-Dimensional Scrolling</a></nav>
+
+<section class="rule" id="label-at-front">
+  <div class="rule-head"><h3>Accessibility Label at front</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">label-at-front · 4 test cases (2 expected FAIL) · 1 scan(s)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule:</b> <b>none</b></p>
+      <p><b>What the rule needs:</b> Needs label + visible text on interactive nodes.</p>
+      <p class="why"><b>Why it could not evaluate the web content:</b> No labels captured (the Ruby engine also excluded ROLE_WEB_VIEW).</p>
+      <details><summary>All rows emitted on this page (every rule)</summary><p><span class="mono">app-orientation-support</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">overlapping-interactive-elements</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKContentView</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKScrollView</code> ×1</p></details>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>iOS result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Visible “Buy now”; name “Tap to Buy now”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Visible “Settings”; name “Open the Settings”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Visible “Buy now”; name “Buy now, 2 items”.</td><td class="na">—</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-pass">PASS</span></td><td></td><td>No override; the name is the visible text.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/label-at-front-p1.jpg" target="_blank"><img loading="lazy" src="img/label-at-front-p1.jpg" alt="iPad scan screenshot, Accessibility Label at front p1"></a><figcaption>p1 · 20 nodes (10 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4</figcaption></figure></div>
+</section>
+<section class="rule" id="accessible-input-field-label">
+  <div class="rule-head"><h3>Accessible Input Field Labels</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">accessible-input-field-label · 6 test cases (3 expected FAIL) · 2 scan(s)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule:</b> <b>none</b></p>
+      <p><b>What the rule needs:</b> Needs a text-field node with placeholder / label.</p>
+      <p class="why"><b>Why it could not evaluate the web content:</b> Placeholder is read only from <code>UITextField</code> (:2931); web <code>&lt;input&gt;</code> / <code>ion-input</code> are not nodes.</p>
+      <details><summary>All rows emitted on this page (every rule)</summary><p><span class="mono">app-orientation-support</span> → pass on <code>UIWindow</code> ×2<br/><span class="mono">overlapping-interactive-elements</span> → pass on <code>UIWindow</code> ×2<br/><span class="mono">responsive-containers</span> → pass on <code>WKChildScrollView</code> ×2<br/><span class="mono">responsive-containers</span> → pass on <code>WKContentView</code> ×2<br/><span class="mono">responsive-containers</span> → pass on <code>WKScrollView</code> ×2</p></details>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>iOS result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Placeholder “Email” is the only label.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td>Ionic</td><td>ion-input with placeholder only.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Named via aria-label only; nothing is visible.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>Visible label placed far from its field.</td><td class="na">—</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Visible &lt;label for&gt; “Email”.</td><td class="na">—</td></tr><tr><td class="mono">TC6</td><td><span class="chip c-pass">PASS</span></td><td>Ionic</td><td>ion-input with a stacked label “Full name”.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/accessible-input-field-label-p1.jpg" target="_blank"><img loading="lazy" src="img/accessible-input-field-label-p1.jpg" alt="iPad scan screenshot, Accessible Input Field Labels p1"></a><figcaption>p1 · 37 nodes (27 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4, TC5</figcaption></figure><figure><a href="img/accessible-input-field-label-p2.jpg" target="_blank"><img loading="lazy" src="img/accessible-input-field-label-p2.jpg" alt="iPad scan screenshot, Accessible Input Field Labels p2"></a><figcaption>p2 · 36 nodes (26 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4, TC5, TC6</figcaption></figure></div>
+</section>
+<section class="rule" id="interactive-element-accessibility">
+  <div class="rule-head"><h3>Accessible Interactive Elements</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">interactive-element-accessibility · 4 test cases (3 expected FAIL) · 1 scan(s)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule:</b> <b>none</b></p>
+      <p><b>What the rule needs:</b> Catalog-disabled; fixed UIKit class set.</p>
+      <p class="why"><b>Why it could not evaluate the web content:</b> Disabled in the catalog and web controls are not nodes.</p>
+      <details><summary>All rows emitted on this page (every rule)</summary><p><span class="mono">app-orientation-support</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">overlapping-interactive-elements</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKContentView</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKScrollView</code> ×1</p></details>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>iOS result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Clickable span marked aria-hidden.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Canvas-drawn button (the only content is pixels).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Link inside an inert region.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Native button exposed to assistive tech.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/interactive-element-accessibility-p1.jpg" target="_blank"><img loading="lazy" src="img/interactive-element-accessibility-p1.jpg" alt="iPad scan screenshot, Accessible Interactive Elements p1"></a><figcaption>p1 · 20 nodes (10 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4</figcaption></figure></div>
+</section>
+<section class="rule" id="app-orientation-support">
+  <div class="rule-head"><h3>App Orientation Lock</h3><span class="verdict v-ok">Works (app-level)</span></div>
+  <p class="mono sub2">app-orientation-support · 2 test cases (0 expected FAIL) · 1 scan(s)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule:</b> 1× pass on <code>UIWindow</code></p>
+      <p><b>What the rule needs:</b> App-level: reads Info.plist orientations.</p>
+      <p class="why"><b>Why it could not evaluate the web content:</b> Web-agnostic, so it <b>works</b>: all 4 orientations declared → PASS on <code>UIWindow</code>. A runtime lock via the ScreenOrientation plugin (TC2) is invisible to a plist check.</p>
+      <details><summary>All rows emitted on this page (every rule)</summary><p><span class="mono">app-orientation-support</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">overlapping-interactive-elements</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKContentView</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKScrollView</code> ×1</p></details>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>iOS result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Build declares all orientations (Info.plist / manifest): the default state of this app.</td><td class="ok">PASS (plist)</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>Runtime lock to portrait (not visible in Info.plist); tap, then rotate.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/app-orientation-support-p1.jpg" target="_blank"><img loading="lazy" src="img/app-orientation-support-p1.jpg" alt="iPad scan screenshot, App Orientation Lock p1"></a><figcaption>p1 · 20 nodes (10 WK*) · web-labelled 0 · TCs on screen: TC1, TC2</figcaption></figure></div>
+</section>
+<section class="rule" id="button-element-content-label-capitalization">
+  <div class="rule-head"><h3>Button Element Accessibility Label Capitalization</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">button-element-content-label-capitalization · 6 test cases (3 expected FAIL) · 1 scan(s)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule:</b> <b>none</b></p>
+      <p><b>What the rule needs:</b> Needs button nodes (button trait / class) with a speakable label or OCR text.</p>
+      <p class="why"><b>Why it could not evaluate the web content:</b> No button nodes exist in the web area; OCR text is only attached to UILabel/UIButton-class nodes (:2737), never to WK layers.</p>
+      <details><summary>All rows emitted on this page (every rule)</summary><p><span class="mono">app-orientation-support</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">overlapping-interactive-elements</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKContentView</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKScrollView</code> ×1</p></details>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>iOS result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Button text starts lowercase: “submit order”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Visible “Continue” but aria-label is lowercase “continue”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td>Ionic</td><td>ion-button text “cancel”: shown uppercase (md mode CSS) but the name stays lowercase.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>Name “Save” but CSS text-transform: lowercase renders “save” (name vs OCR).</td><td class="na">—</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>Brand that is lowercase by design: “iPhone settings”.</td><td class="na">—</td></tr><tr><td class="mono">TC6</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Capitalised label “Submit order”.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/button-element-content-label-capitalization-p1.jpg" target="_blank"><img loading="lazy" src="img/button-element-content-label-capitalization-p1.jpg" alt="iPad scan screenshot, Button Element Accessibility Label Capitalization p1"></a><figcaption>p1 · 20 nodes (10 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4, TC5, TC6</figcaption></figure></div>
+</section>
+<section class="rule" id="checkbox-element-content-label">
+  <div class="rule-head"><h3>Checkbox Element Content Label</h3><span class="verdict v-na">Not an iOS rule</span></div>
+  <p class="mono sub2">checkbox-element-content-label · 6 test cases (4 expected FAIL) · 1 scan(s)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule:</b> <b>none</b></p>
+      <p><b>What the rule needs:</b> Android-only rule.</p>
+      <p class="why"><b>Why it could not evaluate the web content:</b> Not registered in the iOS engine (<code>rule_specs.json</code> iOS has 37 rules; checkbox is Android-only), so it never runs on iOS regardless of content.</p>
+      <details><summary>All rows emitted on this page (every rule)</summary><p><span class="mono">app-orientation-support</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">overlapping-interactive-elements</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKContentView</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKScrollView</code> ×1</p></details>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>iOS result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Native checkbox with no label at all.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Text sits next to the checkbox but is not associated with it.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td>Ionic</td><td>ion-checkbox without label text or aria-label.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Custom div role=checkbox with state but no name.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Checkbox wrapped in a label: “Accept terms”.</td><td class="na">—</td></tr><tr><td class="mono">TC6</td><td><span class="chip c-pass">PASS</span></td><td>Ionic</td><td>ion-checkbox with slotted label “Subscribe”.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/checkbox-element-content-label-p1.jpg" target="_blank"><img loading="lazy" src="img/checkbox-element-content-label-p1.jpg" alt="iPad scan screenshot, Checkbox Element Content Label p1"></a><figcaption>p1 · 20 nodes (10 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4, TC5, TC6</figcaption></figure></div>
+</section>
+<section class="rule" id="duplicate-element-content-label">
+  <div class="rule-head"><h3>Duplicate Accessibility Label on Screen</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">duplicate-element-content-label · 4 test cases (2 expected FAIL) · 1 scan(s)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule:</b> <b>none</b></p>
+      <p><b>What the rule needs:</b> Needs ≥2 accessible, hittable nodes with speakable labels.</p>
+      <p class="why"><b>Why it could not evaluate the web content:</b> Zero labelled nodes captured, so there is nothing to compare.</p>
+      <details><summary>All rows emitted on this page (every rule)</summary><p><span class="mono">app-orientation-support</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">overlapping-interactive-elements</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKContentView</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKScrollView</code> ×1</p></details>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>iOS result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Three rows, three different targets, all named “Edit”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td>Ionic</td><td>Two icon ion-buttons both aria-label “Delete” for different items.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>Same name, same destination (“Home” twice) is acceptable.</td><td class="na">—</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Unique names: “Edit address”, “Edit phone”, “Edit email”.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/duplicate-element-content-label-p1.jpg" target="_blank"><img loading="lazy" src="img/duplicate-element-content-label-p1.jpg" alt="iPad scan screenshot, Duplicate Accessibility Label on Screen p1"></a><figcaption>p1 · 20 nodes (10 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4</figcaption></figure></div>
+</section>
+<section class="rule" id="state-in-content-label">
+  <div class="rule-head"><h3>Duplicate State Info in Spoken Output</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">state-in-content-label · 5 test cases (4 expected FAIL) · 1 scan(s)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule:</b> <b>none</b></p>
+      <p><b>What the rule needs:</b> Needs speakable labels + class / adjustable trait.</p>
+      <p class="why"><b>Why it could not evaluate the web content:</b> No labels captured.</p>
+      <details><summary>All rows emitted on this page (every rule)</summary><p><span class="mono">app-orientation-support</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">overlapping-interactive-elements</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKContentView</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKScrollView</code> ×1</p></details>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>iOS result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Checkbox aria-label “Notifications checked”, and it is checked.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Toggle button aria-pressed=true named “Wi-Fi on”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Selected tab named “Home selected”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-fail">FAIL</span></td><td>Ionic</td><td>ion-toggle labelled “Dark mode enabled”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Checkbox named “Notifications”; the checked state comes from the control.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/state-in-content-label-p1.jpg" target="_blank"><img loading="lazy" src="img/state-in-content-label-p1.jpg" alt="iPad scan screenshot, Duplicate State Info in Spoken Output p1"></a><figcaption>p1 · 39 nodes (29 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4, TC5</figcaption></figure></div>
+</section>
+<section class="rule" id="view-type-in-content-label">
+  <div class="rule-head"><h3>Duplicate Type Info in Spoken Output</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">view-type-in-content-label · 6 test cases (5 expected FAIL) · 1 scan(s)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule:</b> <b>none</b></p>
+      <p><b>What the rule needs:</b> traits.first vs label words.</p>
+      <p class="why"><b>Why it could not evaluate the web content:</b> No labels captured.</p>
+      <details><summary>All rows emitted on this page (every rule)</summary><p><span class="mono">app-orientation-support</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">overlapping-interactive-elements</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKContentView</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKScrollView</code> ×1</p></details>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>iOS result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Button labelled “Save button”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Link labelled “Privacy policy link”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Checkbox labelled “Remember me checkbox”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-fail">FAIL</span></td><td>Ionic</td><td>ion-toggle labelled “Dark mode switch”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Image aria-label “Profile image”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC6</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Plain names: “Save”, “Privacy policy”.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/view-type-in-content-label-p1.jpg" target="_blank"><img loading="lazy" src="img/view-type-in-content-label-p1.jpg" alt="iPad scan screenshot, Duplicate Type Info in Spoken Output p1"></a><figcaption>p1 · 40 nodes (30 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4, TC5, TC6</figcaption></figure></div>
+</section>
+<section class="rule" id="editable-element-content-label">
+  <div class="rule-head"><h3>Editable Element Accessibility Label</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">editable-element-content-label · 6 test cases (4 expected FAIL) · 1 scan(s)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule:</b> <b>none</b></p>
+      <p><b>What the rule needs:</b> Needs editable-class nodes (UITextField/UITextView/SearchField trait).</p>
+      <p class="why"><b>Why it could not evaluate the web content:</b> Web inputs / textarea / contenteditable are not nodes.</p>
+      <details><summary>All rows emitted on this page (every rule)</summary><p><span class="mono">app-orientation-support</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">overlapping-interactive-elements</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKContentView</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKScrollView</code> ×1</p></details>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>iOS result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Text field with a value but no name.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Unnamed textarea.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>contenteditable div with no name.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-fail">FAIL</span></td><td>Ionic</td><td>ion-textarea with no label.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Labelled field with a value: name “First name”, value “John”.</td><td class="na">—</td></tr><tr><td class="mono">TC6</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Textarea named by aria-labelledby.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/editable-element-content-label-p1.jpg" target="_blank"><img loading="lazy" src="img/editable-element-content-label-p1.jpg" alt="iPad scan screenshot, Editable Element Accessibility Label p1"></a><figcaption>p1 · 20 nodes (10 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4, TC5, TC6</figcaption></figure></div>
+</section>
+<section class="rule" id="editable-element-no-content-description">
+  <div class="rule-head"><h3>Editable Element Label Not Announced</h3><span class="verdict v-na">Not an iOS rule</span></div>
+  <p class="mono sub2">editable-element-no-content-description · 4 test cases (2 expected FAIL) · 1 scan(s)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule:</b> <b>none</b></p>
+      <p><b>What the rule needs:</b> Android-only rule.</p>
+      <p class="why"><b>Why it could not evaluate the web content:</b> Not registered in the iOS engine.</p>
+      <details><summary>All rows emitted on this page (every rule)</summary><p><span class="mono">app-orientation-support</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">overlapping-interactive-elements</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKContentView</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKScrollView</code> ×1</p></details>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>iOS result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Field named only by aria-label (becomes contentDescription on Android).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>aria-label overrides a visible hint: “Search”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>title attribute used as the only name.</td><td class="na">—</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Visible label linked with for/id (labelFor on Android).</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/editable-element-no-content-description-p1.jpg" target="_blank"><img loading="lazy" src="img/editable-element-no-content-description-p1.jpg" alt="iPad scan screenshot, Editable Element Label Not Announced p1"></a><figcaption>p1 · 20 nodes (10 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4</figcaption></figure></div>
+</section>
+<section class="rule" id="text-magnification">
+  <div class="rule-head"><h3>Font Magnification Support</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">text-magnification · 5 test cases (3 expected FAIL) · 1 scan(s)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule:</b> <b>none</b></p>
+      <p><b>What the rule needs:</b> Text nodes + UIFont probe (<code>supportsDynamicText</code>, unsupported categories).</p>
+      <p class="why"><b>Why it could not evaluate the web content:</b> No text nodes (guard BSAdditionalRules:97); CSS font sizing is invisible.</p>
+      <details><summary>All rows emitted on this page (every rule)</summary><p><span class="mono">app-orientation-support</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">overlapping-interactive-elements</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKContentView</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKScrollView</code> ×1</p></details>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>iOS result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Fixed 15px text with -webkit-text-size-adjust:none (never scales).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Text sized in vw units (tracks screen width, not text size).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Text in a fixed-height box that clips when enlarged.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-pass">PASS</span></td><td></td><td>iOS Dynamic Type via font: -apple-system-body; rem sizing elsewhere.</td><td class="na">—</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>Ionic default text (Ionic&#x27;s own dynamic-font support).</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/text-magnification-p1.jpg" target="_blank"><img loading="lazy" src="img/text-magnification-p1.jpg" alt="iPad scan screenshot, Font Magnification Support p1"></a><figcaption>p1 · 20 nodes (10 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4, TC5</figcaption></figure></div>
+</section>
+<section class="rule" id="images-of-text">
+  <div class="rule-head"><h3>Images with Text</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">images-of-text · 6 test cases (3 expected FAIL) · 2 scan(s)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule:</b> <b>none</b></p>
+      <p><b>What the rule needs:</b> AI candidate: image-trait / *ImageView nodes with bbox → TCG.</p>
+      <p class="why"><b>Why it could not evaluate the web content:</b> AI candidates are built from native nodes only (BSAITask:57); web <code>&lt;img&gt;</code> / background-image pixels are in the screenshot but never become candidates.</p>
+      <details><summary>All rows emitted on this page (every rule)</summary><p><span class="mono">app-orientation-support</span> → pass on <code>UIWindow</code> ×2<br/><span class="mono">overlapping-interactive-elements</span> → pass on <code>UIWindow</code> ×2<br/><span class="mono">responsive-containers</span> → pass on <code>WKChildScrollView</code> ×2<br/><span class="mono">responsive-containers</span> → pass on <code>WKContentView</code> ×2<br/><span class="mono">responsive-containers</span> → pass on <code>WKScrollView</code> ×2</p></details>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>iOS result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Promo banner image containing “50% OFF SUMMER SALE”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>CSS background-image that contains text (“FREE DELIVERY”).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Instructions rendered as an image.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>Logotype: brand text in a logo (exempt under WCAG 1.4.5).</td><td class="na">—</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-pass">PASS</span></td><td></td><td>The same banner built from real text + CSS.</td><td class="na">—</td></tr><tr><td class="mono">TC6</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Photo without text.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/images-of-text-p1.jpg" target="_blank"><img loading="lazy" src="img/images-of-text-p1.jpg" alt="iPad scan screenshot, Images with Text p1"></a><figcaption>p1 · 37 nodes (27 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4, TC5</figcaption></figure><figure><a href="img/images-of-text-p2.jpg" target="_blank"><img loading="lazy" src="img/images-of-text-p2.jpg" alt="iPad scan screenshot, Images with Text p2"></a><figcaption>p2 · 36 nodes (26 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4, TC5, TC6</figcaption></figure></div>
+</section>
+<section class="rule" id="incorrect-heading">
+  <div class="rule-head"><h3>Incorrect Heading</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">incorrect-heading · 5 test cases (4 expected FAIL) · 1 scan(s)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule:</b> <b>none</b></p>
+      <p><b>What the rule needs:</b> AI: staticText leaves with header trait.</p>
+      <p class="why"><b>Why it could not evaluate the web content:</b> No staticText or header-trait nodes in the web area.</p>
+      <details><summary>All rows emitted on this page (every rule)</summary><p><span class="mono">app-orientation-support</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">overlapping-interactive-elements</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKContentView</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKScrollView</code> ×1</p></details>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>iOS result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Call to action marked as a heading: &lt;h2&gt;Tap to continue&lt;/h2&gt;.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Whole sentence marked as a heading.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Vague heading text that describes nothing: “Section”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Price value marked as role=heading.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Heading “Saved payment methods” titles the content below it.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/incorrect-heading-p1.jpg" target="_blank"><img loading="lazy" src="img/incorrect-heading-p1.jpg" alt="iPad scan screenshot, Incorrect Heading p1"></a><figcaption>p1 · 20 nodes (10 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4, TC5</figcaption></figure></div>
+</section>
+<section class="rule" id="input-type-for-input-field">
+  <div class="rule-head"><h3>Input type for Input Fields</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">input-type-for-input-field · 6 test cases (4 expected FAIL) · 2 scan(s)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule:</b> <b>none</b></p>
+      <p><b>What the rule needs:</b> Needs UITextField (<code>isSecureTextEntry</code>, content type) + label.</p>
+      <p class="why"><b>Why it could not evaluate the web content:</b> Web <code>type</code> / <code>autocomplete</code> attributes are unreachable.</p>
+      <details><summary>All rows emitted on this page (every rule)</summary><p><span class="mono">app-orientation-support</span> → pass on <code>UIWindow</code> ×2<br/><span class="mono">overlapping-interactive-elements</span> → pass on <code>UIWindow</code> ×2<br/><span class="mono">responsive-containers</span> → pass on <code>WKChildScrollView</code> ×2<br/><span class="mono">responsive-containers</span> → pass on <code>WKContentView</code> ×2<br/><span class="mono">responsive-containers</span> → pass on <code>WKScrollView</code> ×2</p></details>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>iOS result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Label “Email” but type=text and no autocomplete.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Label “Phone number” but type=text.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Label “Password” but type=text (not secure).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-fail">FAIL</span></td><td>Ionic</td><td>ion-input “Email address” with type=text.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-pass">PASS</span></td><td></td><td>type=email + autocomplete=email.</td><td class="na">—</td></tr><tr><td class="mono">TC6</td><td><span class="chip c-pass">PASS</span></td><td></td><td>type=tel + autocomplete=tel; type=password + current-password.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/input-type-for-input-field-p1.jpg" target="_blank"><img loading="lazy" src="img/input-type-for-input-field-p1.jpg" alt="iPad scan screenshot, Input type for Input Fields p1"></a><figcaption>p1 · 37 nodes (27 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4, TC5</figcaption></figure><figure><a href="img/input-type-for-input-field-p2.jpg" target="_blank"><img loading="lazy" src="img/input-type-for-input-field-p2.jpg" alt="iPad scan screenshot, Input type for Input Fields p2"></a><figcaption>p2 · 36 nodes (26 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4, TC5, TC6</figcaption></figure></div>
+</section>
+<section class="rule" id="interactable-element-content-label">
+  <div class="rule-head"><h3>Interactive Element Accessibility Label</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">interactable-element-content-label · 6 test cases (4 expected FAIL) · 1 scan(s)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule:</b> <b>none</b></p>
+      <p><b>What the rule needs:</b> Needs interactive nodes (traits / class) with frame + label.</p>
+      <p class="why"><b>Why it could not evaluate the web content:</b> WK layer views are not interactive classes (BSRuleHelpers:130), so no candidates.</p>
+      <details><summary>All rows emitted on this page (every rule)</summary><p><span class="mono">app-orientation-support</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">overlapping-interactive-elements</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKContentView</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKScrollView</code> ×1</p></details>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>iOS result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Icon-only button (SVG) with no accessible name.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td>Ionic</td><td>Icon-only ion-button (heart) without aria-label.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Link wrapping only an image with empty alt.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Empty div role=button (no text, no label).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Icon button with aria-label “Share”.</td><td class="na">—</td></tr><tr><td class="mono">TC6</td><td><span class="chip c-pass">PASS</span></td><td>Ionic</td><td>Icon ion-button with aria-label “Add to favourites”.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/interactable-element-content-label-p1.jpg" target="_blank"><img loading="lazy" src="img/interactable-element-content-label-p1.jpg" alt="iPad scan screenshot, Interactive Element Accessibility Label p1"></a><figcaption>p1 · 20 nodes (10 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4, TC5, TC6</figcaption></figure></div>
+</section>
+<section class="rule" id="interactive-element-unsupported-type">
+  <div class="rule-head"><h3>Interactive Elements with Unsupported Type</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">interactive-element-unsupported-type · 5 test cases (3 expected FAIL) · 1 scan(s)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule:</b> <b>none</b></p>
+      <p><b>What the rule needs:</b> Needs interactive nodes of a native allow-listed class.</p>
+      <p class="why"><b>Why it could not evaluate the web content:</b> No web control is a node, so role validity is never assessed.</p>
+      <details><summary>All rows emitted on this page (every rule)</summary><p><span class="mono">app-orientation-support</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">overlapping-interactive-elements</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKContentView</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKScrollView</code> ×1</p></details>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>iOS result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Clickable div with no role.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Invalid ARIA role “clickable”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Clickable element with role=text / generic.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-pass">PASS</span></td><td></td><td>div role=button tabindex=0.</td><td class="na">—</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Native &lt;a href&gt; link.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/interactive-element-unsupported-type-p1.jpg" target="_blank"><img loading="lazy" src="img/interactive-element-unsupported-type-p1.jpg" alt="iPad scan screenshot, Interactive Elements with Unsupported Type p1"></a><figcaption>p1 · 20 nodes (10 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4, TC5</figcaption></figure></div>
+</section>
+<section class="rule" id="keyboard-focus-for-interactive-elements">
+  <div class="rule-head"><h3>Keyboard Focus for Interactive Elements</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">keyboard-focus-for-interactive-elements · 7 test cases (4 expected FAIL) · 2 scan(s)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule:</b> <b>none</b></p>
+      <p><b>What the rule needs:</b> Needs <code>accessibilityRespondsToUserInteraction</code> on interactive nodes.</p>
+      <p class="why"><b>Why it could not evaluate the web content:</b> No web interactive nodes; <code>tabindex</code> / focusability live in the DOM.</p>
+      <details><summary>All rows emitted on this page (every rule)</summary><p><span class="mono">app-orientation-support</span> → pass on <code>UIWindow</code> ×2<br/><span class="mono">overlapping-interactive-elements</span> → pass on <code>UIWindow</code> ×2<br/><span class="mono">responsive-containers</span> → pass on <code>WKChildScrollView</code> ×4<br/><span class="mono">responsive-containers</span> → pass on <code>WKCompositingView</code> ×13<br/><span class="mono">responsive-containers</span> → pass on <code>WKContentView</code> ×2<br/><span class="mono">responsive-containers</span> → pass on <code>WKScrollView</code> ×2</p></details>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>iOS result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>div with a click handler and no tabindex.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Real button removed from tab order (tabindex=-1).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Anchor without href (not focusable).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>role=button with tabindex=0 but no Enter/Space handling.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>Scrollable region that is not focusable.</td><td class="na">—</td></tr><tr><td class="mono">TC6</td><td><span class="chip c-pass">PASS</span></td><td></td><td>role=button, tabindex=0, handles Enter and Space.</td><td class="na">—</td></tr><tr><td class="mono">TC7</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Native button.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/keyboard-focus-for-interactive-elements-p1.jpg" target="_blank"><img loading="lazy" src="img/keyboard-focus-for-interactive-elements-p1.jpg" alt="iPad scan screenshot, Keyboard Focus for Interactive Elements p1"></a><figcaption>p1 · 48 nodes (34 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4, TC5, TC6, TC7</figcaption></figure><figure><a href="img/keyboard-focus-for-interactive-elements-p2.jpg" target="_blank"><img loading="lazy" src="img/keyboard-focus-for-interactive-elements-p2.jpg" alt="iPad scan screenshot, Keyboard Focus for Interactive Elements p2"></a><figcaption>p2 · 48 nodes (34 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4, TC5, TC6, TC7</figcaption></figure></div>
+</section>
+<section class="rule" id="label-in-name">
+  <div class="rule-head"><h3>Label in Name</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">label-in-name · 5 test cases (3 expected FAIL) · 1 scan(s)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule:</b> <b>none</b></p>
+      <p><b>What the rule needs:</b> Needs label + OCR text on interactive nodes.</p>
+      <p class="why"><b>Why it could not evaluate the web content:</b> No nodes; the only web-specific code is the web-overlay <i>skip</i> guard (BSRules:288-457), which removes findings on native nodes and never evaluates web ones.</p>
+      <details><summary>All rows emitted on this page (every rule)</summary><p><span class="mono">app-orientation-support</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">overlapping-interactive-elements</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKContentView</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKScrollView</code> ×1</p></details>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>iOS result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Visible “Send”; name “Submit message” (doesn&#x27;t contain “Send”).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Visible “Next”; name “Continue”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td>Ionic</td><td>ion-button “Search” with aria-label “Find”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>Visible “Q&amp;A”; name “Questions and answers” (abbreviation).</td><td class="na">—</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Visible “Send”; name “Send message”.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/label-in-name-p1.jpg" target="_blank"><img loading="lazy" src="img/label-in-name-p1.jpg" alt="iPad scan screenshot, Label in Name p1"></a><figcaption>p1 · 20 nodes (10 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4, TC5</figcaption></figure></div>
+</section>
+<section class="rule" id="link-text-purpose">
+  <div class="rule-head"><h3>Link Text Purpose</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">link-text-purpose · 6 test cases (4 expected FAIL) · 1 scan(s)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule:</b> <b>none</b></p>
+      <p><b>What the rule needs:</b> Needs link-trait nodes + surrounding text.</p>
+      <p class="why"><b>Why it could not evaluate the web content:</b> Web links (the main source of links in hybrid apps) are not nodes.</p>
+      <details><summary>All rows emitted on this page (every rule)</summary><p><span class="mono">app-orientation-support</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">overlapping-interactive-elements</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKContentView</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKScrollView</code> ×1</p></details>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>iOS result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Stop-word link: “Click here”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Generic “Read more” with no context.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Raw URL as link text.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Link with no text (image with no alt).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>“Read more” whose aria-label adds context: “Read more about pricing”.</td><td class="na">—</td></tr><tr><td class="mono">TC6</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Descriptive text: “Read the refund policy”.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/link-text-purpose-p1.jpg" target="_blank"><img loading="lazy" src="img/link-text-purpose-p1.jpg" alt="iPad scan screenshot, Link Text Purpose p1"></a><figcaption>p1 · 20 nodes (10 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4, TC5, TC6</figcaption></figure></div>
+</section>
+<section class="rule" id="imageview-element-content-label">
+  <div class="rule-head"><h3>Meaningful accessibility label for images</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">imageview-element-content-label · 6 test cases (4 expected FAIL) · 2 scan(s)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule:</b> <b>none</b></p>
+      <p><b>What the rule needs:</b> Needs image-trait / *ImageView nodes (+ AI label check).</p>
+      <p class="why"><b>Why it could not evaluate the web content:</b> Web <code>&lt;img&gt;</code> / <code>svg role=img</code> alt text is never read.</p>
+      <details><summary>All rows emitted on this page (every rule)</summary><p><span class="mono">app-orientation-support</span> → pass on <code>UIWindow</code> ×2<br/><span class="mono">overlapping-interactive-elements</span> → pass on <code>UIWindow</code> ×2<br/><span class="mono">responsive-containers</span> → pass on <code>WKChildScrollView</code> ×2<br/><span class="mono">responsive-containers</span> → pass on <code>WKContentView</code> ×2<br/><span class="mono">responsive-containers</span> → pass on <code>WKScrollView</code> ×2</p></details>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>iOS result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Informative photo with no alt attribute.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Meaningless alt: “IMG_2024.png”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Generic alt: “image”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Inline SVG role=img with no title or label.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Accurate alt: “Golden retriever catching a ball”.</td><td class="na">—</td></tr><tr><td class="mono">TC6</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Decorative divider with alt=“” (should be ignored).</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/imageview-element-content-label-p1.jpg" target="_blank"><img loading="lazy" src="img/imageview-element-content-label-p1.jpg" alt="iPad scan screenshot, Meaningful accessibility label for images p1"></a><figcaption>p1 · 37 nodes (27 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4</figcaption></figure><figure><a href="img/imageview-element-content-label-p2.jpg" target="_blank"><img loading="lazy" src="img/imageview-element-content-label-p2.jpg" alt="iPad scan screenshot, Meaningful accessibility label for images p2"></a><figcaption>p2 · 36 nodes (26 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4, TC5, TC6</figcaption></figure></div>
+</section>
+<section class="rule" id="meaningful-reading-order">
+  <div class="rule-head"><h3>Meaningful Reading Order</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">meaningful-reading-order · 5 test cases (4 expected FAIL) · 1 scan(s)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule:</b> <b>none</b></p>
+      <p><b>What the rule needs:</b> AI trigger fires only if some native accessible element exists (BSAIRules:465).</p>
+      <p class="why"><b>Why it could not evaluate the web content:</b> The whole screen is web, so there are no accessible nodes and the rule never triggers.</p>
+      <details><summary>All rows emitted on this page (every rule)</summary><p><span class="mono">app-orientation-support</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">overlapping-interactive-elements</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKContentView</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKScrollView</code> ×1</p></details>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>iOS result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Visually 1-2-3, but DOM order is 3-1-2 (CSS order).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>row-reverse: the value is read before its label.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Two columns interleaved: reads Name, City, Email, Zip.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Absolutely positioned “Buy” button first in DOM, drawn last.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-pass">PASS</span></td><td></td><td>DOM order matches visual order.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/meaningful-reading-order-p1.jpg" target="_blank"><img loading="lazy" src="img/meaningful-reading-order-p1.jpg" alt="iPad scan screenshot, Meaningful Reading Order p1"></a><figcaption>p1 · 20 nodes (10 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4, TC5</figcaption></figure></div>
+</section>
+<section class="rule" id="meaningful-visual-order">
+  <div class="rule-head"><h3>Meaningful Visual Order</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">meaningful-visual-order · 4 test cases (3 expected FAIL) · 1 scan(s)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule:</b> <b>none</b></p>
+      <p><b>What the rule needs:</b> AI: native-only accessible sequence vs screenshot.</p>
+      <p class="why"><b>Why it could not evaluate the web content:</b> Empty native sequence, so there is no candidate.</p>
+      <details><summary>All rows emitted on this page (every rule)</summary><p><span class="mono">app-orientation-support</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">overlapping-interactive-elements</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKContentView</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKScrollView</code> ×1</p></details>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>iOS result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Submit is drawn above the fields it submits.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Price sits above an unrelated product; the label is far from its value.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Step 3 appears before step 1 visually.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Logical flow: title, fields, then action.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/meaningful-visual-order-p1.jpg" target="_blank"><img loading="lazy" src="img/meaningful-visual-order-p1.jpg" alt="iPad scan screenshot, Meaningful Visual Order p1"></a><figcaption>p1 · 20 nodes (10 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4</figcaption></figure></div>
+</section>
+<section class="rule" id="missing-heading">
+  <div class="rule-head"><h3>Missing Heading</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">missing-heading · 5 test cases (3 expected FAIL) · 1 scan(s)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule:</b> <b>none</b></p>
+      <p><b>What the rule needs:</b> AI: staticText leaves.</p>
+      <p class="why"><b>Why it could not evaluate the web content:</b> No text nodes.</p>
+      <details><summary>All rows emitted on this page (every rule)</summary><p><span class="mono">app-orientation-support</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">overlapping-interactive-elements</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKContentView</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKScrollView</code> ×1</p></details>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>iOS result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Large bold “Payment details” div that is not a heading.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td>Ionic</td><td>ion-list-header “Recent orders” (renders a div, not a heading).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Bold section title inside a card, styled with a &lt;b&gt; tag.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Real &lt;h2&gt; “Payment details”.</td><td class="na">—</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-pass">PASS</span></td><td></td><td>div role=heading aria-level=2 “Shipping”.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/missing-heading-p1.jpg" target="_blank"><img loading="lazy" src="img/missing-heading-p1.jpg" alt="iPad scan screenshot, Missing Heading p1"></a><figcaption>p1 · 20 nodes (10 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4, TC5</figcaption></figure></div>
+</section>
+<section class="rule" id="missing-view-type-in-spoken-output">
+  <div class="rule-head"><h3>Missing View Type in Spoken Output</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">missing-view-type-in-spoken-output · 5 test cases (3 expected FAIL) · 1 scan(s)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule:</b> <b>none</b></p>
+      <p><b>What the rule needs:</b> Needs traits / class of interactive nodes.</p>
+      <p class="why"><b>Why it could not evaluate the web content:</b> No interactive nodes.</p>
+      <details><summary>All rows emitted on this page (every rule)</summary><p><span class="mono">app-orientation-support</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">overlapping-interactive-elements</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKContentView</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKScrollView</code> ×1</p></details>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>iOS result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Div acting as a switch: no role, no state.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Span styled as a link, with a click handler and no role.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Tab bar made of plain divs (no tablist/tab roles).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-pass">PASS</span></td><td></td><td>role=switch with aria-checked and a name.</td><td class="na">—</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Proper tablist / tab roles with aria-selected.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/missing-view-type-in-spoken-output-p1.jpg" target="_blank"><img loading="lazy" src="img/missing-view-type-in-spoken-output-p1.jpg" alt="iPad scan screenshot, Missing View Type in Spoken Output p1"></a><figcaption>p1 · 20 nodes (10 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4, TC5</figcaption></figure></div>
+</section>
+<section class="rule" id="non-text-color-contrast">
+  <div class="rule-head"><h3>Non-Text Element Color Contrast</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">non-text-color-contrast · 5 test cases (4 expected FAIL) · 1 scan(s)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule:</b> <b>none</b></p>
+      <p><b>What the rule needs:</b> Screenshot swatch on interactive / image nodes.</p>
+      <p class="why"><b>Why it could not evaluate the web content:</b> No such nodes, so no swatch is sampled even though the pixels are in the screenshot.</p>
+      <details><summary>All rows emitted on this page (every rule)</summary><p><span class="mono">app-orientation-support</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">overlapping-interactive-elements</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKContentView</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKScrollView</code> ×1</p></details>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>iOS result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Input border #e0e0e0 on #fff (1.3:1).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Icon-only button with a #cfcfcf icon on #fff (1.6:1).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Checkbox whose border is #d6d6d6 (unchecked state barely visible).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Selected vs unselected segment differ only by a #f2f2f2 fill.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Input border #767676 (4.5:1) and icon #5f6368.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/non-text-color-contrast-p1.jpg" target="_blank"><img loading="lazy" src="img/non-text-color-contrast-p1.jpg" alt="iPad scan screenshot, Non-Text Element Color Contrast p1"></a><figcaption>p1 · 20 nodes (10 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4, TC5</figcaption></figure></div>
+</section>
+<section class="rule" id="overlapping-interactive-elements">
+  <div class="rule-head"><h3>Overlapping Interactive Elements</h3><span class="verdict v-mid">Vacuous / misleading PASS only</span></div>
+  <p class="mono sub2">overlapping-interactive-elements · 5 test cases (3 expected FAIL) · 1 scan(s)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule:</b> 1× pass on <code>UIWindow</code></p>
+      <p><b>What the rule needs:</b> Whole-tree: frames of interactive nodes.</p>
+      <p class="why"><b>Why it could not evaluate the web content:</b> Only PASS on <code>UIWindow</code> ("No overlapping interactive elements"): the overlap check ran over zero interactive nodes. This PASS is <b>vacuous</b>.</p>
+      <details><summary>All rows emitted on this page (every rule)</summary><p><span class="mono">app-orientation-support</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">overlapping-interactive-elements</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKContentView</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKScrollView</code> ×1</p></details>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>iOS result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Close “×” button overlaps a “Details” link.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Two buttons overlap via negative margin.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td>Ionic</td><td>ion-fab-button floating over a row&#x27;s “Buy” button.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>Nested interactive: a button inside a clickable card.</td><td class="na">—</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Buttons spaced apart.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/overlapping-interactive-elements-p1.jpg" target="_blank"><img loading="lazy" src="img/overlapping-interactive-elements-p1.jpg" alt="iPad scan screenshot, Overlapping Interactive Elements p1"></a><figcaption>p1 · 20 nodes (10 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4, TC5</figcaption></figure></div>
+</section>
+<section class="rule" id="readable-text-size">
+  <div class="rule-head"><h3>Readable Text Size</h3><span class="verdict v-na">Not an iOS rule</span></div>
+  <p class="mono sub2">readable-text-size · 5 test cases (2 expected FAIL) · 1 scan(s)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule:</b> <b>none</b></p>
+      <p><b>What the rule needs:</b> Android-only rule.</p>
+      <p class="why"><b>Why it could not evaluate the web content:</b> Not registered in the iOS engine.</p>
+      <details><summary>All rows emitted on this page (every rule)</summary><p><span class="mono">app-orientation-support</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">overlapping-interactive-elements</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKContentView</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKScrollView</code> ×1</p></details>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>iOS result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>9px caption.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>11px body text.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>13.5px, just under the 14 threshold.</td><td class="na">—</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-pass">PASS</span></td><td></td><td>14px (the threshold).</td><td class="na">—</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-pass">PASS</span></td><td></td><td>16px body text.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/readable-text-size-p1.jpg" target="_blank"><img loading="lazy" src="img/readable-text-size-p1.jpg" alt="iPad scan screenshot, Readable Text Size p1"></a><figcaption>p1 · 20 nodes (10 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4, TC5</figcaption></figure></div>
+</section>
+<section class="rule" id="readable-text-spacing">
+  <div class="rule-head"><h3>Readable Text Spacing</h3><span class="verdict v-na">Not an iOS rule</span></div>
+  <p class="mono sub2">readable-text-spacing · 4 test cases (3 expected FAIL) · 1 scan(s)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule:</b> <b>none</b></p>
+      <p><b>What the rule needs:</b> Android-only rule.</p>
+      <p class="why"><b>Why it could not evaluate the web content:</b> Not registered in the iOS engine.</p>
+      <details><summary>All rows emitted on this page (every rule)</summary><p><span class="mono">app-orientation-support</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">overlapping-interactive-elements</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKContentView</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKScrollView</code> ×1</p></details>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>iOS result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Line height 1.0 on multi-line text.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Paragraphs with no spacing between them.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Negative letter spacing and zero word spacing.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Line height 1.5, paragraph spacing 2×, word spacing 0.16em.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/readable-text-spacing-p1.jpg" target="_blank"><img loading="lazy" src="img/readable-text-spacing-p1.jpg" alt="iPad scan screenshot, Readable Text Spacing p1"></a><figcaption>p1 · 20 nodes (10 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4</figcaption></figure></div>
+</section>
+<section class="rule" id="responsive-containers">
+  <div class="rule-head"><h3>Responsive Containers</h3><span class="verdict v-mid">Vacuous / misleading PASS only</span></div>
+  <p class="mono sub2">responsive-containers · 4 test cases (2 expected FAIL) · 1 scan(s)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule:</b> 1× pass on <code>WKContentView</code>, 1× pass on <code>WKScrollView</code></p>
+      <p><b>What the rule needs:</b> Ancestor walk: inside ScrollView/TableView/… ⇒ PASS; exact "WKWebView" ⇒ ignored.</p>
+      <p class="why"><b>Why it could not evaluate the web content:</b> PASS rows on <code>WKScrollView</code>, <code>WKContentView</code>, <code>WKChildScrollView</code>, <code>WKCompositingView</code>: WebKit internals reach <code>WKScrollView</code> ("ScrollView") first (BSAdditionalRules:838-901). These are <b>false-reassurance</b> passes; the fixed-width web card (TC1) is never examined.</p>
+      <details><summary>All rows emitted on this page (every rule)</summary><p><span class="mono">app-orientation-support</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">overlapping-interactive-elements</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKContentView</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKScrollView</code> ×1</p></details>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>iOS result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Fixed width 600px card that overflows the screen (content cut off).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Fixed 72px-high box whose content overflows and is hidden.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Fluid container (max-width:100%) that wraps.</td><td class="na">—</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>Content inside ion-content (the page itself scrolls).</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/responsive-containers-p1.jpg" target="_blank"><img loading="lazy" src="img/responsive-containers-p1.jpg" alt="iPad scan screenshot, Responsive Containers p1"></a><figcaption>p1 · 20 nodes (10 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4</figcaption></figure></div>
+</section>
+<section class="rule" id="focus-order-for-interactive-elements">
+  <div class="rule-head"><h3>Screen Reader Focus for Interactive Elements</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">focus-order-for-interactive-elements · 5 test cases (3 expected FAIL) · 1 scan(s)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule:</b> <b>none</b></p>
+      <p><b>What the rule needs:</b> Needs host VoiceOver caption data + traversal index.</p>
+      <p class="why"><b>Why it could not evaluate the web content:</b> <code>iosFocusOrderCaptionData</code> is always nil on device (BSAIRules:461), so the rule is a no-op on every iOS screen, web or native.</p>
+      <details><summary>All rows emitted on this page (every rule)</summary><p><span class="mono">app-orientation-support</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">overlapping-interactive-elements</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKContentView</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKScrollView</code> ×1</p></details>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>iOS result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Tappable button hidden from the screen reader (aria-hidden).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Clickable card inside an aria-hidden container.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Clickable image with role=presentation.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>Visually hidden skip link (reachable by swipe, not by touch).</td><td class="na">—</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Standard button reachable both ways.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/focus-order-for-interactive-elements-p1.jpg" target="_blank"><img loading="lazy" src="img/focus-order-for-interactive-elements-p1.jpg" alt="iPad scan screenshot, Screen Reader Focus for Interactive Elements p1"></a><figcaption>p1 · 20 nodes (10 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4, TC5</figcaption></figure></div>
+</section>
+<section class="rule" id="special-character-element-content-label">
+  <div class="rule-head"><h3>Special-Character Element Accessibility Label</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">special-character-element-content-label · 6 test cases (4 expected FAIL) · 1 scan(s)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule:</b> <b>none</b></p>
+      <p><b>What the rule needs:</b> Needs labels on accessible nodes.</p>
+      <p class="why"><b>Why it could not evaluate the web content:</b> No labels captured.</p>
+      <details><summary>All rows emitted on this page (every rule)</summary><p><span class="mono">app-orientation-support</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">overlapping-interactive-elements</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKContentView</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKScrollView</code> ×1</p></details>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>iOS result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Glyph in label: “★ Favourite”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Emoji in label: “🔥 Hot deals”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Arrow glyph via aria-label: “Next →”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Check mark only: “✓”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>Currency symbols: “Pay ₹499”.</td><td class="na">—</td></tr><tr><td class="mono">TC6</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Plain text; the glyph is aria-hidden.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/special-character-element-content-label-p1.jpg" target="_blank"><img loading="lazy" src="img/special-character-element-content-label-p1.jpg" alt="iPad scan screenshot, Special-Character Element Accessibility Label p1"></a><figcaption>p1 · 20 nodes (10 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4, TC5, TC6</figcaption></figure></div>
+</section>
+<section class="rule" id="screen-reader-for-interactive-elements">
+  <div class="rule-head"><h3>Spoken Description not Meaningful</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">screen-reader-for-interactive-elements · 4 test cases (3 expected FAIL) · 1 scan(s)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule:</b> <b>none</b></p>
+      <p><b>What the rule needs:</b> PASS-only rule on traversal index / link+button traits.</p>
+      <p class="why"><b>Why it could not evaluate the web content:</b> No interactive nodes, so nothing is emitted.</p>
+      <details><summary>All rows emitted on this page (every rule)</summary><p><span class="mono">app-orientation-support</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">overlapping-interactive-elements</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKContentView</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKScrollView</code> ×1</p></details>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>iOS result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Spoken name is a developer ID: “btn_submit_01”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Icon button named after its file: “ic_settings_24dp”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Whitespace-only aria-label.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Meaningful spoken name: “Settings”.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/screen-reader-for-interactive-elements-p1.jpg" target="_blank"><img loading="lazy" src="img/screen-reader-for-interactive-elements-p1.jpg" alt="iPad scan screenshot, Spoken Description not Meaningful p1"></a><figcaption>p1 · 20 nodes (10 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4</figcaption></figure></div>
+</section>
+<section class="rule" id="screen-orientation">
+  <div class="rule-head"><h3>Supported Screen Orientations</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">screen-orientation · 2 test cases (1 expected FAIL) · 1 scan(s)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule:</b> <b>none</b></p>
+      <p><b>What the rule needs:</b> Catalog-disabled; <code>supportedOrientations</code> always empty.</p>
+      <p class="why"><b>Why it could not evaluate the web content:</b> No-op on iOS.</p>
+      <details><summary>All rows emitted on this page (every rule)</summary><p><span class="mono">app-orientation-support</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">overlapping-interactive-elements</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKContentView</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKScrollView</code> ×1</p></details>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>iOS result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>This screen locks itself to portrait while it is open.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-pass">PASS</span></td><td></td><td>After Release, rotating the device re-lays out this screen.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/screen-orientation-p1.jpg" target="_blank"><img loading="lazy" src="img/screen-orientation-p1.jpg" alt="iPad scan screenshot, Supported Screen Orientations p1"></a><figcaption>p1 · 20 nodes (10 WK*) · web-labelled 0 · TCs on screen: TC1, TC2</figcaption></figure></div>
+</section>
+<section class="rule" id="switch-element-content-label">
+  <div class="rule-head"><h3>Switch Element Accessibility Label</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">switch-element-content-label · 6 test cases (3 expected FAIL) · 1 scan(s)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule:</b> <b>none</b></p>
+      <p><b>What the rule needs:</b> Needs Toggle-trait / *Switch-class nodes.</p>
+      <p class="why"><b>Why it could not evaluate the web content:</b> <code>ion-toggle</code> / <code>role=switch</code> are not nodes.</p>
+      <details><summary>All rows emitted on this page (every rule)</summary><p><span class="mono">app-orientation-support</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">overlapping-interactive-elements</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKContentView</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKScrollView</code> ×1</p></details>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>iOS result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Native checkbox role=switch with no label.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td>Ionic</td><td>ion-toggle with no label.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>div role=switch with aria-checked but no name.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>Vague label “Toggle” that doesn&#x27;t say what it does.</td><td class="na">—</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-pass">PASS</span></td><td>Ionic</td><td>ion-toggle labelled “Wi-Fi”.</td><td class="na">—</td></tr><tr><td class="mono">TC6</td><td><span class="chip c-pass">PASS</span></td><td></td><td>role=switch named “Bluetooth”.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/switch-element-content-label-p1.jpg" target="_blank"><img loading="lazy" src="img/switch-element-content-label-p1.jpg" alt="iPad scan screenshot, Switch Element Accessibility Label p1"></a><figcaption>p1 · 47 nodes (37 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4, TC5, TC6</figcaption></figure></div>
+</section>
+<section class="rule" id="text-color-contrast">
+  <div class="rule-head"><h3>Text Element Color Contrast (Minimum)</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">text-color-contrast · 7 test cases (4 expected FAIL) · 2 scan(s)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule:</b> <b>none</b></p>
+      <p><b>What the rule needs:</b> staticText nodes with textColor/backgroundColor, verified on the screenshot.</p>
+      <p class="why"><b>Why it could not evaluate the web content:</b> WKWebView text/colour is nil by design (:3400) and web text is never a node, so no swatch is sampled.</p>
+      <details><summary>All rows emitted on this page (every rule)</summary><p><span class="mono">app-orientation-support</span> → pass on <code>UIWindow</code> ×2<br/><span class="mono">overlapping-interactive-elements</span> → pass on <code>UIWindow</code> ×2<br/><span class="mono">responsive-containers</span> → pass on <code>WKChildScrollView</code> ×2<br/><span class="mono">responsive-containers</span> → pass on <code>WKCompositingView</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKContentView</code> ×2<br/><span class="mono">responsive-containers</span> → pass on <code>WKScrollView</code> ×2</p></details>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>iOS result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>#999 on #fff, 14px (2.8:1).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>White on amber #ffc107 button (1.6:1).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Light placeholder #c0c0c0 in a field (1.8:1).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>White text over a light photo area.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>Large text 24px #949494 on #fff (3.0:1) meets the large-text threshold.</td><td class="na">—</td></tr><tr><td class="mono">TC6</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>Disabled button with low contrast (exempt: inactive component).</td><td class="na">—</td></tr><tr><td class="mono">TC7</td><td><span class="chip c-pass">PASS</span></td><td></td><td>#595959 on #fff (7:1).</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/text-color-contrast-p1.jpg" target="_blank"><img loading="lazy" src="img/text-color-contrast-p1.jpg" alt="iPad scan screenshot, Text Element Color Contrast (Minimum) p1"></a><figcaption>p1 · 37 nodes (27 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4, TC5, TC6, TC7</figcaption></figure><figure><a href="img/text-color-contrast-p2.jpg" target="_blank"><img loading="lazy" src="img/text-color-contrast-p2.jpg" alt="iPad scan screenshot, Text Element Color Contrast (Minimum) p2"></a><figcaption>p2 · 37 nodes (27 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4, TC5, TC6, TC7</figcaption></figure></div>
+</section>
+<section class="rule" id="text-truncation">
+  <div class="rule-head"><h3>Text Truncation</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">text-truncation · 6 test cases (4 expected FAIL) · 1 scan(s)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule:</b> <b>none</b></p>
+      <p><b>What the rule needs:</b> staticText + <code>textMayClip</code> (UILabel/UITextView/UITextField only).</p>
+      <p class="why"><b>Why it could not evaluate the web content:</b> CSS ellipsis / line-clamp / overflow:hidden are DOM facts; never captured.</p>
+      <details><summary>All rows emitted on this page (every rule)</summary><p><span class="mono">app-orientation-support</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">overlapping-interactive-elements</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKContentView</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKScrollView</code> ×1</p></details>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>iOS result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Single line with ellipsis (text-overflow).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Two-line clamp (-webkit-line-clamp) on a description.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Fixed height + overflow:hidden cuts the last line.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-fail">FAIL</span></td><td>Ionic</td><td>ion-label with the ion-text-nowrap utility: single line, ellipsized.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-pass">PASS</span></td><td>Ionic</td><td>Default ion-label (Ionic 9 wraps by default).</td><td class="na">—</td></tr><tr><td class="mono">TC6</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Plain wrapping paragraph.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/text-truncation-p1.jpg" target="_blank"><img loading="lazy" src="img/text-truncation-p1.jpg" alt="iPad scan screenshot, Text Truncation p1"></a><figcaption>p1 · 20 nodes (10 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4, TC5, TC6</figcaption></figure></div>
+</section>
+<section class="rule" id="touch-target-size">
+  <div class="rule-head"><h3>Touch Target Size</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">touch-target-size · 7 test cases (4 expected FAIL) · 1 scan(s)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule:</b> <b>none</b></p>
+      <p><b>What the rule needs:</b> Frames of interactive nodes vs 44 pt.</p>
+      <p class="why"><b>Why it could not evaluate the web content:</b> No interactive nodes.</p>
+      <details><summary>All rows emitted on this page (every rule)</summary><p><span class="mono">app-orientation-support</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">overlapping-interactive-elements</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKContentView</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKScrollView</code> ×1</p></details>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>iOS result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>24×24 icon button.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>32×32 “Remove” button.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>100×30 text button (height below 44).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-fail">FAIL</span></td><td>Ionic</td><td>ion-button size=small (about 28px high).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>Inline link inside a sentence (inline exception).</td><td class="na">—</td></tr><tr><td class="mono">TC6</td><td><span class="chip c-pass">PASS</span></td><td></td><td>44×44 icon button.</td><td class="na">—</td></tr><tr><td class="mono">TC7</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Small 20px icon with padding giving a 48×48 hit area.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/touch-target-size-p1.jpg" target="_blank"><img loading="lazy" src="img/touch-target-size-p1.jpg" alt="iPad scan screenshot, Touch Target Size p1"></a><figcaption>p1 · 20 nodes (10 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4, TC5, TC6, TC7</figcaption></figure></div>
+</section>
+<section class="rule" id="touch-target-size-and-spacing">
+  <div class="rule-head"><h3>Touch Target Size &amp; Spacing</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">touch-target-size-and-spacing · 5 test cases (2 expected FAIL) · 1 scan(s)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule:</b> <b>none</b></p>
+      <p><b>What the rule needs:</b> Whole-tree frames of interactive nodes vs 24 pt + spacing.</p>
+      <p class="why"><b>Why it could not evaluate the web content:</b> No interactive nodes.</p>
+      <details><summary>All rows emitted on this page (every rule)</summary><p><span class="mono">app-orientation-support</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">overlapping-interactive-elements</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKContentView</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKScrollView</code> ×1</p></details>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>iOS result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Four 16×16 buttons 2px apart.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Two 20×20 buttons touching (0px gap).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-pass">PASS</span></td><td></td><td>16×16 buttons with 24px spacing (the 24 pt circles don&#x27;t intersect).</td><td class="na">—</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-pass">PASS</span></td><td></td><td>24×24 adjacent buttons (minimum size met).</td><td class="na">—</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>Adjacent inline links in text (inline exception).</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/touch-target-size-and-spacing-p1.jpg" target="_blank"><img loading="lazy" src="img/touch-target-size-and-spacing-p1.jpg" alt="iPad scan screenshot, Touch Target Size &amp; Spacing p1"></a><figcaption>p1 · 20 nodes (10 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4, TC5</figcaption></figure></div>
+</section>
+<section class="rule" id="traversal-order-cycle">
+  <div class="rule-head"><h3>Traversal Order Cycle</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">traversal-order-cycle · 4 test cases (2 expected FAIL) · 1 scan(s)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule:</b> <b>none</b></p>
+      <p><b>What the rule needs:</b> —</p>
+      <p class="why"><b>Why it could not evaluate the web content:</b> Always N/A on iOS (BSAdditionalRules:915).</p>
+      <details><summary>All rows emitted on this page (every rule)</summary><p><span class="mono">app-orientation-support</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">overlapping-interactive-elements</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKContentView</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKScrollView</code> ×1</p></details>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>iOS result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Leaving field 3 jumps focus back to field 1: “Continue” is unreachable.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Positive tabindex ping-pong: A(1)→B(2)→A via focus handler.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>Modal focus trap with an accessible Close button (intended trap).</td><td class="na">—</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Linear order with no loops.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/traversal-order-cycle-p1.jpg" target="_blank"><img loading="lazy" src="img/traversal-order-cycle-p1.jpg" alt="iPad scan screenshot, Traversal Order Cycle p1"></a><figcaption>p1 · 20 nodes (10 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4</figcaption></figure></div>
+</section>
+<section class="rule" id="two-dimensional-scroll">
+  <div class="rule-head"><h3>Two-Dimensional Scrolling</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">two-dimensional-scroll · 4 test cases (2 expected FAIL) · 1 scan(s)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule:</b> <b>none</b></p>
+      <p><b>What the rule needs:</b> Exact <code>UIScrollView</code> / <code>UICollectionView</code> + children frames (:940).</p>
+      <p class="why"><b>Why it could not evaluate the web content:</b> <code>WKScrollView</code> / <code>WKChildScrollView</code> never match the exact class, so web 2-D overflow (TC1/TC2) goes undetected.</p>
+      <details><summary>All rows emitted on this page (every rule)</summary><p><span class="mono">app-orientation-support</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">overlapping-interactive-elements</span> → pass on <code>UIWindow</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKChildScrollView</code> ×2<br/><span class="mono">responsive-containers</span> → pass on <code>WKCompositingView</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKContentView</code> ×1<br/><span class="mono">responsive-containers</span> → pass on <code>WKScrollView</code> ×1</p></details>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>iOS result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Fixed-height region that scrolls both horizontally and vertically.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Wide article text (900px) inside a vertically scrolling page.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>Data table: 2-D layout is essential (exempt under WCAG 1.4.10).</td><td class="na">—</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Horizontal-only carousel (one scroll direction).</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/two-dimensional-scroll-p1.jpg" target="_blank"><img loading="lazy" src="img/two-dimensional-scroll-p1.jpg" alt="iPad scan screenshot, Two-Dimensional Scrolling p1"></a><figcaption>p1 · 55 nodes (37 WK*) · web-labelled 0 · TCs on screen: TC1, TC2, TC3, TC4</figcaption></figure></div>
+</section>
+
+<p class="sub">Raw data: <code>~/Work/a11y-scans/poc/&lt;rule&gt;/p&lt;N&gt;/{snapshot.json,screenshot.png,visible.json}</code> on the Mac mini · per-rule summary <code>summary.json</code> / <code>score.md</code> alongside.</p>
+</body>
+</html>

@@ -64,7 +64,7 @@ what is supported, what is not, and whether support can be added reliably · evi
   <a href="#pipeline">1 · How an iOS scan sees the screen</a><br/>
   <a href="#webview">2 · What the scanner captures at a WebView</a><br/>
   <a href="#impact">3 · Production impact: hybrid screens report clean</a><br/>
-  <a href="#device">3b · Measured on a device: Angular Rule Lab (208 TCs)</a><br/>
+  <a href="#device">3b · Measured on a device: Angular Rule Lab (208 TCs)</a> · <a href="ios-run/">iOS run detail ↗</a><br/>
   <a href="#why">4 · Why: WebKit's out-of-process AX tree</a><br/>
   <a href="#rules">5 · Rule-by-rule matrix (37 iOS rules)</a><br/>
   <a href="#existing">6 · Existing web code is suppression, not evaluation</a><br/>
@@ -238,6 +238,7 @@ at every scroll position of every rule page (47 scans, rule engine 2.4.0). Navig
 <div class="rulebox warn"><b>Confirmed end to end:</b> every rule page, including deliberately broken labels, contrast, target sizes, headings, truncation and focus traps, scans as clean.
 The only rows produced are container / app-level passes, which read as coverage. It is the §3 production pattern reproduced under controlled conditions with known ground truth.
 The same app is the test bed for the §8 DOM layer: its <code>docs/TEST_CASES.md</code> gives the expected verdict for every test case.</div>
+<p><b>→ Full per-rule breakdown, with screenshots, emitted rows and the reason each rule could not run: <a href="ios-run/">iOS run: AppA11y Rule Lab</a></b> · Android talkback run: <i>to follow</i></p>
 
 <!-- ============================================================ -->
 <h2 id="why">4 · Why: WebKit's AX tree lives in another process <span class="tag t-web">research</span></h2>
