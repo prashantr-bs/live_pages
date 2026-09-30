@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>iOS WebView &amp; Angular support — App A11y rules</title>
+<style>
+  body { margin:0 auto; max-width:1250px; padding:26px 26px 70px;
+         font:15px/1.55 -apple-system,"Segoe UI",Roboto,sans-serif; color:#1a1d21; background:#fff; }
+  h1 { font-size:22px; margin:0 0 4px; }
+  h2 { font-size:17px; margin:38px 0 6px; padding-top:6px; border-top:1px solid #eef0f2; }
+  h3 { font-size:15px; margin:20px 0 4px; }
+  .sub { color:#5c6570; margin:0 0 14px; font-size:13.5px; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; align-items:start; }
+  .grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; align-items:start; }
+  @media (max-width:820px){ .grid2,.grid3 { grid-template-columns:1fr; } body{padding:18px 16px 60px;} }
+  .col { border:1px solid #e3e6ea; border-radius:10px; padding:10px 14px; background:#fafbfc; }
+  .col h3 { margin:2px 0 4px; font-size:14.5px; }
+  .big { font-size:26px; font-weight:700; margin:2px 0; }
+  .verdict { font-size:12.5px; font-weight:600; border-radius:8px; padding:6px 10px; margin-top:8px; }
+  .v-ok { background:#d7f0dd; color:#0a5d2a; }
+  .v-bad { background:#ffd7d4; color:#8f1b13; }
+  .v-mid { background:#fff1c9; color:#7a5200; }
+  pre.mermaid { background:transparent; text-align:center; margin:4px 0; }
+  pre.code { background:#f6f8fa; border:1px solid #e3e6ea; border-radius:8px; padding:10px 12px; overflow-x:auto;
+             font:12.5px/1.45 ui-monospace,Menlo,monospace; }
+  code { background:#f0f2f4; padding:1px 5px; border-radius:4px; font-size:12.5px; }
+  .rulebox { border:1px solid #e3e6ea; border-left:4px solid #0b57d0; background:#f7f9fb;
+             border-radius:8px; padding:12px 16px; font-size:14px; margin:12px 0; }
+  .rulebox.warn { border-left-color:#c2410c; background:#fff8f4; }
+  .rulebox.ok { border-left-color:#16a34a; background:#f4fbf6; }
+  .tbl { overflow-x:auto; }
+  table { border-collapse:collapse; width:100%; font-size:13.5px; margin:10px 0; }
+  th,td { border:1px solid #e3e6ea; padding:7px 10px; text-align:left; vertical-align:top; }
+  th { background:#f2f4f6; }
+  td.bad { background:#ffd7d4; }
+  td.ok { background:#d7f0dd; }
+  td.mid { background:#fff1c9; }
+  td.na { background:#eef0f2; color:#5c6570; }
+  td.mono, .mono { font-family:ui-monospace,Menlo,monospace; font-size:12.5px; }
+  .note { color:#5c6570; font-size:12.5px; }
+  .tag { display:inline-block; font-size:11px; font-weight:600; border-radius:5px; padding:1px 6px; margin-right:4px; }
+  .t-code { background:#e3edff; color:#0b3d91; }
+  .t-data { background:#e6f4ea; color:#0a5d2a; }
+  .t-web { background:#f3e8ff; color:#5b21b6; }
+  .t-inf { background:#fff1c9; color:#7a5200; }
+  nav.toc { font-size:13.5px; columns:2; column-gap:30px; margin:8px 0 4px; }
+  nav.toc a { color:#0b57d0; text-decoration:none; }
+  ol.tight li, ul.tight li { margin:3px 0; }
+</style>
+</head>
+<body>
+
+<h1>iOS App A11y on WebView content, with an Angular deep-dive</h1>
+<p class="sub">iOS on-device dylib scans (<code>ios_app_patcher</code> · BrowserStackInjector, <code>origin/master @ e8bc1c3</code>, rule engine 2.3.x) ·
+what is supported, what is not, and whether support can be added reliably · evidence tags:
+<span class="tag t-code">code</span> read from source ·
+<span class="tag t-data">prod data</span> BigQuery <code>app_accessibility.*</code>, last 7–30 days ·
+<span class="tag t-web">research</span> WebKit / Apple / Angular / Ionic primary sources ·
+<span class="tag t-inf">inference</span> reasoned, still to be confirmed on a device · 30 Sep 2026</p>
+
+<nav class="toc">
+  <a href="#tldr">0 · TL;DR</a><br/>
+  <a href="#pipeline">1 · How an iOS scan sees the screen</a><br/>
+  <a href="#webview">2 · What the scanner captures at a WebView</a><br/>
+  <a href="#impact">3 · Production impact: hybrid screens report clean</a><br/>
+  <a href="#why">4 · Why: WebKit's out-of-process AX tree</a><br/>
+  <a href="#rules">5 · Rule-by-rule matrix (37 iOS rules)</a><br/>
+  <a href="#existing">6 · Existing web code is suppression, not evaluation</a><br/>
+  <a href="#options">7 · Can support be added reliably? Options compared</a><br/>
+  <a href="#design">8 · Recommended design: in-webview DOM layer</a><br/>
+  <a href="#angular">9 · Angular: support and limitations</a><br/>
+  <a href="#validate">10 · Validation plan (Angular POC)</a><br/>
+  <a href="#refs">11 · Evidence appendix</a>
+</nav>
+
+<!-- ============================================================ -->
+<h2 id="tldr">0 · TL;DR</h2>
+
+<div class="grid3">
+  <div class="col">
+    <h3>Today: web content is invisible</h3>
+    <p>The dylib walks <code>UIView.subviews</code> and UIAccessibility containers <b>in the app's own process</b>. A WKWebView's content lives in
+    WebKit's separate WebContent process. Under <code>WKContentView</code> the walker only ever gets <b>one unlabeled <code>AXRemoteElement</code> proxy</b>
+    covering the whole web area.</p>
+    <div class="verdict v-bad">0 of 37 rules evaluate in-page web elements</div>
+  </div>
+  <div class="col">
+    <h3>The failure mode is silent</h3>
+    <p>Nothing marks a web region as "not assessed", so a fully hybrid screen reads as <b>clean</b>. Capacitor-framework snapshots (typically Ionic/Angular)
+    average <b>0.02 failing rows each, against 5.09 for native</b>. A 100%-WebView Cordova screen got <b>pass</b> on every rule except app-orientation.</p>
+    <div class="verdict v-bad">false negatives that look like compliance</div>
+  </div>
+  <div class="col">
+    <h3>Can it be fixed? Yes, via the DOM</h3>
+    <p>Reliable path: from the dylib, inject a script into each WKWebView in an <b>isolated <code>WKContentWorld</code></b> (iOS 14+, bypasses page CSP).
+    It reads DOM semantics, rects and computed styles (axe-core or ports of our rules) and maps rects to screen points. Contrast stays pixel-verified on the screenshot.</p>
+    <div class="verdict v-ok">23 rules High, 10 Medium, 3 N/A (§5)</div>
+  </div>
+</div>
+
+<div class="rulebox warn">
+<b>Hard limits, whatever we build:</b> <code>SFSafariViewController</code> and <code>ASWebAuthenticationSession</code> are out-of-process and opaque to the host app.
+Closed shadow roots, <code>&lt;canvas&gt;</code>/WebGL UIs (e.g. Flutter-web CanvasKit) and truly cross-process iframes (WebKit site isolation) cannot be read from the page.
+They should be reported as <b>"web content not assessed"</b>, never as pass.
+</div>
+
+<div class="rulebox">
+<b>Angular in one line:</b> <b>NativeScript-Angular</b> renders real UIKit and is supported today like native. Every other Angular-on-iOS shape
+(<b>Ionic + Capacitor</b>, <b>Ionic/Cordova</b>, an Angular site inside an app's WKWebView) is WebView content and is currently blind.
+Angular adds little difficulty on top of "any SPA in a WKWebView": open shadow roots (Ionic/Stencil, <code>ViewEncapsulation.ShadowDom</code>),
+SPA route changes as scan triggers, and a usable "DOM is stable" signal (<code>getAllAngularTestabilities().whenStable</code> when present). §9.
+</div>
+
+<!-- ============================================================ -->
+<h2 id="pipeline">1 · How an iOS scan sees the screen</h2>
+<p class="sub">The IPA is re-signed by <code>codesigner</code> with <code>BrowserStackInjector.framework</code> embedded. Rails → realmobile → the dylib's in-app TCP server.
+The Android talkback path is shown for contrast; it is out of scope here.</p>
+
+<pre class="mermaid">
+flowchart LR
+  R["Rails ScanController#scan<br/>Util.get_snapshot_details"] --> RM["realmobile<br/>fetch_accessibility_info"]
+  RM -- "dylib TCP up<br/>(normal path)" --> T["dylib TcpServer<br/>GET /accessibility_info?on_device=true"]
+  RM -- "fallback: dylib not running<br/>/ app not uploaded" --> W["WDA /bs/get_snapshot_details<br/>(XCUITest AX tree, Ruby rules)"]
+  T --> S["screenshot (keyWindow)<br/>+ 1 full-screen Vision OCR"]
+  S --> V["processViewIteratively<br/>DFS over UIView.subviews<br/>+ accessibilityChildrenOf()"]
+  V --> E["BSRuleEngine: 37 rules on device<br/>+ aiCandidates → TCG"]
+  E --> P["POST snapshot → Rails<br/>maybe_persist_inline_rule_results"]
+  style V fill:#fff1c9
+</pre>
+
+<div class="grid2">
+  <div class="col">
+    <h3>iOS (this page) <span class="tag t-code">code</span></h3>
+    <ul class="tight">
+      <li>Capture is <b>synchronous on the main thread</b>. The TCP listener runs on <code>.main</code> (<code>TcpServer.swift:375</code>).</li>
+      <li>Children come from <code>subviews</code>, plus <code>accessibilityElements</code> / <code>accessibilityElementCount()</code> for non-UIView proxies
+      (<code>accessibilityChildrenOf</code>, <code>AppAccessibility.swift:1782</code>). This was built for Flutter <code>SemanticsObject</code>s.</li>
+      <li>Framework is passed in (<code>framework=</code>), not detected. The engine enum is <code>native | flutter | react_native | cordova</code>, and
+      <code>cordova</code> is never read by any rule (<code>BSRuleEngine.swift:27</code>).</li>
+    </ul>
+  </div>
+  <div class="col">
+    <h3>Android (contrast only) <span class="tag t-code">code</span></h3>
+    <ul class="tight">
+      <li>talkback's <code>AccessibilityService</code> reads the system <code>AccessibilityNodeInfo</code> tree. Chromium's AX bridge exposes <b>WebView DOM
+      nodes as virtual nodes</b> ("the only representation of real content", <code>BSRuleHelpers.kt</code>).</li>
+      <li>So Android already <i>sees</i> web elements and has web carve-outs (focus order, ad WebViews). iOS has no equivalent input.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="webview">2 · What the scanner captures at a WebView</h2>
+
+<h3>2a · Code <span class="tag t-code">code</span></h3>
+<p>The only WebView special case in capture is a short-circuit that gives up on text, colour and font
+(<code>AppAccessibility.swift:3400</code>, <code>extractTextColorFontAndMetrics</code>):</p>
+<pre class="code">if view is WKWebView {
+  NSLog("[AppAccessibility] Detected WKWebView - text extraction requires JavaScript evaluation")
+  // For WKWebView, text/color extraction would require async JS evaluation
+  // which is not suitable for synchronous property extraction
+  return (nil, nil, nil, nil, nil, nil)
+}</pre>
+<ul class="tight">
+  <li>There is no <code>evaluateJavaScript</code>, <code>WKUserScript</code> or <code>WKScriptMessageHandler</code> anywhere in the dylib. Nothing reads the DOM, and nothing forces the web AX tree to build.</li>
+  <li><code>WKContentView</code>, <code>WKCompositingView</code>, <code>WKChildScrollView</code>, <code>UIWebView</code>, <code>SFSafariViewController</code> and <code>_UIRemoteView</code> have <b>no special-casing</b>. They are walked as generic UIViews
+  and are not in the capture-time OCR class allow-list (<code>:2737</code>). Full-screen OCR only enriches existing text nodes; it never creates nodes.</li>
+  <li><code>WKWebViewInspectableMocker</code> (forces <code>isInspectable</code>, iOS 16.4+) is gated on the <code>webviewInspect</code> patch flag for <b>App Live LCA / Appium contexts</b>.
+  Nothing in App A11y reads it.</li>
+</ul>
+
+<h3>2b · Production snapshots <span class="tag t-data">prod data</span></h3>
+<p class="sub">A sample of 25 random iOS snapshots containing <code>WKContentView</code> (last 7 days), with every descendant of <code>WKContentView</code> counted:</p>
+<div class="tbl"><table>
+<tr><th>Node type under WKContentView</th><th>Count (25 snapshots)</th><th>Non-empty label</th><th><code>isWDAccessible=1</code></th><th>What it is</th></tr>
+<tr><td class="mono">WKCompositingView</td><td>162</td><td>0</td><td>0</td><td>GPU compositing layers (pixels only)</td></tr>
+<tr><td class="mono">UIView</td><td>70</td><td>0</td><td>0</td><td>WebKit internal containers</td></tr>
+<tr><td class="mono"><b>AXRemoteElement</b></td><td><b>25 (exactly 1 per snapshot)</b></td><td class="bad"><b>0</b></td><td class="bad"><b>0</b></td><td>Proxy token for the WebContent-process AX tree. Its frame = the whole web area, label/value/traits empty</td></tr>
+<tr><td class="mono">WKVisibilityPropagationView, WKTransformView, WKChildScrollView</td><td>26</td><td>0</td><td>0</td><td>layout plumbing</td></tr>
+<tr><td class="mono">_UITextSelection*, _UICursor*, _UIScrollViewScrollIndicator</td><td>~30</td><td>2 (scroll bars)</td><td>0</td><td>UIKit text-interaction chrome</td></tr>
+<tr><td><b>DOM-derived elements</b> (buttons, links, inputs, text, images)</td><td class="bad"><b>0</b></td><td class="bad">—</td><td class="bad">—</td><td></td></tr>
+</table></div>
+<p class="note">Representative path: <code>FlutterView › … › WebViewImpl › WKScrollView › WKContentView › AXRemoteElement {rect 0,122 402×654, label "", traits []}</code>.
+The proxy does get captured, because <code>accessibilityChildrenOf</code> picks it up. Resolving its children needs an out-of-process AX client, which the dylib is not (§4).</p>
+
+<div class="rulebox warn">
+<b>Settled:</b> in-process UIAccessibility enumeration of a WKWebView yields <b>no web elements</b>. The code shows it, 25/25 production snapshots show it,
+and the WebKit source explains it (§4).
+</div>
+
+<!-- ============================================================ -->
+<h2 id="impact">3 · Production impact: hybrid screens report clean <span class="tag t-data">prod data</span></h2>
+
+<p class="sub">iOS snapshots, last 30 days, grouped by the <code>framework</code> value realmobile reports. Rule rows joined from <code>app_a11y_rule_results</code> (status 2 = fail).</p>
+<div class="tbl"><table>
+<tr><th>framework</th><th>snapshots</th><th>with WKContentView</th><th>apps (with WK / total)</th><th>avg rule rows / snapshot</th><th>avg <b>fail</b> rows / snapshot</th><th>% snapshots with ≤1 fail</th></tr>
+<tr><td>native</td><td>5,754</td><td>276 (5%)</td><td>28 / 114</td><td>23.7</td><td class="ok">5.09</td><td>41%</td></tr>
+<tr><td>react-native / react_native<sup>*</sup></td><td>6,806</td><td>865 (13%)</td><td>23 / 55</td><td>19.9</td><td>1.46</td><td>62%</td></tr>
+<tr><td>flutter</td><td>1,599</td><td>599 (37%)</td><td>3 / 12</td><td>17.3</td><td>0.92</td><td>77%</td></tr>
+<tr><td>nativescript</td><td>109</td><td>10 (9%)</td><td>1 / 1</td><td>15.3</td><td>1.29</td><td>66%</td></tr>
+<tr><td><b>cordova</b></td><td>234</td><td><b>177 (76%)</b></td><td>3 / 3</td><td>9.8</td><td class="bad">0.91</td><td class="bad">77%</td></tr>
+<tr><td><b>capacitor</b></td><td>102</td><td><b>101 (99%)</b></td><td>3 / 3</td><td class="bad">7.3</td><td class="bad"><b>0.02</b></td><td class="bad"><b>100%</b></td></tr>
+</table></div>
+
+<div class="grid2">
+  <div class="col">
+    <h3>Worked example: a Cordova registration app (iPad)</h3>
+    <p class="mono">WKWebView rect 1210×834 = 100% of screen<br/>under WKContentView: 46 nodes, 0 labels</p>
+    <p>Results: <code>app-orientation-support</code> <b>fail</b>. Every other emitted rule is <b>pass</b>: reading order, visual order, overlapping, responsive-containers, state-in-label.</p>
+    <div class="verdict v-bad">A full web form scored as nearly clean. Nothing in it was actually examined.</div>
+  </div>
+  <div class="col">
+    <h3>Many WebViews are invisible helpers</h3>
+    <p>Rects in the sample: grocery app <code>WKWebView 0×0</code>, restaurant app <code>RNCWKWebView 1×0</code>, remittance app <code>InternalWebView 430×0</code>
+    (analytics, payment SDKs, pre-warmed sheets). Real web UI in the sample: 3 apps, covering 79%, 100% and 100% of the screen.</p>
+    <div class="verdict v-mid">Any fix must gate on <i>visible</i> web area, or zero-size WebViews add noise.</div>
+  </div>
+</div>
+<p class="note"><sup>*</sup> averages for the <code>react-native</code> value (5,372 joined snapshots); counts combine both spellings. Caveat: fewer failures on hybrid frameworks is partly the native chrome being simpler. The Capacitor 0.02 figure (1–2 fails in 102 snapshots) with 99% WebView presence
+is only explicable by content not being assessed. That matches §2.</p>
+
+<!-- ============================================================ -->
+<h2 id="why">4 · Why: WebKit's AX tree lives in another process <span class="tag t-web">research</span></h2>
+
+<pre class="mermaid">
+flowchart LR
+  subgraph APP["App process (our dylib runs here)"]
+    WV["WKWebView"] --> CV["WKContentView<br/>registers ax-uuid + ax-pid<br/>(no accessibilityElementCount impl)"]
+    CV --> AXR["AXRemoteElement<br/>(token only: pid, uuid, machPort)"]
+    D["BrowserStackInjector walk"] -. "sees" .-> AXR
+  end
+  subgraph WC["WebContent process"]
+    PO["WKAccessibilityWebPageObject"] --> WR["WebAccessibilityObjectWrapperIOS<br/>label · traits · frame · ARIA per DOM node"]
+    DOM["DOM + JS engine"] --> WR
+  end
+  subgraph AXC["Out-of-process AX client"]
+    VO["VoiceOver / XCTest / WDA"]
+  end
+  VO -- "resolves remote token (XPC/mach)" --> PO
+  AXR -. "token matches" .- PO
+  D == "JS injection<br/>(WKContentWorld)" ==> DOM
+  style D fill:#fff1c9
+  style AXR fill:#ffd7d4
+  style DOM fill:#d7f0dd
+</pre>
+
+<ul class="tight">
+  <li><code>WKContentView</code> does not implement <code>accessibilityElementCount</code>/<code>accessibilityElementAtIndex</code>. It only registers <code>ax-uuid</code>/<code>ax-pid</code> tokens so that
+  the accessibility bundle can bind to the WebContent process. <a href="https://github.com/WebKit/WebKit/blob/main/Source/WebKit/UIProcess/ios/WKContentView.mm">WKContentView.mm</a></li>
+  <li>The per-node API (label, traits, frame, ARIA) is implemented by <code>WebAccessibilityObjectWrapperIOS</code> <b>inside the WebContent process</b>.
+  <a href="https://github.com/WebKit/WebKit/blob/main/Source/WebCore/accessibility/ios/WebAccessibilityObjectWrapperIOS.mm">WebAccessibilityObjectWrapperIOS.mm</a> ·
+  <a href="https://github.com/WebKit/WebKit/blob/main/Source/WebKit/WebProcess/WebPage/ios/WebPageIOS.mm">WebPageIOS.mm</a></li>
+  <li><code>AXRemoteElement</code> (private AXRuntime) holds <code>remotePid</code>/<code>machPort</code>/<code>uuid</code>. It is a proxy only.
+  <a href="https://github.com/JaviSoto/iOS10-Runtime-Headers/blob/master/PrivateFrameworks/AXRuntime.framework/AXRemoteElement.h">AXRemoteElement.h</a>.
+  Texture hit exactly this: "WKWebView's accessibility elements are handled out-of-process". <a href="https://github.com/TextureGroup/Texture/pull/1955">Texture#1955</a></li>
+  <li>The web AX tree is <b>lazy</b>. <code>Document::axObjectCache()</code> returns null until an AX client enables accessibility, and the WebContent sandbox only unblocks AX mach services after
+  <code>kAXSApplicationAccessibilityEnabledNotification</code>. <a href="https://github.com/WebKit/WebKit/blob/main/Source/WebCore/dom/Document.cpp">Document.cpp</a> ·
+  <a href="https://github.com/WebKit/WebKit/blob/main/Source/WebKit/UIProcess/Cocoa/WebProcessProxyCocoa.mm">WebProcessProxyCocoa.mm</a></li>
+  <li>This is why XCTest/WDA <i>can</i> list web elements: it is the out-of-process client. It is also why WDA page source with web content is slow and sometimes truncated.
+  <a href="https://github.com/appium/appium/issues/9408">appium#9408</a> · <a href="https://appium.github.io/appium-xcuitest-driver/11.0/troubleshooting/wda-slowness/">WDA slowness</a></li>
+</ul>
+
+<!-- ============================================================ -->
+<h2 id="rules">5 · Rule-by-rule matrix: 37 registered iOS rules</h2>
+<p class="sub">"Today" is the on-device verdict for in-page web elements. "With DOM layer" is how reliably the rule can be ported to the §8 design (DOM semantics + rects + computed style + screenshot).
+<b>High</b> = deterministic DOM signal with a known web equivalent (axe rule id shown). <b>Med</b> = needs heuristics/AI or has known gaps. Source: <code>BSRuleRegistry.swift:55-104</code>, <code>rule_specs.json</code>.</p>
+
+<div class="tbl"><table>
+<tr><th>rule_id</th><th>WCAG</th><th>Type</th><th>Today on web content</th><th>Why (code)</th><th>With DOM layer</th><th>Web signal / axe equivalent</th></tr>
+
+<tr><td class="mono">touch-target-size</td><td>2.5.5 AAA</td><td>det</td><td class="bad">blind</td><td>web controls are not nodes; WK* classes are not interactive (<code>BSRuleHelpers:130</code>)</td><td class="ok">High</td><td>rect of a/button/input/[role]/[tabindex]; ≥44 CSS px (1 CSS px ≈ 1 pt at zoom 1)</td></tr>
+<tr><td class="mono">touch-target-size-and-spacing</td><td>2.5.8 AA</td><td>det</td><td class="bad">blind</td><td>same</td><td class="ok">High</td><td><code>target-size</code> (24 CSS px, inline &amp; UA-control exceptions)</td></tr>
+<tr><td class="mono">accessible-input-field-label</td><td>3.3.2 / 1.3.5</td><td>det → AI</td><td class="bad">blind</td><td>placeholder read only from UITextField (<code>:2931</code>)</td><td class="ok">High</td><td><code>label</code>, <code>label-title-only</code>; AI purpose from label+placeholder</td></tr>
+<tr><td class="mono">input-type-for-input-field</td><td>1.3.5 AA</td><td>det → AI</td><td class="bad">blind</td><td>isSecureTextEntry is UIKit-only</td><td class="ok">High</td><td><code>autocomplete-valid</code> + <code>type</code>/<code>inputmode</code> vs purpose</td></tr>
+<tr><td class="mono">editable-element-content-label</td><td>1.3.1 / 4.1.2</td><td>det + AI</td><td class="bad">blind</td><td>class-based editable set</td><td class="ok">High</td><td>accessible name of input/textarea/[contenteditable]</td></tr>
+<tr><td class="mono">label-at-front</td><td>BP</td><td>det</td><td class="bad">blind</td><td>no web node (Ruby excluded ROLE_WEB_VIEW anyway)</td><td class="ok">High</td><td>accessible name vs visible text prefix</td></tr>
+<tr><td class="mono">label-in-name</td><td>2.5.3 A</td><td>det (OCR)</td><td class="bad">blind + guard</td><td>web-overlay guard only <i>skips</i> native nodes (<code>BSRules:288-457</code>)</td><td class="mid">Med</td><td><code>label-content-name-mismatch</code> (experimental in axe)</td></tr>
+<tr><td class="mono">duplicate-element-content-label</td><td>4.1.2 A</td><td>det</td><td class="bad">blind</td><td>—</td><td class="ok">High</td><td>same name across distinct interactive targets</td></tr>
+<tr><td class="mono">missing-view-type-in-spoken-output</td><td>4.1.2 A</td><td>det</td><td class="bad">blind</td><td>traits-based</td><td class="mid">Med</td><td>computed role present; <code>&lt;div (click)&gt;</code> needs listener detection (see §8)</td></tr>
+<tr><td class="mono">screen-orientation</td><td>1.3.4</td><td>det (disabled)</td><td class="na">no-op everywhere</td><td><code>supportedOrientations</code> always empty</td><td class="na">N/A</td><td>—</td></tr>
+<tr><td class="mono">text-truncation</td><td>1.4.4 AA</td><td>det</td><td class="bad">blind</td><td>UILabel/UITextView/UITextField clip heuristics only</td><td class="ok">High</td><td><code>text-overflow:ellipsis</code> / <code>-webkit-line-clamp</code> with <code>scrollWidth&gt;clientWidth</code>. Measured, which beats the native prediction</td></tr>
+<tr><td class="mono">interactable-element-content-label</td><td>4.1.2 / 2.4.6</td><td>det + AI</td><td class="bad">blind</td><td>—</td><td class="ok">High</td><td><code>button-name</code>, <code>link-name</code>, <code>aria-command-name</code>; AI quality on crop</td></tr>
+<tr><td class="mono">imageview-element-content-label</td><td>1.1.1 A</td><td>det + AI</td><td class="bad">blind</td><td>image trait / *ImageView only</td><td class="ok">High</td><td><code>image-alt</code>, <code>role-img-alt</code>, <code>svg-img-alt</code>; AI alt quality on rect crop</td></tr>
+<tr><td class="mono">switch-element-content-label</td><td>1.3.1 A</td><td>det + AI</td><td class="bad">blind</td><td>Toggle trait / *Switch class</td><td class="ok">High</td><td>role=switch, checkbox, <code>ion-toggle</code>, <code>mat-slide-toggle</code> names</td></tr>
+<tr><td class="mono">state-in-content-label</td><td>4.1.2 A</td><td>det</td><td class="bad">blind</td><td>—</td><td class="ok">High</td><td>name contains "selected/checked/on" while aria-checked/selected/pressed exists</td></tr>
+<tr><td class="mono">view-type-in-content-label</td><td>4.1.2 A</td><td>det</td><td class="bad">blind</td><td>traits.first vs label</td><td class="ok">High</td><td>name contains role word ("button", "link") while role is set</td></tr>
+<tr><td class="mono">button-element-content-label-capitalization</td><td>3.1.6 AAA</td><td>det</td><td class="bad">blind</td><td>—</td><td class="ok">High</td><td>accessible name + CSS <code>text-transform</code></td></tr>
+<tr><td class="mono">special-character-element-content-label</td><td>BP</td><td>det</td><td class="bad">blind</td><td>—</td><td class="ok">High</td><td>accessible name characters</td></tr>
+<tr><td class="mono">images-of-text</td><td>1.4.5 AA</td><td>AI</td><td class="bad">blind</td><td>candidates native-only (<code>BSAITask:57</code>)</td><td class="mid">Med</td><td>AI on <code>&lt;img&gt;</code>, <code>background-image</code>, <code>&lt;svg&gt;</code> crops</td></tr>
+<tr><td class="mono">meaningful-reading-order</td><td>1.3.2 / 2.4.3</td><td>AI</td><td class="mid">partial / often skipped</td><td>fires only if a native accessible node exists (<code>BSAIRules:465</code>)</td><td class="mid">Med</td><td>DOM/AX order vs visual order, then AI</td></tr>
+<tr><td class="mono">meaningful-visual-order</td><td>1.3.2 A</td><td>AI</td><td class="bad">blind; FP-risk</td><td>native-only sequence judged against a screenshot full of web pixels</td><td class="mid">Med</td><td>merged native+web sequence</td></tr>
+<tr><td class="mono">missing-heading</td><td>1.3.1 A</td><td>AI</td><td class="bad">blind</td><td>staticText leaves only</td><td class="ok">High</td><td><code>page-has-heading-one</code>, h1–h6/role=heading; AI for visual headings</td></tr>
+<tr><td class="mono">incorrect-heading</td><td>1.3.1 / 2.4.6</td><td>AI</td><td class="bad">blind</td><td>—</td><td class="mid">Med</td><td><code>heading-order</code>, <code>empty-heading</code>, then AI</td></tr>
+<tr><td class="mono">link-text-purpose</td><td>2.4.4 A</td><td>det + AI</td><td class="bad">blind (largest gap)</td><td><code>link</code> trait only. On hybrid apps, links are almost all web</td><td class="ok">High</td><td><code>link-name</code>, "click here/read more" + AI with surrounding DOM text</td></tr>
+<tr><td class="mono">app-orientation-support</td><td>1.3.4 AA</td><td>det, app-level</td><td class="ok">works</td><td>Info.plist, web-agnostic</td><td class="na">—</td><td>unchanged</td></tr>
+<tr><td class="mono">text-magnification</td><td>1.4.4 AA</td><td>det</td><td class="bad">blind</td><td>WKWebView has no text (guard <code>BSAdditional:97</code>)</td><td class="mid">Med</td><td>font not <code>-apple-system-*</code> text style + fixed px, <code>-webkit-text-size-adjust:none</code>; best: dual-size capture</td></tr>
+<tr><td class="mono">focus-order-for-interactive-elements</td><td>2.4.3 A</td><td>det</td><td class="na">no-op on iOS</td><td>caption data always nil on device (<code>BSAIRules:461</code>)</td><td class="mid">Med</td><td><code>tabindex</code> &gt; 0, DOM order vs visual; route-change focus (Angular)</td></tr>
+<tr><td class="mono">keyboard-focus-for-interactive-elements</td><td>2.1.1 A</td><td>det</td><td class="bad">blind</td><td>—</td><td class="mid">Med</td><td><code>scrollable-region-focusable</code>, <code>nested-interactive</code>; click-without-tabindex needs listener hook</td></tr>
+<tr><td class="mono">interactive-element-accessibility</td><td>1.3.3 / 4.1.2</td><td>det (catalog-disabled)</td><td class="bad">blind</td><td>fixed UIKit class set</td><td class="ok">High</td><td><code>aria-allowed-role</code>, <code>aria-required-attr</code>, <code>aria-hidden-focus</code></td></tr>
+<tr><td class="mono">interactive-element-unsupported-type</td><td>4.1.2</td><td>det</td><td class="bad">blind</td><td>native allow-list</td><td class="ok">High</td><td><code>aria-roles</code>, <code>aria-valid-attr-value</code></td></tr>
+<tr><td class="mono">screen-reader-for-interactive-elements</td><td>2.4.3</td><td>det (pass-only)</td><td class="na">pass-only</td><td>—</td><td class="na">N/A</td><td>—</td></tr>
+<tr><td class="mono">overlapping-interactive-elements</td><td>1.3.2 / 2.5.8</td><td>det</td><td class="bad">blind</td><td>frames of native nodes only</td><td class="ok">High</td><td>rect intersection + <code>elementFromPoint</code> occlusion</td></tr>
+<tr><td class="mono">responsive-containers</td><td>1.4.10 AA</td><td>det</td><td class="mid">misleading PASS rows</td><td>WK internals reach <code>WKScrollView</code> ("ScrollView" ⇒ pass) before <code>WKWebView</code> (ignored); wrappers like <code>RNCWKWebView</code> can FAIL (<code>BSAdditional:838-901</code>)</td><td class="ok">High</td><td>document <code>scrollWidth &gt; innerWidth</code>, fixed-width containers; add a web exemption to the native rule</td></tr>
+<tr><td class="mono">traversal-order-cycle</td><td>2.4.3</td><td>det</td><td class="na">always N/A on iOS</td><td><code>:915</code></td><td class="na">N/A</td><td>—</td></tr>
+<tr><td class="mono">two-dimensional-scroll</td><td>1.4.10 AA</td><td>det</td><td class="bad">blind</td><td>exact <code>UIScrollView</code>/<code>UICollectionView</code>; <code>WKScrollView</code> never matches</td><td class="ok">High</td><td>horizontal overflow of body / non-carousel regions: the classic reflow failure</td></tr>
+<tr><td class="mono">text-color-contrast</td><td>1.4.3 AA</td><td>det (pixel-verified)</td><td class="bad">blind; FP-risk</td><td>WKWebView text = nil; stale native labels under a web overlay are sampled from web pixels (no <code>isCovered</code> check here)</td><td class="ok">High</td><td><code>color-contrast</code> (CSS), confirmed with the <b>screenshot swatch</b> on the mapped rect</td></tr>
+<tr><td class="mono">non-text-color-contrast</td><td>1.4.11 AA</td><td>det (pixel)</td><td class="bad">blind</td><td>interactive/image native nodes only</td><td class="mid">Med</td><td>screenshot swatch on control/icon rects (borders, focus rings)</td></tr>
+</table></div>
+<p class="note">Totals: <b>High 23 · Med 10 · N/A 3</b>, plus app-orientation-support, which already works (37). Not ported to iOS in either engine, so out of scope: checkbox-element-content-label, readable-text-size, readable-text-spacing, image-view contrast.
+axe-core rule ids are from <a href="https://github.com/dequelabs/axe-core/blob/develop/doc/rule-descriptions.md">axe rule descriptions</a>.</p>
+
+<!-- ============================================================ -->
+<h2 id="existing">6 · Existing web code is suppression, not evaluation <span class="tag t-code">code</span></h2>
+<div class="tbl"><table>
+<tr><th>Code</th><th>What it does</th><th>Effect on web content</th></tr>
+<tr><td class="mono">BSRules.swift:288-457<br/>ocrTextShadowedByWebOverlay · isWebViewFamily · isFullBleedDegenerate</td>
+<td>label-in-name skips OCR'd native nodes under a full-bleed WebView whose frame was captured as 0 in one axis (Klarna payment sheets in a banking app)</td>
+<td>Removes FPs on <i>native</i> nodes. Evaluates nothing web.</td></tr>
+<tr><td class="mono">isCovered (AppAccessibility.swift:2990)</td><td>hit-test at centre lands in a foreign subtree ⇒ covered; label-in-name skips</td><td>Same: a native-FP guard. <b>Not</b> applied in text-color-contrast or button-capitalization (which prefers OCR text)</td></tr>
+<tr><td class="mono">BSRuleResponsiveContainers.ignoredAncestors</td><td>exact-match ignore of "WKWebView", "WebView"</td><td>Web internals reach WKScrollView first ⇒ <b>PASS</b> rows that look like assessment</td></tr>
+<tr><td class="mono">AppFramework enum</td><td><code>cordova</code> exists; <code>capacitor</code>, <code>ionic</code> do not. Unknown values map to native</td><td>realmobile already reports <code>capacitor</code>/<code>cordova</code> (§3), but no rule branches on it</td></tr>
+</table></div>
+<div class="rulebox warn"><b>Remaining false-positive class, native-over-web:</b> a stale or underlying native label whose OCR crop or contrast swatch comes from a web overlay's pixels.
+It is guarded only in label-in-name. A web-region mask built from the §8 layer (or simply the <code>AXRemoteElement</code> frame we already capture) would close it for every pixel-based rule.</div>
+
+<!-- ============================================================ -->
+<h2 id="options">7 · Can support be added reliably? Options compared</h2>
+<div class="tbl"><table>
+<tr><th>Option</th><th>How</th><th>Coverage</th><th>Reliability</th><th>Verdict</th></tr>
+<tr><td><b>A. Resolve AXRemoteElement in-process</b></td><td>private AXRuntime calls from the dylib to act as an AX client of the WebContent pid</td>
+<td>VoiceOver-equivalent tree</td><td class="bad">private SPI; needs AX-client entitlement and sandbox unblock; lazy tree (§4); breaks across iOS releases</td><td class="bad">No</td></tr>
+<tr><td><b>B. Route WebView screens to WDA</b></td><td>use the existing realmobile fallback (<code>/bs/get_snapshot_details</code>, XCUITest tree + Ruby rules)</td>
+<td>web elements as generic Other/StaticText/Button, no ARIA, no CSS</td><td class="mid">slow, truncation on big DOMs (appium#9408), loses the dylib's rendering data and rule parity. <span class="tag t-inf">inference</span> the working-tree fixture shows web children</td><td class="mid">Stop-gap only</td></tr>
+<tr><td><b>C. In-webview DOM layer</b> (recommended)</td><td>dylib injects JS into each visible WKWebView in an isolated <code>WKContentWorld</code>; returns nodes with role, name, states, rect, computed styles</td>
+<td>full DOM semantics + CSS; open shadow roots; same-process iframes</td><td class="ok">public API (iOS 14+); CSP-proof in isolated worlds; deterministic; precedent exists (the Flutter <code>ensureSemanticsEnabled</code> + 3 s poll)</td><td class="ok">Yes</td></tr>
+<tr><td><b>D. Screenshot-only AI vision</b></td><td>send the web-region crop to TCG for label/contrast/heading judgement</td>
+<td>visual only: no names, roles or states</td><td class="mid">non-deterministic, costly, cannot check what VoiceOver says</td><td class="mid">Complement to C for images-of-text / visual headings</td></tr>
+<tr><td><b>E. Web Inspector protocol off-device</b></td><td>force <code>isInspectable</code> (mocker exists), drive it from realmobile via the remote debugger, run axe</td>
+<td>same as C</td><td class="mid">needs the Settings › Safari › Web Inspector toggle, host-side plumbing, and coordinate mapping without native context</td><td class="mid">Possible; C is simpler and in-process</td></tr>
+</table></div>
+
+<!-- ============================================================ -->
+<h2 id="design">8 · Recommended design: in-webview DOM layer (option C)</h2>
+
+<pre class="mermaid">
+flowchart TB
+  A["/accessibility_info received"] --> B{"visible WKWebView(s)?<br/>area &gt; 0, on screen, not covered"}
+  B -- no --> N["native capture as today"]
+  B -- yes --> C["per webview: callAsyncJavaScript<br/>in WKContentWorld 'bstack-a11y'<br/>(all frames where reachable)"]
+  C --> D["page script: wait for stable DOM<br/>(Angular whenStable / MutationObserver quiet ≤ 1.5 s)"]
+  D --> E["walk DOM + open shadow roots:<br/>role, accessible name, states, rect,<br/>computed font/colour, overflow, tabindex"]
+  E --> F["return JSON (≤ N nodes) · timeout 3 s"]
+  F --> G["map CSS rect → WKContentView → window pt<br/>clip to webview visible bounds + native occluders"]
+  G --> H["graft as children of the webview node<br/>source=web, isWebElement=1"]
+  H --> I["rules: web branch per rule (§5)<br/>contrast = CSS + screenshot swatch"]
+  F -- "timeout / closed shadow / canvas / cross-origin" --> X["emit 'web content not assessed'<br/>region + reason (never PASS)"]
+  style C fill:#d7f0dd
+  style X fill:#fff1c9
+</pre>
+
+<div class="grid2">
+  <div class="col">
+    <h3>Why it is reliable <span class="tag t-web">research</span></h3>
+    <ul class="tight">
+      <li><b>Public API:</b> <code>callAsyncJavaScript(_:arguments:in:in:)</code> awaits Promises, and its completion runs on main (iOS 14+).
+      <a href="https://developer.apple.com/documentation/webkit/wkwebview/callasyncjavascript(_:arguments:in:in:completionhandler:)">Apple</a></li>
+      <li><b>Isolation:</b> <code>WKContentWorld</code> gives our globals a separate world over a shared DOM, so page scripts cannot tamper with them.
+      <a href="https://developer.apple.com/documentation/webkit/wkcontentworld">Apple</a></li>
+      <li><b>CSP-proof:</b> WebKit enables eval in any non-normal world regardless of page CSP
+      (<a href="https://github.com/WebKit/WebKit/blob/main/Source/WebCore/page/csp/ContentSecurityPolicy.cpp">ContentSecurityPolicy.cpp</a>).</li>
+      <li><b>Finding webviews:</b> the walker already meets every WKWebView, and the dylib already swizzles <code>WKWebView init</code> (inspectable mocker), so a weak registry is cheap.</li>
+      <li><b>Async precedent:</b> Flutter semantics enablement already spins the run loop with a bounded poll before capture (<code>AppAccessibility.swift:442-532</code>).</li>
+    </ul>
+  </div>
+  <div class="col">
+    <h3>Engineering points to get right</h3>
+    <ul class="tight">
+      <li><b>Threading:</b> never block main waiting on JS; the completion is delivered on main and would deadlock. Kick off JS first, then run the native walk, then merge with a timeout.</li>
+      <li><b>Coordinates</b> <span class="tag t-inf">inference, validate</span>: <code>getBoundingClientRect</code> + <code>scrollX/Y</code> gives document CSS px, which equals the WKContentView coordinate space.
+      Then <code>contentView.convert(_:to: nil)</code> handles zoomScale, contentOffset and insets. ×<code>scaleFactor</code> for screenshot px.</li>
+      <li><b>Frames:</b> <code>WKUserScript(forMainFrameOnly:false)</code> covers frames created after install. Existing cross-origin or site-isolated iframes may be unreachable, so report them as not assessed.</li>
+      <li><b>Shadow DOM:</b> recurse into <code>element.shadowRoot</code> (open). Closed roots are unreachable, so flag the host.</li>
+      <li><b>Accessible name:</b> use a proven implementation (axe-core's, MPL-2.0, ~0.5 MB minified) or <code>dom-accessibility-api</code>; don't hand-roll accname.</li>
+      <li><b>Visibility:</b> exclude <code>display:none</code>, <code>visibility:hidden</code> and <code>aria-hidden</code> subtrees for visual rules, but keep <code>cdk-visually-hidden</code> / sr-only text for name rules.</li>
+      <li><b>Noise gate:</b> skip 0×0 or 1×0 webviews (analytics/payment SDKs, §3) and webviews that are &lt;x% visible or covered.</li>
+      <li><b>Budget:</b> cap nodes (e.g. 1,500) and time (e.g. 3 s); record <code>webCapture{ms,nodes,truncated,reason}</code> in <code>performance</code>.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="rulebox">
+<b>Two build shapes:</b> (1) <b>Run axe-core in-page</b>: fastest to breadth (90+ rules, battle-tested), but its results must be mapped into our 37 rule ids and severities, and its contrast is CSS-only.
+(2) <b>Web branch per BS rule</b>: a small in-page extractor emits a normalised node list (role, name, states, rect, styles). The existing Swift rules each get a web branch, which keeps rule ids, messages
+and AI candidate plumbing identical and adds the screenshot-verified contrast. <b>Recommendation:</b> ship (2) for parity, and borrow axe's accname/role computation as a library.
+</div>
+
+<div class="rulebox warn">
+<b>Not coverable from the dylib, so report "not assessed" with a reason:</b> SFSafariViewController / ASWebAuthenticationSession (out of process; seen 9× in 7 days), closed shadow roots,
+canvas/WebGL UIs (Flutter-web CanvasKit, game engines, map tiles), site-isolated cross-origin iframes (payment widgets), PDF rendered inside WKWebView, and UIWebView (deprecated, 58 snapshots/7 d, in-process legacy — may be partially reachable but not worth building for).
+</div>
+
+<!-- ============================================================ -->
+<h2 id="angular">9 · Angular: support and limitations</h2>
+
+<h3>9a · How Angular reaches an iOS device, and what App A11y sees</h3>
+<div class="tbl"><table>
+<tr><th>Shape</th><th>Renders as</th><th>Detection signal</th><th>Today</th><th>With DOM layer</th></tr>
+<tr><td><b>Ionic + Angular on Capacitor</b> (most common)</td><td>one full-screen WKWebView, <code>capacitor://localhost</code>; Ionic components are Stencil web components with <b>open</b> shadow DOM (<code>ion-button</code>, <code>ion-item</code>, <code>ion-toggle</code>; <code>ion-input</code> scoped)</td>
+<td><code>CAPBridgeViewController</code>, <code>window.Capacitor</code>, <code>ion-app</code>, <code>[ng-version]</code></td><td class="bad">blind (0.02 fails/snapshot)</td><td class="ok">supported: pierce open roots; map <code>ion-*</code> hosts ↔ inner native controls</td></tr>
+<tr><td><b>Ionic/Angular on Cordova</b></td><td>WKWebView via <code>CDVWebViewEngine</code></td><td><code>CDVViewController</code>, <code>window.cordova</code></td><td class="bad">blind</td><td class="ok">supported</td></tr>
+<tr><td><b>Angular site inside a native app's WKWebView</b> (account, checkout, help pages)</td><td>WKWebView, https origin</td><td><code>[ng-version]</code> on root component</td><td class="bad">blind; native chrome only</td><td class="ok">main frame supported; embedded payment iframes partial</td></tr>
+<tr><td><b>Angular inside RN / Flutter webview</b></td><td><code>RNCWebView</code> / <code>WebViewImpl</code> → WKWebView</td><td>host class + <code>[ng-version]</code></td><td class="bad">blind (RNC* also reads as React Native)</td><td class="ok">supported</td></tr>
+<tr><td><b>NativeScript + Angular</b></td><td>real UIKit views (no WebView)</td><td><code>framework=nativescript</code> (109 snapshots / 30 d)</td><td class="ok">supported like native</td><td class="na">n/a</td></tr>
+<tr><td><b>Angular PWA in Safari / SFSafariViewController</b></td><td>Safari process</td><td>—</td><td class="na">outside the app process</td><td class="bad">not feasible from the dylib (use Web A11y)</td></tr>
+</table></div>
+
+<h3>9b · Angular-specific considerations for the DOM layer</h3>
+<div class="tbl"><table>
+<tr><th>Topic</th><th>Fact <span class="tag t-web">research</span></th><th>Implication</th></tr>
+<tr><td>Style encapsulation</td><td>Default <code>Emulated</code> uses attribute scoping, no shadow root. <code>ViewEncapsulation.ShadowDom</code> uses <code>attachShadow({mode:'open'})</code>
+(<a href="https://angular.dev/guide/components/styling">angular.dev</a>)</td><td class="ok">Always reachable. Only third-party closed roots are lost.</td></tr>
+<tr><td>Scan timing / stability</td><td><code>getAllAngularTestabilities()[i].whenStable()</code> exists for NgModule bootstrap. Standalone <code>bootstrapApplication</code> needs <code>provideProtractorTestingSupport()</code>, and zoneless is the default in v21+
+(<a href="https://angular.dev/api/core/Testability">Testability</a>, <a href="https://angular.dev/guide/zoneless">zoneless</a>)</td><td class="mid">Use it when present; fall back to MutationObserver quiescence + <code>document.readyState</code> + pending-fetch heuristic.</td></tr>
+<tr><td>SPA routing</td><td>Route change = <code>history.pushState</code>, no page load. Angular recommends moving focus on <code>NavigationEnd</code> (<a href="https://angular.dev/best-practices/a11y">a11y guide</a>)</td>
+<td>Continuous scan: hook pushState/popstate in our world to trigger rescans. New rule opportunity: focus not moved after navigation (2.4.3).</td></tr>
+<tr><td>Click handlers on non-semantic elements</td><td><code>&lt;div (click)="…"&gt;</code> is the #1 Angular a11y defect. Listeners are not discoverable from the DOM</td>
+<td class="mid">Detect with <code>cursor:pointer</code> / <code>tabindex</code> heuristics, or a <b>page-world</b> <code>addEventListener</code> hook at document start (intrusive; opt-in).</td></tr>
+<tr><td>Angular Material / CDK</td><td>CDK a11y ships <code>FocusTrap</code>, <code>LiveAnnouncer</code> (aria-live), <code>FocusMonitor</code>, <code>cdk-visually-hidden</code>
+(<a href="https://github.com/angular/components/blob/main/src/cdk/a11y/a11y.md">cdk/a11y</a>)</td>
+<td>Treat visually-hidden text as a name source, not as a missing label. <code>mat-icon</code> without <code>aria-hidden</code> feeds special-character/label rules.</td></tr>
+<tr><td>Ionic components</td><td>Real VoiceOver bugs: <code>ion-item button</code> content not read since iOS 17.1 (<a href="https://github.com/ionic-team/ionic-framework/issues/28471">#28471</a>), buttons in <code>ion-modal</code> ignored (<a href="https://github.com/ionic-team/ionic-framework/issues/26156">#26156</a>),
+initial focus on a hidden input (<a href="https://github.com/ionic-team/cordova-plugin-ionic-webview/issues/364">#364</a>)</td>
+<td class="mid">DOM truth ≠ what VoiceOver says here. Findings from DOM semantics are sound for WCAG, but a few VoiceOver-only defects need the AX-tree view (WDA) to reproduce.</td></tr>
+<tr><td>Text scaling</td><td>WKWebView follows Dynamic Type only via <code>font: -apple-system-body</code> (etc.)
+(<a href="https://useyourloaf.com/blog/using-dynamic-type-with-web-views/">useyourloaf</a>)</td>
+<td class="mid">text-magnification web branch: check the computed font family/size source; confirm with a dual-size capture.</td></tr>
+<tr><td>Framework markers</td><td>Root has <code>ng-version</code>. <code>ng-reflect-*</code> is dev-only and off by default since v20 (<a href="https://angular.dev/api/core/provideNgReflectAttributes">angular.dev</a>)</td>
+<td>Detect via <code>[ng-version]</code>; report <code>webFramework=angular|ionic|react|vue</code> next to the native <code>framework</code>.</td></tr>
+</table></div>
+
+<div class="rulebox ok">
+<b>Angular bottom line:</b> once the generic WKWebView DOM layer exists, Angular needs no framework-specific capture. It needs three small adapters:
+(1) stability wait via Testability, (2) open-shadow-root traversal plus the <code>ion-*</code> host mapping, (3) route-change rescan triggers.
+Pre-DOM-layer, the only honest improvement is to <b>emit "web content not assessed" for every visible WKWebView region</b>. That is cheap: we already capture the <code>AXRemoteElement</code> frame.
+</div>
+
+<!-- ============================================================ -->
+<h2 id="validate">10 · Validation plan: Angular POC</h2>
+<p class="sub">Next step, on request: a purpose-built Angular (+ Ionic/Capacitor) app on the Mac mini (<code>~/Work/AngularFrameworkPOC</code>), with one screen per rule family.
+Each scenario comes as a violating/passing pair, so the scan verdict can be scored both today (expect blind) and after the DOM layer.</p>
+<div class="tbl"><table>
+<tr><th>Rule family</th><th>Scenario pairs (violation ↔ fixed)</th></tr>
+<tr><td>Names &amp; labels</td><td>icon-only button without / with <code>aria-label</code>; <code>&lt;img&gt;</code> without alt / decorative alt=""; input with placeholder only / <code>&lt;label for&gt;</code>; <code>ion-toggle</code> unlabeled; duplicate "Edit" buttons; label contains "button"; label with state "selected"; label ≠ visible text (label-in-name); emoji/special chars; ALL-CAPS button</td></tr>
+<tr><td>Roles &amp; operability</td><td><code>&lt;div (click)&gt;</code> vs <code>&lt;button&gt;</code>; invalid role; <code>aria-hidden</code> on focusable; <code>tabindex="3"</code>; nested interactive; scrollable region not focusable</td></tr>
+<tr><td>Target size &amp; overlap</td><td>16×16 CSS px icon link vs 44×44; tightly packed chips; overlapping FAB over a list button</td></tr>
+<tr><td>Contrast</td><td>#999 on #fff text; placeholder contrast; text over image/gradient; low-contrast input border (non-text)</td></tr>
+<tr><td>Text &amp; reflow</td><td>fixed <code>font-size:14px</code> vs <code>-apple-system-body</code>; ellipsized label; <code>-webkit-text-size-adjust:none</code>; fixed-width 600px container (horizontal scroll)</td></tr>
+<tr><td>Structure &amp; order</td><td>no h1 / skipped levels; visual heading as bold div; CSS order/flex reversing reading order; route change without focus move</td></tr>
+<tr><td>Links &amp; forms</td><td>"click here" / "read more"; <code>autocomplete</code> missing on email/password; error message not associated</td></tr>
+<tr><td>Hard cases (expect "not assessed")</td><td>closed shadow root component; <code>&lt;canvas&gt;</code> chart; cross-origin iframe; SFSafariViewController launch; hidden 0×0 analytics webview (must be ignored)</td></tr>
+</table></div>
+
+<!-- ============================================================ -->
+<h2 id="refs">11 · Evidence appendix</h2>
+<h3>Code (ios_app_patcher <code>origin/master @ e8bc1c3</code>, BrowserStackInjector/BrowserStackInjector/)</h3>
+<ul class="tight mono">
+  <li>TcpServer.swift:123 /accessibility_info · :141 on_device · :144 framework · :375 main-queue listener</li>
+  <li>AppAccessibility.swift:1109 captureSingleAccessibilityTree · :1664 processViewIteratively · :1782 accessibilityChildrenOf · :1946 extractAccessibilityNodeProperties · :2737 OCR class allow-list · :2990 isCovered · :3400 WKWebView short-circuit · :3775 renderScreenshotData · :442-532 Flutter semantics poll</li>
+  <li>AppAccessibility/BSRules.swift:288-457 web-overlay guard · BSAdditionalRules.swift:838-901 responsive-containers ignoredAncestors · :940 two-dimensional-scroll class match · BSRuleEngine.swift:27 AppFramework · BSAIRules.swift:434-504 AI sequences · BSAITask.swift:57 candidate bbox</li>
+  <li>SwiftPatchLoader.swift:31,65 webviewInspect flag · WKWebViewInspectableMocker.swift (LCAM-2671)</li>
+  <li>RULE_ENGINE_CHANGELOG.md:382-496 web-overlay / isCovered history (Klarna InternalWebView)</li>
+  <li>app-accessibility: Util.get_snapshot_details (lib/util.rb) · ScanHelper#maybe_persist_inline_rule_results · IOSUtils ROLE_WEB_VIEW map (Ruby, legacy WDA path) · realmobile lib/helpers/app_accessibility.rb#fetch_accessibility_info</li>
+  <li>talkback (contrast): AppAccessibility.java · talkback-rule-engine BSRuleHelpers.kt isInsideWebView</li>
+</ul>
+<h3>Production queries <span class="tag t-data">prod data</span></h3>
+<pre class="code">-- presence (7 d): 16,473 snapshots (all OS); 799 contain "WKContentView", 58 "UIWebView", 9 "SFSafari"
+SELECT COUNTIF(STRPOS(snapshot,'"WKContentView"')&gt;0) ... FROM app_accessibility.app_a11y_snapshots WHERE created_at &gt;= now-7d
+
+-- per-framework fail density (30 d, iOS)
+WITH s AS (SELECT id, JSON_VALUE(snapshot,'$.framework') fw FROM app_a11y_snapshots WHERE ... os='ios'),
+rr AS (SELECT snapshot_id, COUNTIF(status=2) fails, COUNT(*) rows_ FROM app_a11y_rule_results WHERE ... GROUP BY 1)
+SELECT fw, COUNT(*), AVG(fails), AVG(rows_), COUNTIF(fails&lt;=1)/COUNT(*) FROM s JOIN rr ON rr.snapshot_id=s.id GROUP BY fw
+
+-- node census: 25 random WKContentView snapshots parsed locally; descendants of WKContentView by type / label / isWDAccessible</pre>
+<h3>External sources <span class="tag t-web">research</span></h3>
+<ul class="tight">
+  <li>WebKit: <a href="https://github.com/WebKit/WebKit/blob/main/Source/WebKit/UIProcess/ios/WKContentView.mm">WKContentView.mm</a> ·
+  <a href="https://github.com/WebKit/WebKit/blob/main/Source/WebCore/accessibility/ios/WebAccessibilityObjectWrapperIOS.mm">WebAccessibilityObjectWrapperIOS.mm</a> ·
+  <a href="https://github.com/WebKit/WebKit/blob/main/Source/WebCore/dom/Document.cpp">Document.cpp</a> ·
+  <a href="https://github.com/WebKit/WebKit/blob/main/Source/WebCore/page/csp/ContentSecurityPolicy.cpp">ContentSecurityPolicy.cpp</a> ·
+  <a href="https://docs.webkit.org/Deep%20Dive/SiteIsolation.html">Site Isolation</a></li>
+  <li>Apple: <a href="https://developer.apple.com/documentation/webkit/wkcontentworld">WKContentWorld</a> ·
+  <a href="https://developer.apple.com/documentation/webkit/wkuserscript/isformainframeonly">WKUserScript.isForMainFrameOnly</a> ·
+  <a href="https://developer.apple.com/documentation/webkit/wkwebview/isinspectable">isInspectable</a> ·
+  <a href="https://developer.apple.com/news/?id=12232019b">UIWebView deprecation</a></li>
+  <li>Prior art: <a href="https://docs.deque.com/devtools-mobile/2025.7.2/en/known-issues/">Deque axe DevTools Mobile known issues</a> ("we highly recommend testing using axe DevTools for Web") ·
+  <a href="https://github.com/dequelabs/axe-core/blob/develop/doc/API.md">axe-core API</a> · <a href="https://github.com/TextureGroup/Texture/pull/1955">Texture#1955</a> ·
+  <a href="https://github.com/appium/appium/issues/9408">appium#9408</a></li>
+  <li>Angular / Ionic / Capacitor: <a href="https://angular.dev/best-practices/a11y">Angular a11y</a> · <a href="https://angular.dev/api/core/Testability">Testability</a> ·
+  <a href="https://github.com/angular/angular/pull/45885">angular#45885</a> · <a href="https://angular.dev/guide/zoneless">zoneless</a> ·
+  <a href="https://ionicframework.com/docs/core-concepts/webview">Ionic WebView</a> · <a href="https://capacitorjs.com/docs/config">Capacitor config</a> ·
+  <a href="https://github.com/stenciljs/core/blob/main/src/utils/shadow-root.ts">Stencil shadow-root</a> · <a href="https://docs.nativescript.org/ui/">NativeScript UI</a></li>
+  <li>WCAG: <a href="https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html">2.5.8 Target Size (Minimum)</a> ·
+  <a href="https://www.tpgi.com/text-resizing-web-pages-ios-using-dynamic-type/">TPGi — Dynamic Type in web pages</a></li>
+</ul>
+<p class="note">Open items to confirm on device during the POC: the coordinate formula under zoom/insets; whether <code>userContentController.addUserScript</code> on a live webview applies to new frames;
+the site-isolation status on current iOS; JS round-trip latency on a 1–2k node Ionic page.</p>
+
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'base', flowchart: { htmlLabels: true },
+                       themeVariables: { fontSize: '13.5px' } });
+</script>
+</body>
+</html>
