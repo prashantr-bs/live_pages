@@ -36,6 +36,9 @@ patched into the Angular Rule Lab (208 test cases) · iPad Air 11" M2, iPadOS 26
   <div class="kpi"><b>~1.2 s</b><span>DOM layer per scan (p50; ~12 ms extraction + ~1.2 s web Dynamic Type probe); rule eval 4 ms</span></div>
 </div>
 
+<div class="rulebox"><b>Read-only variant:</b> <a href="no-mutation/">DOM layer without the text-size probe</a>. It makes no page mutation and takes 15 ms per scan instead of 1.2 s.
+It finds 56/127 with 0 false positives, and text-magnification becomes "not supported" for web content.</div>
+
 <h2>1 · Approaches explored</h2>
 <div class="tbl"><table>
 <tr><th>Approach</th><th>How</th><th>Verdict</th><th>Evidence</th></tr>

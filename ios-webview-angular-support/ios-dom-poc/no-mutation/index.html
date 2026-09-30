@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DOM layer, read-only</title>
+<style>
+  body { margin:0 auto; max-width:1250px; padding:26px 26px 70px; font:15px/1.55 -apple-system,"Segoe UI",Roboto,sans-serif; color:#1a1d21; background:#fff; }
+  h1 { font-size:22px; margin:0 0 4px; } h2 { font-size:17px; margin:34px 0 6px; padding-top:6px; border-top:1px solid #eef0f2; } h3 { font-size:15px; margin:18px 0 4px; }
+  .sub { color:#5c6570; margin:0 0 14px; font-size:13.5px; } a { color:#0b57d0; }
+  code { background:#f0f2f4; padding:1px 5px; border-radius:4px; font-size:12.5px; } .mono { font-family:ui-monospace,Menlo,monospace; font-size:12px; color:#4b5563; }
+  pre.code { background:#f6f8fa; border:1px solid #e3e6ea; border-radius:8px; padding:10px 12px; overflow-x:auto; font:12.5px/1.45 ui-monospace,Menlo,monospace; }
+  .kpis { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin:12px 0; }
+  .kpi { border:1px solid #e3e6ea; border-radius:10px; padding:10px 12px; background:#fafbfc; } .kpi b { display:block; font-size:24px; } .kpi span { font-size:12.5px; color:#5c6570; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; align-items:start; }
+  .col { border:1px solid #e3e6ea; border-radius:10px; padding:10px 14px; background:#fafbfc; }
+  .rulebox { border:1px solid #e3e6ea; border-left:4px solid #0b57d0; background:#f7f9fb; border-radius:8px; padding:12px 16px; font-size:14px; margin:12px 0; }
+  .rulebox.ok { border-left-color:#16a34a; background:#f4fbf6; } .rulebox.warn { border-left-color:#c2410c; background:#fff8f4; }
+  table { border-collapse:collapse; width:100%; font-size:13.5px; margin:10px 0; } th,td { border:1px solid #e3e6ea; padding:6px 9px; text-align:left; vertical-align:top; } th { background:#f2f4f6; }
+  td.bad { background:#ffd7d4; } td.ok { background:#d7f0dd; } td.mid { background:#fff1c9; } td.na { background:#eef0f2; color:#5c6570; }
+  .tbl { overflow-x:auto; } pre.mermaid { background:transparent; text-align:center; }
+  @media (max-width:860px) { .grid2 { grid-template-columns:1fr; } .kpis { grid-template-columns:repeat(2,1fr); } body { padding:18px 16px 60px; } }
+</style>
+</head>
+<body>
+<p class="sub"><a href="../">← iOS DOM-layer POC</a> · <a href="../../">WebView &amp; Angular support analysis</a> · <a href="../../ios-run/">iOS run (stock dylib)</a></p>
+<h1>In-process DOM layer, read-only variant: no page mutation, text-magnification not supported</h1>
+<p class="sub">ios_app_patcher <code>origin/master b16cf49</code> + POC branch <code>webview-dom-poc</code> @ v5 (web Dynamic Type probe removed) · built with Xcode 26.6 on the Mac mini ·
+patched into the Angular Rule Lab (208 test cases) · iPad Air 11" M2, iPadOS 26.5 · 72 on-device scans, scored per test case · 30 Sep 2026</p>
+
+<div class="kpis">
+  <div class="kpi"><b>0 → 56</b><span>expected-FAIL test cases reported FAIL (stock dylib → DOM layer), of 127</span></div>
+  <div class="kpi"><b>56/104</b><span>of the cases the iOS engine can evaluate at all (54% deterministic)</span></div>
+  <div class="kpi"><b>+24</b><span>more become AI candidates (verdict needs TCG, not run locally)</span></div>
+  <div class="kpi"><b>0</b><span>false positives on expected-PASS test cases</span></div>
+  <div class="kpi"><b>15 ms</b><span>DOM layer per scan (p50; p90 18 ms, max 22 ms), was 1,225 ms with the probe; rule eval 4 ms</span></div>
+</div>
+
+<h2>1 · What changed versus the <a href="../">POC page</a></h2>
+<div class="tbl"><table>
+<tr><th></th><th>POC (v4)</th><th>This variant (v5)</th></tr>
+<tr><td>Page mutation during a scan</td><td class="mid">briefly re-lays out web text at AX-XXXL (private <code>-[WKWebView _contentSizeCategory]</code> override + notification), then restores</td><td class="ok"><b>none</b>: read-only extraction</td></tr>
+<tr><td>text-magnification on web text</td><td class="ok">measured: 2/3 detected</td><td class="na"><b>not supported</b>: returns not-applicable, so no guess and no false pass</td></tr>
+<tr><td>Private API use in the DOM layer</td><td>WKWebView content-size getter</td><td>none (the WKWebView init swizzle for the click hook remains)</td></tr>
+<tr><td>DOM layer time per scan (p50)</td><td>1,225 ms</td><td><b>15 ms</b></td></tr>
+<tr><td>Expected-FAIL test cases detected</td><td>58 / 127</td><td><b>56 / 127</b> (only the 2 text-magnification cases dropped)</td></tr>
+<tr><td>False positives</td><td>0</td><td>0</td></tr>
+</table></div>
+
+<h2>2 · How the DOM layer works (read-only)</h2>
+<pre class="mermaid">
+flowchart LR
+  L["dylib load<br/>SwiftPatchLoader"] --> H["WKWebView init swizzle:<br/>page-world user script marks<br/>click / key listeners<br/>(data-bs-a11y-click / -key)"]
+  S["/accessibility_info"] --> P["bsPrefetchWebDOM()<br/>visible WKWebViews"]
+  P --> X["extractor in WKContentWorld.defaultClient<br/>composed-tree walk (open shadow roots, slots)<br/>role · accessible name · states · rect<br/>paint-stack bg · fg · font · clip · focusable"]
+  X --> M["CSS px → WKContentView → window pt"]
+  M --> G["graft synthetic nodes under WKWebView<br/>(before tree MD5 / dedupe)"]
+  G --> R["existing 37 rules<br/>(+4 small web arms)"]
+  style X fill:#d7f0dd
+</pre>
+<div class="grid2">
+  <div class="col"><h3>Node contract (no rule rewrites)</h3>
+  <p>Synthetic nodes use the capture's own keys (<code>label</code>, <code>value</code>, <code>text</code>, <code>traitsStringArray</code>, <code>rect</code>, <code>textProperties</code>, <code>voiceOverCaption</code>, <code>isHittable</code>…).
+  Type names hit the existing matchers: <code>WebButton</code> (…Button), <code>WebImageView</code> (…ImageView), <code>WebLabel</code> (…Label), <code>WebSwitch</code>,
+  <code>TextField</code> / <code>SearchField</code> (WDA vocabulary already in <code>inputTypeRoleIOS</code>), <code>WebTappableView</code> (contains "Tappable").
+  Controls carry a boundary colour in <code>nonTextColor</code>; their text lives in a non-accessible caption child, like <code>UIButtonLabel</code>.</p></div>
+  <div class="col"><h3>Rule-side changes (small, web-only arms)</h3>
+  <ul>
+    <li>matchers: add <code>TextField</code>, <code>SearchField</code>, <code>WebTappableView</code>…</li>
+    <li>unsupported-type: <code>WebTappableView</code> joins the allow-list (click listener, no role)</li>
+    <li>missing-view-type: <code>WebTappableView</code> must announce Button / Link</li>
+    <li>two-dimensional-scroll: <code>WebScrollView</code> with both axes</li>
+    <li>responsive-containers: <code>WebContainer</code> clipping its content</li>
+  </ul>
+  <p class="sub">Per the cross-repo mirror rule these need the matching Ruby changes before shipping.</p></div>
+</div>
+
+<h3>The one technique worth calling out</h3>
+<pre class="code">// Click handlers are invisible to an isolated world (page JS objects aren't shared). A PAGE-world user
+// script at document start wraps addEventListener and leaves a DOM marker the extractor reads.
+EventTarget.prototype.addEventListener = function (type, l, o) {
+  if (TYPES.has(type) &amp;&amp; this instanceof Element) this.setAttribute('data-bs-a11y-click', '1');
+  return orig.call(this, type, l, o);
+};</pre>
+<p class="sub">This marker (a <code>data-bs-a11y-*</code> attribute) is the only thing the layer writes into the page. It doesn't change layout or rendering.</p>
+
+<h2>3 · Results per rule (72 scans, per-test-case attribution)</h2>
+<p class="sub">A test case counts as detected only if the rule emitted <code>fail</code> on an element inside that test case's stage. Stock dylib = <a href="../../ios-run/">iOS run</a>.</p>
+<div class="tbl"><table>
+<tr><th>Rule</th><th>exp FAIL</th><th>stock</th><th>DOM layer</th><th>FP</th><th>Why not higher</th></tr>
+<tr><td>Accessibility Label at front<br/><span class="mono">label-at-front</span></td><td>2</td><td class="bad">0</td><td class="bad"><b>0/2</b></td><td></td><td>iOS rule checks a <i>trait-name prefix</i> ("Button …"), not visible-text-first: rule semantics, not capture</td></tr><tr><td>Accessible Input Field Labels<br/><span class="mono">accessible-input-field-label</span></td><td>3</td><td class="bad">0</td><td class="mid"><b>2/3 + 1 AI</b></td><td></td><td>AI verdict needs TCG</td></tr><tr><td>Accessible Interactive Elements<br/><span class="mono">interactive-element-accessibility</span></td><td>3</td><td class="bad">0</td><td class="na"><b>iOS no-op</b></td><td></td><td>rule does nothing on iOS today, native or web</td></tr><tr><td>App Orientation Lock<br/><span class="mono">app-orientation-support</span></td><td>0</td><td class="bad">0</td><td class="ok"><b>app-level</b></td><td></td><td>Info.plist check; unaffected</td></tr><tr><td>Button Element Accessibility Label Capitalization<br/><span class="mono">button-element-content-label-capitalization</span></td><td>3</td><td class="bad">0</td><td class="ok"><b>3/3</b></td><td></td><td></td></tr><tr><td>Checkbox Element Content Label<br/><span class="mono">checkbox-element-content-label</span></td><td>4</td><td class="bad">0</td><td class="na"><b>Android-only rule</b></td><td></td><td>not in the iOS engine</td></tr><tr><td>Duplicate Accessibility Label on Screen<br/><span class="mono">duplicate-element-content-label</span></td><td>2</td><td class="bad">0</td><td class="ok"><b>2/2</b></td><td></td><td></td></tr><tr><td>Duplicate State Info in Spoken Output<br/><span class="mono">state-in-content-label</span></td><td>4</td><td class="bad">0</td><td class="bad"><b>0/4</b></td><td></td><td>iOS rule only flags a doubled "selected"; "checked / on / enabled" are outside its vocabulary</td></tr><tr><td>Duplicate Type Info in Spoken Output<br/><span class="mono">view-type-in-content-label</span></td><td>5</td><td class="bad">0</td><td class="mid"><b>3/5</b></td><td></td><td>role vocabulary has no checkbox / switch word (TC3, TC4)</td></tr><tr><td>Editable Element Accessibility Label<br/><span class="mono">editable-element-content-label</span></td><td>4</td><td class="bad">0</td><td class="mid"><b>2/4 + 2 AI</b></td><td></td><td>AI verdict needs TCG</td></tr><tr><td>Editable Element Label Not Announced<br/><span class="mono">editable-element-no-content-description</span></td><td>2</td><td class="bad">0</td><td class="na"><b>Android-only rule</b></td><td></td><td>not in the iOS engine</td></tr><tr><td>Font Magnification Support<br/><span class="mono">text-magnification</span></td><td>3</td><td class="bad">0</td><td class="na"><b>Not supported</b></td><td></td><td><b>Not supported for web content.</b> Deciding whether web text follows Dynamic Type needs the page re-laid out at a larger text size, which this variant deliberately never does</td></tr><tr><td>Images with Text<br/><span class="mono">images-of-text</span></td><td>3</td><td class="bad">0</td><td class="mid"><b>0/3 + 3 AI</b></td><td></td><td>AI verdict needs TCG</td></tr><tr><td>Incorrect Heading<br/><span class="mono">incorrect-heading</span></td><td>4</td><td class="bad">0</td><td class="mid"><b>0/4 + 4 AI</b></td><td></td><td>AI verdict needs TCG</td></tr><tr><td>Input type for Input Fields<br/><span class="mono">input-type-for-input-field</span></td><td>4</td><td class="bad">0</td><td class="mid"><b>0/4 + 4 AI</b></td><td></td><td>AI verdict needs TCG</td></tr><tr><td>Interactive Element Accessibility Label<br/><span class="mono">interactable-element-content-label</span></td><td>4</td><td class="bad">0</td><td class="mid"><b>3/4</b></td><td></td><td>TC3 link whose only content is an alt="" image: name computation gap</td></tr><tr><td>Interactive Elements with Unsupported Type<br/><span class="mono">interactive-element-unsupported-type</span></td><td>3</td><td class="bad">0</td><td class="ok"><b>3/3</b></td><td></td><td></td></tr><tr><td>Keyboard Focus for Interactive Elements<br/><span class="mono">keyboard-focus-for-interactive-elements</span></td><td>4</td><td class="bad">0</td><td class="ok"><b>4/4</b></td><td></td><td></td></tr><tr><td>Label in Name<br/><span class="mono">label-in-name</span></td><td>3</td><td class="bad">0</td><td class="ok"><b>3/3</b></td><td></td><td></td></tr><tr><td>Link Text Purpose<br/><span class="mono">link-text-purpose</span></td><td>4</td><td class="bad">0</td><td class="mid"><b>3/4 + 1 AI</b></td><td></td><td>AI verdict needs TCG</td></tr><tr><td>Meaningful accessibility label for images<br/><span class="mono">imageview-element-content-label</span></td><td>4</td><td class="bad">0</td><td class="mid"><b>2/4 + 2 AI</b></td><td></td><td>AI verdict needs TCG</td></tr><tr><td>Meaningful Reading Order<br/><span class="mono">meaningful-reading-order</span></td><td>4</td><td class="bad">0</td><td class="bad"><b>0/4</b></td><td></td><td>needs the VoiceOver focus caption (not captured on device); DOM order vs visual order is available for a web-specific arm</td></tr><tr><td>Meaningful Visual Order<br/><span class="mono">meaningful-visual-order</span></td><td>3</td><td class="bad">0</td><td class="mid"><b>0/3 + 1 AI</b></td><td></td><td>whole-tree AI sequence is built from native accessible nodes; web nodes need to join the sequence</td></tr><tr><td>Missing Heading<br/><span class="mono">missing-heading</span></td><td>3</td><td class="bad">0</td><td class="mid"><b>0/3 + 3 AI</b></td><td></td><td>AI verdict needs TCG</td></tr><tr><td>Missing View Type in Spoken Output<br/><span class="mono">missing-view-type-in-spoken-output</span></td><td>3</td><td class="bad">0</td><td class="mid"><b>2/3</b></td><td></td><td>TC1 is an unlabelled div: nothing is spoken, so the rule is rightly N/A (missing-label territory)</td></tr><tr><td>Non-Text Element Color Contrast<br/><span class="mono">non-text-color-contrast</span></td><td>4</td><td class="bad">0</td><td class="mid"><b>2/4</b></td><td></td><td>TC2 icon colour (SVG stroke) and TC4 selected-segment fill not yet sampled: extractor gap</td></tr><tr><td>Overlapping Interactive Elements<br/><span class="mono">overlapping-interactive-elements</span></td><td>3</td><td class="bad">0</td><td class="mid"><b>1/3</b></td><td></td><td>inline link / negative-margin overlap (TC1, TC2) not reported: rule arm for web rect overlap needed</td></tr><tr><td>Readable Text Size<br/><span class="mono">readable-text-size</span></td><td>2</td><td class="bad">0</td><td class="na"><b>Android-only rule</b></td><td></td><td>not in the iOS engine</td></tr><tr><td>Readable Text Spacing<br/><span class="mono">readable-text-spacing</span></td><td>3</td><td class="bad">0</td><td class="na"><b>Android-only rule</b></td><td></td><td>not in the iOS engine</td></tr><tr><td>Responsive Containers<br/><span class="mono">responsive-containers</span></td><td>2</td><td class="bad">0</td><td class="ok"><b>2/2</b></td><td></td><td></td></tr><tr><td>Screen Reader Focus for Interactive Elements<br/><span class="mono">focus-order-for-interactive-elements</span></td><td>3</td><td class="bad">0</td><td class="na"><b>iOS no-op</b></td><td></td><td>rule does nothing on iOS today, native or web</td></tr><tr><td>Special-Character Element Accessibility Label<br/><span class="mono">special-character-element-content-label</span></td><td>4</td><td class="bad">0</td><td class="mid"><b>3/4</b></td><td></td><td>"→" is not in the rule's special-character set</td></tr><tr><td>Spoken Description not Meaningful<br/><span class="mono">screen-reader-for-interactive-elements</span></td><td>3</td><td class="bad">0</td><td class="na"><b>iOS no-op</b></td><td></td><td>rule does nothing on iOS today, native or web</td></tr><tr><td>Supported Screen Orientations<br/><span class="mono">screen-orientation</span></td><td>1</td><td class="bad">0</td><td class="na"><b>iOS no-op</b></td><td></td><td>rule does nothing on iOS today, native or web</td></tr><tr><td>Switch Element Accessibility Label<br/><span class="mono">switch-element-content-label</span></td><td>3</td><td class="bad">0</td><td class="mid"><b>0/3 + 3 AI</b></td><td></td><td>AI verdict needs TCG</td></tr><tr><td>Text Element Color Contrast (Minimum)<br/><span class="mono">text-color-contrast</span></td><td>4</td><td class="bad">0</td><td class="ok"><b>4/4</b></td><td></td><td></td></tr><tr><td>Text Truncation<br/><span class="mono">text-truncation</span></td><td>4</td><td class="bad">0</td><td class="mid"><b>3/4</b></td><td></td><td>TC4 Ionic nowrap label clips at the ion-label host (shadow boundary): extractor gap</td></tr><tr><td>Touch Target Size<br/><span class="mono">touch-target-size</span></td><td>4</td><td class="bad">0</td><td class="ok"><b>4/4</b></td><td></td><td></td></tr><tr><td>Touch Target Size &amp; Spacing<br/><span class="mono">touch-target-size-and-spacing</span></td><td>2</td><td class="bad">0</td><td class="ok"><b>2/2</b></td><td></td><td></td></tr><tr><td>Traversal Order Cycle<br/><span class="mono">traversal-order-cycle</span></td><td>2</td><td class="bad">0</td><td class="na"><b>iOS no-op</b></td><td></td><td>rule does nothing on iOS today, native or web</td></tr><tr><td>Two-Dimensional Scrolling<br/><span class="mono">two-dimensional-scroll</span></td><td>2</td><td class="bad">0</td><td class="ok"><b>2/2</b></td><td></td><td></td></tr>
+</table></div>
+
+<h2>4 · Where the remaining misses come from</h2>
+<div class="tbl"><table>
+<tr><th>Bucket</th><th>Expected-FAIL TCs</th><th>What would close it</th></tr>
+<tr><td class="ok">Detected deterministically on device</td><td><b>56</b></td><td>—</td></tr>
+<tr><td class="mid">AI candidates (headings, image alt quality, switch / editable labels, images of text, input purpose)</td><td>24</td><td>TCG dispatch (already wired for native nodes; web nodes now become candidates)</td></tr>
+<tr><td class="na">Not supported in this variant (text-magnification: web Dynamic Type)</td><td>3</td><td>needs a page re-layout at a larger text size (see the <a href="../">POC page</a>); revisit if required</td></tr>
+<tr><td class="na">Android-only rules</td><td>11</td><td>not iOS rules</td></tr>
+<tr><td class="na">iOS engine no-ops (focus-order, traversal cycle, screen-orientation, screen-reader, disabled catalog rule)</td><td>11</td><td>engine work independent of WebView</td></tr>
+<tr><td class="mid">iOS rule semantics narrower than the test case (label-at-front, state-in-label, view-type, special-char, unlabelled switch)</td><td>10</td><td>rule decisions, not capture: the DOM data is present</td></tr>
+<tr><td class="mid">Whole-tree order rules (reading / visual order)</td><td>6</td><td>add DOM order vs visual order arm; include web nodes in the AI sequence</td></tr>
+<tr><td class="bad">Extractor gaps still open</td><td>6</td><td>SVG stroke / segment fill colours, web-rect overlap arm, alt="" image-link name, Ionic nowrap host clipping</td></tr>
+</table></div>
+
+<h2>5 · Production notes and risks</h2>
+<ul>
+  <li><b>Scope:</b> iOS 14+ (WKContentWorld). Main frame + same-process frames; closed shadow roots, canvas UIs and SFSafariViewController stay out of reach, and are reported as "not assessed".</li>
+  <li><b>Cost:</b> 15 ms per scan at p50 (22 ms max) across 72 scans, and rule evaluation stays at ~4 ms.</li>
+  <li><b>Text magnification:</b> reported as not applicable for web text. It isn't a pass, so the report must say "not assessed" for web text-scaling.</li>
+  <li><b>Side effects:</b> the page-world hook wraps <code>addEventListener</code> and adds <code>data-bs-a11y-*</code> attributes. Nothing else in the page is touched.</li>
+  <li><b>Contracts:</b> synthetic uids use the <code>ObjectIdentifier(0x7eb…)</code> shape; <code>webSource: "dom"</code> marks them for the server. The mirror-contract rule applies to the 4 rule arms.</li>
+  <li><b>Verification loop:</b> keep the LCA / Web Inspector channel as an offline verifier of accessible names against WebCore (approach A).</li>
+</ul>
+<p class="sub">POC source: branch <code>webview-dom-poc</code> in <code>~/Work/webview-poc/ios_app_patcher</code> on the Mac mini (patch exported) · build + patch + install loop: <code>~/Work/webview-poc/patch-install.sh</code> · scans: <code>~/Work/a11y-scans/webdom5</code>.</p>
+
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'base', flowchart: { htmlLabels: true }, themeVariables: { fontSize: '13.5px' } });
+</script>
+</body>
+</html>
