@@ -1,0 +1,2005 @@
+{
+ "label-at-front": {
+  "tcs": [
+   {
+    "tc": "TC1",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Visible \u201cBuy now\u201d; name \u201cTap to Buy now\u201d.",
+    "result": "none"
+   },
+   {
+    "tc": "TC2",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Visible \u201cSettings\u201d; name \u201cOpen the Settings\u201d.",
+    "result": "none"
+   },
+   {
+    "tc": "TC3",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "Visible \u201cBuy now\u201d; name \u201cBuy now, 2 items\u201d.",
+    "result": "none"
+   },
+   {
+    "tc": "TC4",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "No override; the name is the visible text.",
+    "result": "none"
+   }
+  ],
+  "rows": {},
+  "capture": {
+   "nodes": 53,
+   "web": 46,
+   "web_notimp": 46,
+   "web_named": 35
+  }
+ },
+ "accessible-input-field-label": {
+  "tcs": [
+   {
+    "tc": "TC1",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Placeholder \u201cEmail\u201d is the only label.",
+    "result": "none"
+   },
+   {
+    "tc": "TC2",
+    "kind": "fail",
+    "ionic": true,
+    "desc": "ion-input with placeholder only.",
+    "result": "none"
+   },
+   {
+    "tc": "TC3",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Named via aria-label only; nothing is visible.",
+    "result": "none"
+   },
+   {
+    "tc": "TC4",
+    "kind": "edge",
+    "ionic": false,
+    "desc": "Visible label placed far from its field.",
+    "result": "none"
+   },
+   {
+    "tc": "TC5",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "Visible <label for> \u201cEmail\u201d.",
+    "result": "none"
+   },
+   {
+    "tc": "TC6",
+    "kind": "pass",
+    "ionic": true,
+    "desc": "ion-input with a stacked label \u201cFull name\u201d.",
+    "result": "none"
+   }
+  ],
+  "rows": {},
+  "capture": {
+   "nodes": 156,
+   "web": 142,
+   "web_notimp": 121,
+   "web_named": 80
+  }
+ },
+ "interactive-element-accessibility": {
+  "tcs": [
+   {
+    "tc": "TC1",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Clickable span marked aria-hidden.",
+    "result": "none"
+   },
+   {
+    "tc": "TC2",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Canvas-drawn button (the only content is pixels).",
+    "result": "none"
+   },
+   {
+    "tc": "TC3",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Link inside an inert region.",
+    "result": "none"
+   },
+   {
+    "tc": "TC4",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "Native button exposed to assistive tech.",
+    "result": "none"
+   }
+  ],
+  "rows": {},
+  "capture": {
+   "nodes": 50,
+   "web": 43,
+   "web_notimp": 43,
+   "web_named": 32
+  }
+ },
+ "app-orientation-support": {
+  "tcs": [
+   {
+    "tc": "TC1",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "Build declares all orientations (Info.plist / manifest): the default state of this app.",
+    "result": "none"
+   },
+   {
+    "tc": "TC2",
+    "kind": "edge",
+    "ionic": false,
+    "desc": "Runtime lock to portrait (not visible in Info.plist); tap, then rotate.",
+    "result": "none"
+   }
+  ],
+  "rows": {
+   "pass|FrameLayout|outside TCs": 1
+  },
+  "capture": {
+   "nodes": 39,
+   "web": 32,
+   "web_notimp": 32,
+   "web_named": 25
+  }
+ },
+ "button-element-content-label-capitalization": {
+  "tcs": [
+   {
+    "tc": "TC1",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Button text starts lowercase: \u201csubmit order\u201d.",
+    "result": "none"
+   },
+   {
+    "tc": "TC2",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Visible \u201cContinue\u201d but aria-label is lowercase \u201ccontinue\u201d.",
+    "result": "none"
+   },
+   {
+    "tc": "TC3",
+    "kind": "fail",
+    "ionic": true,
+    "desc": "ion-button text \u201ccancel\u201d: shown uppercase (md mode CSS) but the name stays lowercase.",
+    "result": "none"
+   },
+   {
+    "tc": "TC4",
+    "kind": "edge",
+    "ionic": false,
+    "desc": "Name \u201cSave\u201d but CSS text-transform: lowercase renders \u201csave\u201d (name vs OCR).",
+    "result": "none"
+   },
+   {
+    "tc": "TC5",
+    "kind": "edge",
+    "ionic": false,
+    "desc": "Brand that is lowercase by design: \u201ciPhone settings\u201d.",
+    "result": "none"
+   },
+   {
+    "tc": "TC6",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "Capitalised label \u201cSubmit order\u201d.",
+    "result": "none"
+   }
+  ],
+  "rows": {},
+  "capture": {
+   "nodes": 138,
+   "web": 124,
+   "web_notimp": 115,
+   "web_named": 89
+  }
+ },
+ "checkbox-element-content-label": {
+  "tcs": [
+   {
+    "tc": "TC1",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Native checkbox with no label at all.",
+    "result": "none"
+   },
+   {
+    "tc": "TC2",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Text sits next to the checkbox but is not associated with it.",
+    "result": "none"
+   },
+   {
+    "tc": "TC3",
+    "kind": "fail",
+    "ionic": true,
+    "desc": "ion-checkbox without label text or aria-label.",
+    "result": "none"
+   },
+   {
+    "tc": "TC4",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Custom div role=checkbox with state but no name.",
+    "result": "none"
+   },
+   {
+    "tc": "TC5",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "Checkbox wrapped in a label: \u201cAccept terms\u201d.",
+    "result": "none"
+   },
+   {
+    "tc": "TC6",
+    "kind": "pass",
+    "ionic": true,
+    "desc": "ion-checkbox with slotted label \u201cSubscribe\u201d.",
+    "result": "none"
+   }
+  ],
+  "rows": {},
+  "capture": {
+   "nodes": 140,
+   "web": 126,
+   "web_notimp": 126,
+   "web_named": 90
+  }
+ },
+ "duplicate-element-content-label": {
+  "tcs": [
+   {
+    "tc": "TC1",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Three rows, three different targets, all named \u201cEdit\u201d.",
+    "result": "none"
+   },
+   {
+    "tc": "TC2",
+    "kind": "fail",
+    "ionic": true,
+    "desc": "Two icon ion-buttons both aria-label \u201cDelete\u201d for different items.",
+    "result": "none"
+   },
+   {
+    "tc": "TC3",
+    "kind": "edge",
+    "ionic": false,
+    "desc": "Same name, same destination (\u201cHome\u201d twice) is acceptable.",
+    "result": "none"
+   },
+   {
+    "tc": "TC4",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "Unique names: \u201cEdit address\u201d, \u201cEdit phone\u201d, \u201cEdit email\u201d.",
+    "result": "none"
+   }
+  ],
+  "rows": {},
+  "capture": {
+   "nodes": 136,
+   "web": 122,
+   "web_notimp": 117,
+   "web_named": 99
+  }
+ },
+ "state-in-content-label": {
+  "tcs": [
+   {
+    "tc": "TC1",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Checkbox aria-label \u201cNotifications checked\u201d, and it is checked.",
+    "result": "none"
+   },
+   {
+    "tc": "TC2",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Toggle button aria-pressed=true named \u201cWi-Fi on\u201d.",
+    "result": "none"
+   },
+   {
+    "tc": "TC3",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Selected tab named \u201cHome selected\u201d.",
+    "result": "none"
+   },
+   {
+    "tc": "TC4",
+    "kind": "fail",
+    "ionic": true,
+    "desc": "ion-toggle labelled \u201cDark mode enabled\u201d.",
+    "result": "none"
+   },
+   {
+    "tc": "TC5",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "Checkbox named \u201cNotifications\u201d; the checked state comes from the control.",
+    "result": "none"
+   }
+  ],
+  "rows": {},
+  "capture": {
+   "nodes": 62,
+   "web": 55,
+   "web_notimp": 55,
+   "web_named": 44
+  }
+ },
+ "view-type-in-content-label": {
+  "tcs": [
+   {
+    "tc": "TC1",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Button labelled \u201cSave button\u201d.",
+    "result": "none"
+   },
+   {
+    "tc": "TC2",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Link labelled \u201cPrivacy policy link\u201d.",
+    "result": "none"
+   },
+   {
+    "tc": "TC3",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Checkbox labelled \u201cRemember me checkbox\u201d.",
+    "result": "none"
+   },
+   {
+    "tc": "TC4",
+    "kind": "fail",
+    "ionic": true,
+    "desc": "ion-toggle labelled \u201cDark mode switch\u201d.",
+    "result": "none"
+   },
+   {
+    "tc": "TC5",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Image aria-label \u201cProfile image\u201d.",
+    "result": "none"
+   },
+   {
+    "tc": "TC6",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "Plain names: \u201cSave\u201d, \u201cPrivacy policy\u201d.",
+    "result": "none"
+   }
+  ],
+  "rows": {},
+  "capture": {
+   "nodes": 138,
+   "web": 124,
+   "web_notimp": 121,
+   "web_named": 99
+  }
+ },
+ "editable-element-content-label": {
+  "tcs": [
+   {
+    "tc": "TC1",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Text field with a value but no name.",
+    "result": "none"
+   },
+   {
+    "tc": "TC2",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Unnamed textarea.",
+    "result": "none"
+   },
+   {
+    "tc": "TC3",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "contenteditable div with no name.",
+    "result": "none"
+   },
+   {
+    "tc": "TC4",
+    "kind": "fail",
+    "ionic": true,
+    "desc": "ion-textarea with no label.",
+    "result": "none"
+   },
+   {
+    "tc": "TC5",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "Labelled field with a value: name \u201cFirst name\u201d, value \u201cJohn\u201d.",
+    "result": "none"
+   },
+   {
+    "tc": "TC6",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "Textarea named by aria-labelledby.",
+    "result": "none"
+   }
+  ],
+  "rows": {},
+  "capture": {
+   "nodes": 142,
+   "web": 128,
+   "web_notimp": 119,
+   "web_named": 86
+  }
+ },
+ "editable-element-no-content-description": {
+  "tcs": [
+   {
+    "tc": "TC1",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Field named only by aria-label (becomes contentDescription on Android).",
+    "result": "none"
+   },
+   {
+    "tc": "TC2",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "aria-label overrides a visible hint: \u201cSearch\u201d.",
+    "result": "none"
+   },
+   {
+    "tc": "TC3",
+    "kind": "edge",
+    "ionic": false,
+    "desc": "title attribute used as the only name.",
+    "result": "none"
+   },
+   {
+    "tc": "TC4",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "Visible label linked with for/id (labelFor on Android).",
+    "result": "none"
+   }
+  ],
+  "rows": {},
+  "capture": {
+   "nodes": 50,
+   "web": 43,
+   "web_notimp": 43,
+   "web_named": 33
+  }
+ },
+ "text-magnification": {
+  "tcs": [
+   {
+    "tc": "TC1",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Fixed 15px text with -webkit-text-size-adjust:none (never scales).",
+    "result": "none"
+   },
+   {
+    "tc": "TC2",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Text sized in vw units (tracks screen width, not text size).",
+    "result": "none"
+   },
+   {
+    "tc": "TC3",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Text in a fixed-height box that clips when enlarged.",
+    "result": "none"
+   },
+   {
+    "tc": "TC4",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "iOS Dynamic Type via font: -apple-system-body; rem sizing elsewhere.",
+    "result": "none"
+   },
+   {
+    "tc": "TC5",
+    "kind": "edge",
+    "ionic": false,
+    "desc": "Ionic default text (Ionic's own dynamic-font support).",
+    "result": "none"
+   }
+  ],
+  "rows": {},
+  "capture": {
+   "nodes": 120,
+   "web": 106,
+   "web_notimp": 106,
+   "web_named": 90
+  }
+ },
+ "images-of-text": {
+  "tcs": [
+   {
+    "tc": "TC1",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Promo banner image containing \u201c50% OFF SUMMER SALE\u201d.",
+    "result": "none"
+   },
+   {
+    "tc": "TC2",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "CSS background-image that contains text (\u201cFREE DELIVERY\u201d).",
+    "result": "none"
+   },
+   {
+    "tc": "TC3",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Instructions rendered as an image.",
+    "result": "none"
+   },
+   {
+    "tc": "TC4",
+    "kind": "edge",
+    "ionic": false,
+    "desc": "Logotype: brand text in a logo (exempt under WCAG 1.4.5).",
+    "result": "none"
+   },
+   {
+    "tc": "TC5",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "The same banner built from real text + CSS.",
+    "result": "none"
+   },
+   {
+    "tc": "TC6",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "Photo without text.",
+    "result": "none"
+   }
+  ],
+  "rows": {},
+  "capture": {
+   "nodes": 132,
+   "web": 118,
+   "web_notimp": 102,
+   "web_named": 88
+  }
+ },
+ "incorrect-heading": {
+  "tcs": [
+   {
+    "tc": "TC1",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Call to action marked as a heading: <h2>Tap to continue</h2>.",
+    "result": "ai_review"
+   },
+   {
+    "tc": "TC2",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Whole sentence marked as a heading.",
+    "result": "ai_review"
+   },
+   {
+    "tc": "TC3",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Vague heading text that describes nothing: \u201cSection\u201d.",
+    "result": "ai_review"
+   },
+   {
+    "tc": "TC4",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Price value marked as role=heading.",
+    "result": "ai_review"
+   },
+   {
+    "tc": "TC5",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "Heading \u201cSaved payment methods\u201d titles the content below it.",
+    "result": "ai_review"
+   }
+  ],
+  "rows": {
+   "ai_review|TextView|outside TCs": 38,
+   "ai_review|TextView|TC1": 2,
+   "ai_review|TextView|TC2": 2,
+   "ai_review|TextView|TC3": 4,
+   "ai_review|TextView|TC4": 2,
+   "ai_review|TextView|TC5": 2
+  },
+  "capture": {
+   "nodes": 114,
+   "web": 100,
+   "web_notimp": 99,
+   "web_named": 85
+  }
+ },
+ "input-type-for-input-field": {
+  "tcs": [
+   {
+    "tc": "TC1",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Label \u201cEmail\u201d but type=text and no autocomplete.",
+    "result": "none"
+   },
+   {
+    "tc": "TC2",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Label \u201cPhone number\u201d but type=text.",
+    "result": "none"
+   },
+   {
+    "tc": "TC3",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Label \u201cPassword\u201d but type=text (not secure).",
+    "result": "none"
+   },
+   {
+    "tc": "TC4",
+    "kind": "fail",
+    "ionic": true,
+    "desc": "ion-input \u201cEmail address\u201d with type=text.",
+    "result": "none"
+   },
+   {
+    "tc": "TC5",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "type=email + autocomplete=email.",
+    "result": "none"
+   },
+   {
+    "tc": "TC6",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "type=tel + autocomplete=tel; type=password + current-password.",
+    "result": "none"
+   }
+  ],
+  "rows": {},
+  "capture": {
+   "nodes": 150,
+   "web": 136,
+   "web_notimp": 120,
+   "web_named": 83
+  }
+ },
+ "interactable-element-content-label": {
+  "tcs": [
+   {
+    "tc": "TC1",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Icon-only button (SVG) with no accessible name.",
+    "result": "none"
+   },
+   {
+    "tc": "TC2",
+    "kind": "fail",
+    "ionic": true,
+    "desc": "Icon-only ion-button (heart) without aria-label.",
+    "result": "none"
+   },
+   {
+    "tc": "TC3",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Link wrapping only an image with empty alt.",
+    "result": "none"
+   },
+   {
+    "tc": "TC4",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Empty div role=button (no text, no label).",
+    "result": "none"
+   },
+   {
+    "tc": "TC5",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "Icon button with aria-label \u201cShare\u201d.",
+    "result": "none"
+   },
+   {
+    "tc": "TC6",
+    "kind": "pass",
+    "ionic": true,
+    "desc": "Icon ion-button with aria-label \u201cAdd to favourites\u201d.",
+    "result": "none"
+   }
+  ],
+  "rows": {},
+  "capture": {
+   "nodes": 142,
+   "web": 128,
+   "web_notimp": 119,
+   "web_named": 85
+  }
+ },
+ "interactive-element-unsupported-type": {
+  "tcs": [
+   {
+    "tc": "TC1",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Clickable div with no role.",
+    "result": "none"
+   },
+   {
+    "tc": "TC2",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Invalid ARIA role \u201cclickable\u201d.",
+    "result": "none"
+   },
+   {
+    "tc": "TC3",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Clickable element with role=text / generic.",
+    "result": "none"
+   },
+   {
+    "tc": "TC4",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "div role=button tabindex=0.",
+    "result": "none"
+   },
+   {
+    "tc": "TC5",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "Native <a href> link.",
+    "result": "none"
+   }
+  ],
+  "rows": {},
+  "capture": {
+   "nodes": 61,
+   "web": 54,
+   "web_notimp": 54,
+   "web_named": 42
+  }
+ },
+ "keyboard-focus-for-interactive-elements": {
+  "tcs": [
+   {
+    "tc": "TC1",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "div with a click handler and no tabindex.",
+    "result": "none"
+   },
+   {
+    "tc": "TC2",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Real button removed from tab order (tabindex=-1).",
+    "result": "none"
+   },
+   {
+    "tc": "TC3",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Anchor without href (not focusable).",
+    "result": "none"
+   },
+   {
+    "tc": "TC4",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "role=button with tabindex=0 but no Enter/Space handling.",
+    "result": "none"
+   },
+   {
+    "tc": "TC5",
+    "kind": "edge",
+    "ionic": false,
+    "desc": "Scrollable region that is not focusable.",
+    "result": "none"
+   },
+   {
+    "tc": "TC6",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "role=button, tabindex=0, handles Enter and Space.",
+    "result": "none"
+   },
+   {
+    "tc": "TC7",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "Native button.",
+    "result": "none"
+   }
+  ],
+  "rows": {},
+  "capture": {
+   "nodes": 160,
+   "web": 146,
+   "web_notimp": 129,
+   "web_named": 105
+  }
+ },
+ "label-in-name": {
+  "tcs": [
+   {
+    "tc": "TC1",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Visible \u201cSend\u201d; name \u201cSubmit message\u201d (doesn't contain \u201cSend\u201d).",
+    "result": "none"
+   },
+   {
+    "tc": "TC2",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Visible \u201cNext\u201d; name \u201cContinue\u201d.",
+    "result": "none"
+   },
+   {
+    "tc": "TC3",
+    "kind": "fail",
+    "ionic": true,
+    "desc": "ion-button \u201cSearch\u201d with aria-label \u201cFind\u201d.",
+    "result": "none"
+   },
+   {
+    "tc": "TC4",
+    "kind": "edge",
+    "ionic": false,
+    "desc": "Visible \u201cQ&A\u201d; name \u201cQuestions and answers\u201d (abbreviation).",
+    "result": "none"
+   },
+   {
+    "tc": "TC5",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "Visible \u201cSend\u201d; name \u201cSend message\u201d.",
+    "result": "none"
+   }
+  ],
+  "rows": {},
+  "capture": {
+   "nodes": 124,
+   "web": 110,
+   "web_notimp": 110,
+   "web_named": 84
+  }
+ },
+ "link-text-purpose": {
+  "tcs": [
+   {
+    "tc": "TC1",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Stop-word link: \u201cClick here\u201d.",
+    "result": "none"
+   },
+   {
+    "tc": "TC2",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Generic \u201cRead more\u201d with no context.",
+    "result": "none"
+   },
+   {
+    "tc": "TC3",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Raw URL as link text.",
+    "result": "none"
+   },
+   {
+    "tc": "TC4",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Link with no text (image with no alt).",
+    "result": "none"
+   },
+   {
+    "tc": "TC5",
+    "kind": "edge",
+    "ionic": false,
+    "desc": "\u201cRead more\u201d whose aria-label adds context: \u201cRead more about pricing\u201d.",
+    "result": "none"
+   },
+   {
+    "tc": "TC6",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "Descriptive text: \u201cRead the refund policy\u201d.",
+    "result": "none"
+   }
+  ],
+  "rows": {},
+  "capture": {
+   "nodes": 150,
+   "web": 136,
+   "web_notimp": 134,
+   "web_named": 110
+  }
+ },
+ "imageview-element-content-label": {
+  "tcs": [
+   {
+    "tc": "TC1",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Informative photo with no alt attribute.",
+    "result": "none"
+   },
+   {
+    "tc": "TC2",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Meaningless alt: \u201cIMG_2024.png\u201d.",
+    "result": "none"
+   },
+   {
+    "tc": "TC3",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Generic alt: \u201cimage\u201d.",
+    "result": "none"
+   },
+   {
+    "tc": "TC4",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Inline SVG role=img with no title or label.",
+    "result": "none"
+   },
+   {
+    "tc": "TC5",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "Accurate alt: \u201cGolden retriever catching a ball\u201d.",
+    "result": "none"
+   },
+   {
+    "tc": "TC6",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "Decorative divider with alt=\u201c\u201d (should be ignored).",
+    "result": "none"
+   }
+  ],
+  "rows": {},
+  "capture": {
+   "nodes": 132,
+   "web": 118,
+   "web_notimp": 100,
+   "web_named": 83
+  }
+ },
+ "meaningful-reading-order": {
+  "tcs": [
+   {
+    "tc": "TC1",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Visually 1-2-3, but DOM order is 3-1-2 (CSS order).",
+    "result": "none"
+   },
+   {
+    "tc": "TC2",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "row-reverse: the value is read before its label.",
+    "result": "none"
+   },
+   {
+    "tc": "TC3",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Two columns interleaved: reads Name, City, Email, Zip.",
+    "result": "none"
+   },
+   {
+    "tc": "TC4",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Absolutely positioned \u201cBuy\u201d button first in DOM, drawn last.",
+    "result": "none"
+   },
+   {
+    "tc": "TC5",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "DOM order matches visual order.",
+    "result": "none"
+   }
+  ],
+  "rows": {
+   "ai_review|FrameLayout|outside TCs": 2
+  },
+  "capture": {
+   "nodes": 132,
+   "web": 118,
+   "web_notimp": 110,
+   "web_named": 96
+  }
+ },
+ "meaningful-visual-order": {
+  "tcs": [
+   {
+    "tc": "TC1",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Submit is drawn above the fields it submits.",
+    "result": "none"
+   },
+   {
+    "tc": "TC2",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Price sits above an unrelated product; the label is far from its value.",
+    "result": "ai_review"
+   },
+   {
+    "tc": "TC3",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Step 3 appears before step 1 visually.",
+    "result": "none"
+   },
+   {
+    "tc": "TC4",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "Logical flow: title, fields, then action.",
+    "result": "none"
+   }
+  ],
+  "rows": {
+   "ai_review|FrameLayout|outside TCs": 1,
+   "ai_review|FrameLayout|TC2": 1
+  },
+  "capture": {
+   "nodes": 118,
+   "web": 104,
+   "web_notimp": 101,
+   "web_named": 84
+  }
+ },
+ "missing-heading": {
+  "tcs": [
+   {
+    "tc": "TC1",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Large bold \u201cPayment details\u201d div that is not a heading.",
+    "result": "ai_review"
+   },
+   {
+    "tc": "TC2",
+    "kind": "fail",
+    "ionic": true,
+    "desc": "ion-list-header \u201cRecent orders\u201d (renders a div, not a heading).",
+    "result": "ai_review"
+   },
+   {
+    "tc": "TC3",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Bold section title inside a card, styled with a <b> tag.",
+    "result": "ai_review"
+   },
+   {
+    "tc": "TC4",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "Real <h2> \u201cPayment details\u201d.",
+    "result": "ai_review"
+   },
+   {
+    "tc": "TC5",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "div role=heading aria-level=2 \u201cShipping\u201d.",
+    "result": "ai_review"
+   }
+  ],
+  "rows": {
+   "ai_review|TextView|outside TCs": 35,
+   "ai_review|TextView|TC1": 4,
+   "ai_review|TextView|TC2": 4,
+   "ai_review|TextView|TC3": 4,
+   "ai_review|TextView|TC4": 4,
+   "ai_review|TextView|TC5": 2
+  },
+  "capture": {
+   "nodes": 132,
+   "web": 118,
+   "web_notimp": 111,
+   "web_named": 97
+  }
+ },
+ "missing-view-type-in-spoken-output": {
+  "tcs": [
+   {
+    "tc": "TC1",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Div acting as a switch: no role, no state.",
+    "result": "none"
+   },
+   {
+    "tc": "TC2",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Span styled as a link, with a click handler and no role.",
+    "result": "none"
+   },
+   {
+    "tc": "TC3",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Tab bar made of plain divs (no tablist/tab roles).",
+    "result": "none"
+   },
+   {
+    "tc": "TC4",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "role=switch with aria-checked and a name.",
+    "result": "none"
+   },
+   {
+    "tc": "TC5",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "Proper tablist / tab roles with aria-selected.",
+    "result": "none"
+   }
+  ],
+  "rows": {},
+  "capture": {
+   "nodes": 63,
+   "web": 56,
+   "web_notimp": 56,
+   "web_named": 45
+  }
+ },
+ "non-text-color-contrast": {
+  "tcs": [
+   {
+    "tc": "TC1",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Input border #e0e0e0 on #fff (1.3:1).",
+    "result": "none"
+   },
+   {
+    "tc": "TC2",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Icon-only button with a #cfcfcf icon on #fff (1.6:1).",
+    "result": "none"
+   },
+   {
+    "tc": "TC3",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Checkbox whose border is #d6d6d6 (unchecked state barely visible).",
+    "result": "none"
+   },
+   {
+    "tc": "TC4",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Selected vs unselected segment differ only by a #f2f2f2 fill.",
+    "result": "none"
+   },
+   {
+    "tc": "TC5",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "Input border #767676 (4.5:1) and icon #5f6368.",
+    "result": "none"
+   }
+  ],
+  "rows": {},
+  "capture": {
+   "nodes": 122,
+   "web": 108,
+   "web_notimp": 107,
+   "web_named": 85
+  }
+ },
+ "overlapping-interactive-elements": {
+  "tcs": [
+   {
+    "tc": "TC1",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Close \u201c\u00d7\u201d button overlaps a \u201cDetails\u201d link.",
+    "result": "none"
+   },
+   {
+    "tc": "TC2",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Two buttons overlap via negative margin.",
+    "result": "none"
+   },
+   {
+    "tc": "TC3",
+    "kind": "fail",
+    "ionic": true,
+    "desc": "ion-fab-button floating over a row's \u201cBuy\u201d button.",
+    "result": "none"
+   },
+   {
+    "tc": "TC4",
+    "kind": "edge",
+    "ionic": false,
+    "desc": "Nested interactive: a button inside a clickable card.",
+    "result": "none"
+   },
+   {
+    "tc": "TC5",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "Buttons spaced apart.",
+    "result": "none"
+   }
+  ],
+  "rows": {},
+  "capture": {
+   "nodes": 130,
+   "web": 116,
+   "web_notimp": 114,
+   "web_named": 92
+  }
+ },
+ "readable-text-size": {
+  "tcs": [
+   {
+    "tc": "TC1",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "9px caption.",
+    "result": "none"
+   },
+   {
+    "tc": "TC2",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "11px body text.",
+    "result": "none"
+   },
+   {
+    "tc": "TC3",
+    "kind": "edge",
+    "ionic": false,
+    "desc": "13.5px, just under the 14 threshold.",
+    "result": "none"
+   },
+   {
+    "tc": "TC4",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "14px (the threshold).",
+    "result": "none"
+   },
+   {
+    "tc": "TC5",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "16px body text.",
+    "result": "none"
+   }
+  ],
+  "rows": {},
+  "capture": {
+   "nodes": 55,
+   "web": 48,
+   "web_notimp": 48,
+   "web_named": 41
+  }
+ },
+ "readable-text-spacing": {
+  "tcs": [
+   {
+    "tc": "TC1",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Line height 1.0 on multi-line text.",
+    "result": "none"
+   },
+   {
+    "tc": "TC2",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Paragraphs with no spacing between them.",
+    "result": "none"
+   },
+   {
+    "tc": "TC3",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Negative letter spacing and zero word spacing.",
+    "result": "none"
+   },
+   {
+    "tc": "TC4",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "Line height 1.5, paragraph spacing 2\u00d7, word spacing 0.16em.",
+    "result": "none"
+   }
+  ],
+  "rows": {},
+  "capture": {
+   "nodes": 102,
+   "web": 88,
+   "web_notimp": 88,
+   "web_named": 74
+  }
+ },
+ "responsive-containers": {
+  "tcs": [
+   {
+    "tc": "TC1",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Fixed width 600px card that overflows the screen (content cut off).",
+    "result": "none"
+   },
+   {
+    "tc": "TC2",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Fixed 72px-high box whose content overflows and is hidden.",
+    "result": "pass"
+   },
+   {
+    "tc": "TC3",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "Fluid container (max-width:100%) that wraps.",
+    "result": "none"
+   },
+   {
+    "tc": "TC4",
+    "kind": "edge",
+    "ionic": false,
+    "desc": "Content inside ion-content (the page itself scrolls).",
+    "result": "none"
+   }
+  ],
+  "rows": {
+   "pass|FrameLayout|outside TCs": 1,
+   "pass|LinearLayout|outside TCs": 1,
+   "pass|FrameLayout|TC2": 2,
+   "pass|LinearLayout|TC2": 1,
+   "pass|ViewGroup|TC2": 1
+  },
+  "capture": {
+   "nodes": 50,
+   "web": 43,
+   "web_notimp": 43,
+   "web_named": 36
+  }
+ },
+ "focus-order-for-interactive-elements": {
+  "tcs": [
+   {
+    "tc": "TC1",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Tappable button hidden from the screen reader (aria-hidden).",
+    "result": "none"
+   },
+   {
+    "tc": "TC2",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Clickable card inside an aria-hidden container.",
+    "result": "none"
+   },
+   {
+    "tc": "TC3",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Clickable image with role=presentation.",
+    "result": "none"
+   },
+   {
+    "tc": "TC4",
+    "kind": "edge",
+    "ionic": false,
+    "desc": "Visually hidden skip link (reachable by swipe, not by touch).",
+    "result": "none"
+   },
+   {
+    "tc": "TC5",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "Standard button reachable both ways.",
+    "result": "none"
+   }
+  ],
+  "rows": {},
+  "capture": {
+   "nodes": 116,
+   "web": 102,
+   "web_notimp": 102,
+   "web_named": 82
+  }
+ },
+ "special-character-element-content-label": {
+  "tcs": [
+   {
+    "tc": "TC1",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Glyph in label: \u201c\u2605 Favourite\u201d.",
+    "result": "none"
+   },
+   {
+    "tc": "TC2",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Emoji in label: \u201c\ud83d\udd25 Hot deals\u201d.",
+    "result": "none"
+   },
+   {
+    "tc": "TC3",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Arrow glyph via aria-label: \u201cNext \u2192\u201d.",
+    "result": "none"
+   },
+   {
+    "tc": "TC4",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Check mark only: \u201c\u2713\u201d.",
+    "result": "none"
+   },
+   {
+    "tc": "TC5",
+    "kind": "edge",
+    "ionic": false,
+    "desc": "Currency symbols: \u201cPay \u20b9499\u201d.",
+    "result": "none"
+   },
+   {
+    "tc": "TC6",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "Plain text; the glyph is aria-hidden.",
+    "result": "none"
+   }
+  ],
+  "rows": {},
+  "capture": {
+   "nodes": 134,
+   "web": 120,
+   "web_notimp": 113,
+   "web_named": 88
+  }
+ },
+ "screen-reader-for-interactive-elements": {
+  "tcs": [
+   {
+    "tc": "TC1",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Spoken name is a developer ID: \u201cbtn_submit_01\u201d.",
+    "result": "pass"
+   },
+   {
+    "tc": "TC2",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Icon button named after its file: \u201cic_settings_24dp\u201d.",
+    "result": "pass"
+   },
+   {
+    "tc": "TC3",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Whitespace-only aria-label.",
+    "result": "pass"
+   },
+   {
+    "tc": "TC4",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "Meaningful spoken name: \u201cSettings\u201d.",
+    "result": "pass"
+   }
+  ],
+  "rows": {
+   "pass|WebView|TC2": 1,
+   "pass|View|outside TCs": 1,
+   "pass|Button|outside TCs": 1,
+   "pass|Button|TC1": 1,
+   "pass|Button|TC2": 1,
+   "pass|Button|TC3": 1,
+   "pass|Button|TC4": 1
+  },
+  "capture": {
+   "nodes": 53,
+   "web": 46,
+   "web_notimp": 46,
+   "web_named": 34
+  }
+ },
+ "screen-orientation": {
+  "tcs": [
+   {
+    "tc": "TC1",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "This screen locks itself to portrait while it is open.",
+    "result": "none"
+   },
+   {
+    "tc": "TC2",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "After Release, rotating the device re-lays out this screen.",
+    "result": "none"
+   }
+  ],
+  "rows": {
+   "pass|FrameLayout|outside TCs": 1
+  },
+  "capture": {
+   "nodes": 39,
+   "web": 32,
+   "web_notimp": 32,
+   "web_named": 25
+  }
+ },
+ "switch-element-content-label": {
+  "tcs": [
+   {
+    "tc": "TC1",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Native checkbox role=switch with no label.",
+    "result": "none"
+   },
+   {
+    "tc": "TC2",
+    "kind": "fail",
+    "ionic": true,
+    "desc": "ion-toggle with no label.",
+    "result": "none"
+   },
+   {
+    "tc": "TC3",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "div role=switch with aria-checked but no name.",
+    "result": "none"
+   },
+   {
+    "tc": "TC4",
+    "kind": "edge",
+    "ionic": false,
+    "desc": "Vague label \u201cToggle\u201d that doesn't say what it does.",
+    "result": "none"
+   },
+   {
+    "tc": "TC5",
+    "kind": "pass",
+    "ionic": true,
+    "desc": "ion-toggle labelled \u201cWi-Fi\u201d.",
+    "result": "none"
+   },
+   {
+    "tc": "TC6",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "role=switch named \u201cBluetooth\u201d.",
+    "result": "none"
+   }
+  ],
+  "rows": {},
+  "capture": {
+   "nodes": 144,
+   "web": 130,
+   "web_notimp": 130,
+   "web_named": 92
+  }
+ },
+ "text-color-contrast": {
+  "tcs": [
+   {
+    "tc": "TC1",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "#999 on #fff, 14px (2.8:1).",
+    "result": "needs_review"
+   },
+   {
+    "tc": "TC2",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "White on amber #ffc107 button (1.6:1).",
+    "result": "needs_review"
+   },
+   {
+    "tc": "TC3",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Light placeholder #c0c0c0 in a field (1.8:1).",
+    "result": "none"
+   },
+   {
+    "tc": "TC4",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "White text over a light photo area.",
+    "result": "needs_review"
+   },
+   {
+    "tc": "TC5",
+    "kind": "edge",
+    "ionic": false,
+    "desc": "Large text 24px #949494 on #fff (3.0:1) meets the large-text threshold.",
+    "result": "pass"
+   },
+   {
+    "tc": "TC6",
+    "kind": "edge",
+    "ionic": false,
+    "desc": "Disabled button with low contrast (exempt: inactive component).",
+    "result": "none"
+   },
+   {
+    "tc": "TC7",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "#595959 on #fff (7:1).",
+    "result": "pass"
+   }
+  ],
+  "rows": {
+   "pass|TextView|outside TCs": 35,
+   "needs_review|TextView|TC1": 1,
+   "needs_review|Button|TC2": 1,
+   "needs_review|TextView|TC4": 2,
+   "pass|TextView|TC2": 1,
+   "pass|Button|TC2": 1,
+   "pass|TextView|TC5": 1,
+   "pass|TextView|TC7": 1
+  },
+  "capture": {
+   "nodes": 138,
+   "web": 124,
+   "web_notimp": 110,
+   "web_named": 93
+  }
+ },
+ "text-truncation": {
+  "tcs": [
+   {
+    "tc": "TC1",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Single line with ellipsis (text-overflow).",
+    "result": "pass"
+   },
+   {
+    "tc": "TC2",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Two-line clamp (-webkit-line-clamp) on a description.",
+    "result": "pass"
+   },
+   {
+    "tc": "TC3",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Fixed height + overflow:hidden cuts the last line.",
+    "result": "pass"
+   },
+   {
+    "tc": "TC4",
+    "kind": "fail",
+    "ionic": true,
+    "desc": "ion-label with the ion-text-nowrap utility: single line, ellipsized.",
+    "result": "pass"
+   },
+   {
+    "tc": "TC5",
+    "kind": "pass",
+    "ionic": true,
+    "desc": "Default ion-label (Ionic 9 wraps by default).",
+    "result": "pass"
+   },
+   {
+    "tc": "TC6",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "Plain wrapping paragraph.",
+    "result": "pass"
+   }
+  ],
+  "rows": {
+   "pass|TextView|outside TCs": 39,
+   "pass|TextView|TC1": 3,
+   "pass|TextView|TC2": 2,
+   "pass|TextView|TC3": 2,
+   "pass|TextView|TC4": 2,
+   "pass|TextView|TC5": 2,
+   "pass|TextView|TC6": 1
+  },
+  "capture": {
+   "nodes": 142,
+   "web": 128,
+   "web_notimp": 122,
+   "web_named": 104
+  }
+ },
+ "touch-target-size": {
+  "tcs": [
+   {
+    "tc": "TC1",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "24\u00d724 icon button.",
+    "result": "fail"
+   },
+   {
+    "tc": "TC2",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "32\u00d732 \u201cRemove\u201d button.",
+    "result": "fail"
+   },
+   {
+    "tc": "TC3",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "100\u00d730 text button (height below 44).",
+    "result": "fail"
+   },
+   {
+    "tc": "TC4",
+    "kind": "fail",
+    "ionic": true,
+    "desc": "ion-button size=small (about 28px high).",
+    "result": "none"
+   },
+   {
+    "tc": "TC5",
+    "kind": "edge",
+    "ionic": false,
+    "desc": "Inline link inside a sentence (inline exception).",
+    "result": "none"
+   },
+   {
+    "tc": "TC6",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "44\u00d744 icon button.",
+    "result": "pass"
+   },
+   {
+    "tc": "TC7",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "Small 20px icon with padding giving a 48\u00d748 hit area.",
+    "result": "pass"
+   }
+  ],
+  "rows": {
+   "pass|View|outside TCs": 2,
+   "pass|Button|outside TCs": 2,
+   "fail|Button|TC1": 2,
+   "fail|Button|TC2": 2,
+   "fail|Button|TC3": 2,
+   "pass|Button|TC6": 1,
+   "pass|Button|TC7": 1
+  },
+  "capture": {
+   "nodes": 158,
+   "web": 144,
+   "web_notimp": 135,
+   "web_named": 109
+  }
+ },
+ "touch-target-size-and-spacing": {
+  "tcs": [
+   {
+    "tc": "TC1",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Four 16\u00d716 buttons 2px apart.",
+    "result": "fail"
+   },
+   {
+    "tc": "TC2",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Two 20\u00d720 buttons touching (0px gap).",
+    "result": "fail"
+   },
+   {
+    "tc": "TC3",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "16\u00d716 buttons with 24px spacing (the 24 pt circles don't intersect).",
+    "result": "pass"
+   },
+   {
+    "tc": "TC4",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "24\u00d724 adjacent buttons (minimum size met).",
+    "result": "pass"
+   },
+   {
+    "tc": "TC5",
+    "kind": "edge",
+    "ionic": false,
+    "desc": "Adjacent inline links in text (inline exception).",
+    "result": "pass"
+   }
+  ],
+  "rows": {
+   "pass|View|outside TCs": 1,
+   "pass|Button|outside TCs": 1,
+   "fail|Button|TC1": 4,
+   "fail|Button|TC2": 2,
+   "pass|Button|TC3": 3,
+   "pass|Button|TC4": 2,
+   "pass|View|TC5": 3
+  },
+  "capture": {
+   "nodes": 70,
+   "web": 63,
+   "web_notimp": 63,
+   "web_named": 56
+  }
+ },
+ "traversal-order-cycle": {
+  "tcs": [
+   {
+    "tc": "TC1",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Leaving field 3 jumps focus back to field 1: \u201cContinue\u201d is unreachable.",
+    "result": "pass"
+   },
+   {
+    "tc": "TC2",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Positive tabindex ping-pong: A(1)\u2192B(2)\u2192A via focus handler.",
+    "result": "none"
+   },
+   {
+    "tc": "TC3",
+    "kind": "edge",
+    "ionic": false,
+    "desc": "Modal focus trap with an accessible Close button (intended trap).",
+    "result": "none"
+   },
+   {
+    "tc": "TC4",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "Linear order with no loops.",
+    "result": "none"
+   }
+  ],
+  "rows": {
+   "pass|FrameLayout|TC1": 1,
+   "pass|ViewGroup|TC1": 1,
+   "pass|FrameLayout|outside TCs": 1,
+   "pass|ViewGroup|outside TCs": 1
+  },
+  "capture": {
+   "nodes": 120,
+   "web": 106,
+   "web_notimp": 98,
+   "web_named": 82
+  }
+ },
+ "two-dimensional-scroll": {
+  "tcs": [
+   {
+    "tc": "TC1",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Fixed-height region that scrolls both horizontally and vertically.",
+    "result": "fail"
+   },
+   {
+    "tc": "TC2",
+    "kind": "fail",
+    "ionic": false,
+    "desc": "Wide article text (900px) inside a vertically scrolling page.",
+    "result": "pass"
+   },
+   {
+    "tc": "TC3",
+    "kind": "edge",
+    "ionic": false,
+    "desc": "Data table: 2-D layout is essential (exempt under WCAG 1.4.10).",
+    "result": "pass"
+   },
+   {
+    "tc": "TC4",
+    "kind": "pass",
+    "ionic": false,
+    "desc": "Horizontal-only carousel (one scroll direction).",
+    "result": "pass"
+   }
+  ],
+  "rows": {
+   "pass|FrameLayout|TC1": 3,
+   "pass|LinearLayout|TC1": 2,
+   "pass|ViewGroup|TC1": 1,
+   "pass|WebView|TC1": 2,
+   "pass|View|TC1": 8,
+   "pass|View|outside TCs": 16,
+   "pass|TextView|outside TCs": 41,
+   "pass|Button|outside TCs": 2,
+   "fail|View|TC1": 2,
+   "pass|TextView|TC1": 14,
+   "pass|TextView|TC2": 7,
+   "pass|View|TC2": 8,
+   "pass|View|TC3": 38,
+   "pass|GridView|TC3": 2,
+   "pass|TextView|TC4": 2,
+   "pass|FrameLayout|outside TCs": 3,
+   "pass|LinearLayout|outside TCs": 2,
+   "pass|ViewGroup|outside TCs": 1,
+   "pass|WebView|outside TCs": 2,
+   "pass|View|TC4": 2
+  },
+  "capture": {
+   "nodes": 158,
+   "web": 144,
+   "web_notimp": 144,
+   "web_named": 130
+  }
+ }
+}

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>iOS WebView &amp; Angular support — App A11y rules</title>
+<title>WebView &amp; Angular support — App A11y rules (iOS + Android)</title>
 <style>
   body { margin:0 auto; max-width:1250px; padding:26px 26px 70px;
          font:15px/1.55 -apple-system,"Segoe UI",Roboto,sans-serif; color:#1a1d21; background:#fff; }
@@ -51,7 +51,7 @@
 </head>
 <body>
 
-<h1>iOS App A11y on WebView content, with an Angular deep-dive</h1>
+<h1>App A11y on WebView content (iOS + Android), with an Angular deep-dive</h1>
 <p class="sub">iOS on-device dylib scans (<code>ios_app_patcher</code> · BrowserStackInjector, <code>origin/master @ e8bc1c3</code>, rule engine 2.3.x) ·
 what is supported, what is not, and whether support can be added reliably · evidence tags:
 <span class="tag t-code">code</span> read from source ·
@@ -59,6 +59,7 @@ what is supported, what is not, and whether support can be added reliably · evi
 <span class="tag t-web">research</span> WebKit / Apple / Angular / Ionic primary sources ·
 <span class="tag t-inf">inference</span> reasoned, still to be confirmed on a device · 30 Sep 2026</p>
 
+<p class="sub"><b>Device runs:</b> <a href="ios-run/">iOS run</a> · <a href="android-run/">Android run</a> · <a href="compare/">iOS vs Android comparison</a></p>
 <nav class="toc">
   <a href="#tldr">0 · TL;DR</a><br/>
   <a href="#pipeline">1 · How an iOS scan sees the screen</a><br/>
@@ -73,6 +74,7 @@ what is supported, what is not, and whether support can be added reliably · evi
   <a href="#design">8 · Recommended design: in-webview DOM layer</a><br/>
   <a href="#angular">9 · Angular: support and limitations</a><br/>
   <a href="#validate">10 · Validation plan (Angular POC)</a><br/>
+  <a href="#android">A · Android (talkback) code analysis</a><br/>
   <a href="#refs">11 · Evidence appendix</a>
 </nav>
 
@@ -107,6 +109,8 @@ Closed shadow roots, <code>&lt;canvas&gt;</code>/WebGL UIs (e.g. Flutter-web Can
 They should be reported as <b>"web content not assessed"</b>, never as pass.
 </div>
 
+<div class="rulebox"><b>Android in one line (<a href="#android">§A</a>):</b> the opposite problem. talkback <i>does</i> receive the web DOM as Chromium virtual nodes, but the rule engine gates most rules on
+<code>isImportantForAccessibility</code>, which Chromium never sets. 31 of 41 rules skip (27) or cap (4) web content, and the fix is mostly inside the rule engine.</div>
 <div class="rulebox">
 <b>Angular in one line:</b> <b>NativeScript-Angular</b> renders real UIKit and is supported today like native. Every other Angular-on-iOS shape
 (<b>Ionic + Capacitor</b>, <b>Ionic/Cordova</b>, an Angular site inside an app's WKWebView) is WebView content and is currently blind.
@@ -238,7 +242,7 @@ at every scroll position of every rule page (47 scans, rule engine 2.4.0). Navig
 <div class="rulebox warn"><b>Confirmed end to end:</b> every rule page, including deliberately broken labels, contrast, target sizes, headings, truncation and focus traps, scans as clean.
 The only rows produced are container / app-level passes, which read as coverage. It is the §3 production pattern reproduced under controlled conditions with known ground truth.
 The same app is the test bed for the §8 DOM layer: its <code>docs/TEST_CASES.md</code> gives the expected verdict for every test case.</div>
-<p><b>→ Full per-rule breakdown, with screenshots, emitted rows and the reason each rule could not run: <a href="ios-run/">iOS run: AppA11y Rule Lab</a></b> · Android talkback run: <i>to follow</i></p>
+<p><b>→ Full per-rule breakdown, with screenshots, emitted rows and the reason each rule could not run: <a href="ios-run/">iOS run: AppA11y Rule Lab</a></b> · <a href="android-run/">Android talkback run</a> · <a href="compare/">iOS vs Android</a></p>
 
 <!-- ============================================================ -->
 <h2 id="why">4 · Why: WebKit's AX tree lives in another process <span class="tag t-web">research</span></h2>
@@ -513,6 +517,56 @@ Each scenario comes as a violating/passing pair, so the scan verdict can be scor
 <tr><td>Links &amp; forms</td><td>"click here" / "read more"; <code>autocomplete</code> missing on email/password; error message not associated</td></tr>
 <tr><td>Hard cases (expect "not assessed")</td><td>closed shadow root component; <code>&lt;canvas&gt;</code> chart; cross-origin iframe; SFSafariViewController launch; hidden 0×0 analytics webview (must be ignored)</td></tr>
 </table></div>
+
+<!-- ============================================================ -->
+<h2 id="android">A · Android (BS talkback): code analysis of WebView support <span class="tag t-code">code</span> <span class="tag t-web">research</span></h2>
+<p class="sub">Code-only, like §1–§2 and §5 for iOS. Sources: <code>talkback</code> <code>origin/main @ 15e97db6</code> (<code>talkback/…/AppAccessibility.java</code>, <code>talkback-rule-engine/…/bsruleengine/*</code>, <code>RULE_ENGINE_CHANGELOG.md</code>) and Chromium main
+(<a href="https://github.com/chromium/chromium/blob/main/content/public/android/java/src/org/chromium/content/browser/accessibility/AccessibilityNodeInfoBuilder.java">AccessibilityNodeInfoBuilder.java</a>,
+<a href="https://github.com/chromium/chromium/blob/main/content/public/android/java/src/org/chromium/content/browser/accessibility/WebContentsAccessibilityImpl.java">WebContentsAccessibilityImpl.java</a>,
+<a href="https://github.com/chromium/chromium/blob/main/ui/accessibility/ax_assistant_structure.cc">ax_assistant_structure.cc</a>). Device runs: <a href="android-run/">Android run</a> · <a href="compare/">iOS vs Android</a>.</p>
+
+<div class="grid3">
+  <div class="col"><h3>Capture sees the web</h3><p>The scanner <i>is</i> an AccessibilityService, so Chromium serves it the DOM as <b>virtual <code>AccessibilityNodeInfo</code> nodes</b>. <code>snapshotNode</code> (<code>AppAccessibility.java:4207-4236</code>) walks <code>getChild()</code> into them:
+  Button / TextView / EditText / CheckBox / Switch / Image, with names, <code>isHeading</code>, <code>inputType</code>, <code>isPassword</code>, hint, state, HTML <code>id</code> as <code>viewIdResourceName</code> and <code>URLSpan</code> links.</p>
+  <div class="verdict v-ok">Opposite of iOS: the data is there</div></div>
+  <div class="col"><h3>…but the engine drops it</h3><p>Chromium never calls <code>setImportantForAccessibility</code>. <code>BSView.isAccessible</code> = that flag (<code>BSViewAdapter.kt:100</code>), and <code>shouldFocusView</code> / <code>speakableTextApplicable</code> return false without it (<code>BSShouldFocusView.kt:27-38</code>).
+  The code says so itself: "Chromium's WebView virtual nodes never carry importantForAccessibility… turned the rule off for every node of hybrid apps" (<code>BSRules.kt:604-607</code>).</p>
+  <div class="verdict v-bad">27 of 41 rules skip web nodes</div></div>
+  <div class="col"><h3>Missing inputs</h3><p>Chromium serves no <code>EXTRA_DATA_RENDERING_INFO</code> (only character locations, image data, drawing order), so <b>fontSize / fontSizeUnit / layoutSize are null</b> for web text (<code>AppAccessibility.java:4503-4526</code>).
+  There's no ellipsize info, no <code>labeledBy</code>, and no contrast swatches for web controls.</p>
+  <div class="verdict v-mid">text-size, truncation, magnification and reflow rules blind or capped</div></div>
+</div>
+
+<h3>A.1 · Rule matrix for WebView content on Android</h3>
+<p class="sub">evaluates = web nodes reach the rule's check · partial = reach it but capped / subset only · skipped = gated out · verdict from code, not from device runs.</p>
+<div class="tbl"><table>
+<tr><th>rule_id</th><th>Inputs</th><th>WebView handling / gate (file:line)</th><th>Web content</th><th>Note</th></tr>
+<tr><td class="mono">touch-target-size</td><td>rect, clickable</td><td class="mono">no importance gate; inline-link exemption BSRuleHelpers.kt:161-166; ad-WebView exemption :340-359</td><td class="ok">evaluates</td><td>d: no lag guard, stale rects on a lagging tree</td></tr><tr><td class="mono">touch-target-size-and-spacing</td><td>rect, OCR presence</td><td class="mono">no gate; phantomWebElement NA BSAdditionalRules.kt:755-791</td><td class="ok">evaluates</td><td>lag-guarded; d: dense link spacing</td></tr><tr><td class="mono">two-dimensional-scroll</td><td>actionList scroll directions</td><td class="mono">no gate BSAdditionalRules.kt:924-927; Chromium adds all 4 directions</td><td class="ok">evaluates</td><td>d: incidental horizontal overflow</td></tr><tr><td class="mono">incorrect-heading</td><td>TextView leaf, isHeading</td><td class="mono">no gate BSAIRules.kt:489-500; Chromium setHeading</td><td class="ok">evaluates</td><td>AI candidate → TCG verdict</td></tr><tr><td class="mono">missing-heading</td><td>TextView leaf text</td><td class="mono">no gate BSAIRules.kt:450-460</td><td class="ok">evaluates</td><td>AI payload says is_accessible:"0" for every web leaf</td></tr><tr><td class="mono">editable-element-no-content-description</td><td>desc / hint / labeledBy</td><td class="mono">labelLost path BSAdditionalRules.kt:372-386; Chromium never sets labeledBy</td><td class="ok">evaluates</td><td>d: filled web fields with hint/desc → FAIL</td></tr><tr><td class="mono">screen-reader-for-interactive-elements</td><td>isInScreenReaderTree, caption</td><td class="mono">uses isInScreenReaderTree :1386 (virtual → true)</td><td class="ok">evaluates</td><td>metadata PASS only</td></tr><tr><td class="mono">text-color-contrast</td><td>contrastSwatch, OCR</td><td class="mono">gate removed (PAAA-541) but WebView root forced PASS BSRules.kt:666-700; non-accessible → NEEDS_REVIEW</td><td class="mid">partial</td><td>web text can never FAIL; OCR over web pixels</td></tr><tr><td class="mono">text-truncation</td><td>TextView, fontSizeUnit, layoutSize</td><td class="mono">validContentText true when unit≠2 BSRules.kt:152</td><td class="mid">partial</td><td>web TextViews always PASS</td></tr><tr><td class="mono">non-text-color-contrast</td><td>swatch on Image/ImageButton/SeekBar/ProgressBar</td><td class="mono">swatch capture native classes only AppAccessibility.java:5928-5934</td><td class="mid">partial</td><td>clickable img / range / progress only</td></tr><tr><td class="mono">images-of-text</td><td>image role, OCR</td><td class="mono">no gate BSAIRules.kt:403; &lt;img&gt; → android.widget.Image → ROLE_NONE</td><td class="mid">partial</td><td>clickable images only</td></tr><tr><td class="mono">focus-order-for-interactive-elements</td><td>focus caption</td><td class="mono">APPA11Y-5614: web out of scope :1297-1316 (ACTION_NEXT_HTML_ELEMENT)</td><td class="bad">skipped</td><td>by design; WebView host still checked</td></tr><tr><td class="mono">meaningful-reading-order</td><td>focus caption</td><td class="mono">web nodes never in caption BSAIRules.kt ~535</td><td class="bad">skipped</td><td>screen-level candidate only</td></tr><tr><td class="mono">meaningful-visual-order</td><td>accessible visible nodes</td><td class="mono">!isAccessible :596</td><td class="bad">skipped</td><td></td></tr><tr><td class="mono">text-magnification</td><td>fontSizeUnit, textSizeInPx</td><td class="mono">isAccessible BSRules.kt:927; unit null</td><td class="bad">skipped</td><td>no ExtraRenderingInfo from Chromium</td></tr><tr><td class="mono">readable-text-size</td><td>fontSize</td><td class="mono">isAccessible :680; fontSize null</td><td class="bad">skipped</td><td>no ExtraRenderingInfo</td></tr><tr><td class="mono">readable-text-spacing</td><td>fontSize + OCR</td><td class="mono">fontSize ?: return :2762</td><td class="bad">skipped</td><td></td></tr><tr><td class="mono">responsive-containers</td><td>layoutSize</td><td class="mono">layoutSize null → skip :1731</td><td class="bad">skipped</td><td>no ExtraRenderingInfo</td></tr><tr><td class="mono">label-in-name</td><td>label vs visible text</td><td class="mono">gate :2360</td><td class="bad">skipped</td><td>data captured, never evaluated</td></tr><tr><td class="mono">label-at-front</td><td>label</td><td class="mono">gate :2072</td><td class="bad">skipped</td><td></td></tr><tr><td class="mono">duplicate-element-content-label</td><td>speakable label</td><td class="mono">shouldFocusView :122</td><td class="bad">skipped</td><td></td></tr><tr><td class="mono">checkbox-element-content-label</td><td>CheckBox role</td><td class="mono">shouldFocusView :253</td><td class="bad">skipped</td><td>Chromium maps to android.widget.CheckBox</td></tr><tr><td class="mono">switch-element-content-label</td><td>Switch role</td><td class="mono">shouldFocusView :297</td><td class="bad">skipped</td><td>Chromium maps role=switch → Switch</td></tr><tr><td class="mono">state-in-content-label</td><td>label + state</td><td class="mono">gate :431</td><td class="bad">skipped</td><td></td></tr><tr><td class="mono">view-type-in-content-label</td><td>label vs role</td><td class="mono">gate :608</td><td class="bad">skipped</td><td></td></tr><tr><td class="mono">button-element-content-label-capitalization</td><td>Button role, label</td><td class="mono">gate :478</td><td class="bad">skipped</td><td></td></tr><tr><td class="mono">special-character-element-content-label</td><td>label</td><td class="mono">gate :547</td><td class="bad">skipped</td><td></td></tr><tr><td class="mono">interactable-element-content-label</td><td>speakable label</td><td class="mono">gate BSAIRules.kt:60-64</td><td class="bad">skipped</td><td></td></tr><tr><td class="mono">imageview-element-content-label</td><td>image role</td><td class="mono">gate BSAIRules.kt:263</td><td class="bad">skipped</td><td>&lt;img&gt; is ROLE_NONE too</td></tr><tr><td class="mono">editable-element-content-label</td><td>speakable label</td><td class="mono">gate BSAIRules.kt:315</td><td class="bad">skipped</td><td></td></tr><tr><td class="mono">accessible-input-field-label</td><td>text / OCR / labeledBy</td><td class="mono">gate :1477</td><td class="bad">skipped</td><td></td></tr><tr><td class="mono">input-type-for-input-field</td><td>inputType vs label</td><td class="mono">gate :2604</td><td class="bad">skipped</td><td>Chromium does set inputType</td></tr><tr><td class="mono">link-text-purpose</td><td>clickableSpans / TextView</td><td class="mono">shouldFocusView BSAIRules.kt:632</td><td class="bad">skipped</td><td>URLSpan data captured, unused</td></tr><tr><td class="mono">missing-view-type-in-spoken-output</td><td>spoken caption</td><td class="mono">gate :1599</td><td class="bad">skipped</td><td></td></tr><tr><td class="mono">overlapping-interactive-elements</td><td>bounds</td><td class="mono">speakableTextApplicable :1001</td><td class="bad">skipped</td><td></td></tr><tr><td class="mono">keyboard-focus-for-interactive-elements</td><td>focusable</td><td class="mono">gate :1265</td><td class="bad">skipped</td><td></td></tr><tr><td class="mono">interactive-element-unsupported-type</td><td>class prefix</td><td class="mono">gate :1074</td><td class="bad">skipped</td><td></td></tr><tr><td class="mono">traversal-order-cycle</td><td>cycle flags</td><td class="mono">gate :966</td><td class="bad">skipped</td><td></td></tr><tr><td class="mono">interactive-element-accessibility</td><td>—</td><td class="mono">disabled placeholder :1054-1061</td><td class="na">not web-dependent</td><td></td></tr><tr><td class="mono">app-orientation-support</td><td>manifest</td><td class="mono">root-only</td><td class="na">not web-dependent</td><td>web-agnostic</td></tr><tr><td class="mono">screen-orientation</td><td>activity orientation</td><td class="mono">root-only</td><td class="na">not web-dependent</td><td>web-agnostic</td></tr>
+</table></div>
+<p class="note">Totals: evaluates 7 · partial 4 · skipped 27 · not web-dependent 3. <code>NA</code> results are dropped before upload (<code>BSRuleProcessor.kt:60-69</code>), so a skipped web node leaves no trace: "found nothing" and "never evaluated" look identical.</p>
+
+<h3>A.2 · Framework detection, WebView-specific code and quirks</h3>
+<ul class="tight">
+  <li><code>detectAppFramework</code> (<code>AppAccessibility.java:3405-3515</code>) scans APK entries. <code>assets/www/cordova.js</code> gives <code>cordova</code>; Capacitor ships <code>assets/public/</code>, so Capacitor / Ionic probably read as <code>native</code> <span class="tag t-inf">inference</span>. Angular is never detected, and no rule branches on <code>cordova</code>.</li>
+  <li><code>isInsideWebView</code> (ancestor <code>android.webkit.WebView</code>) drives the inline-link exemption, viewport clipping and the phantom-web-element guard. <code>BSView.isWebViewElement</code> is never set, so the <code>flutterWeb</code> guards (<code>BSAdditionalRules.kt:1266/1325/1387</code>) are dead code.</li>
+  <li>Chrome Custom Tabs / TWA are captured only when opened directly over the app (<code>BSCapturePolicy.kt:25-38</code>). Chrome's own UI ids are skipped. Nested iframes map to <code>android.view.View</code> (nested root web area).</li>
+  <li>Chromium builds its AX tree lazily and auto-disables it 5 s after no service is active. BS talkback's package <code>com.android.talkback</code> is not in Chromium's <code>KNOWN_SCREEN_READER_SERVICE_IDS</code>, so its AXMode comes from heuristics <span class="tag t-inf">inference</span>: content may differ slightly from what real TalkBack users get.</li>
+</ul>
+
+<h3>A.3 · Can Android support be made reliable? Yes, mostly inside the rule engine</h3>
+<div class="tbl"><table>
+<tr><th>Change</th><th>Unlocks</th><th>Reliability</th></tr>
+<tr><td>Treat web virtual nodes as accessible when <code>isInScreenReaderTree</code> (already captured) instead of <code>isImportantForAccessibility</code></td><td>the 27 gated rules: labels, roles, state/type-in-label, links, inputs, switches/checkboxes, overlap, keyboard focus</td><td class="ok">High: the tree TalkBack itself announces; small, contained change; expect higher finding volume</td></tr>
+<tr><td>Web text size from OCR glyph height (the Flutter path already does this, <code>AppAccessibility.java:4566-4569</code>) or from JS via WebView debugging</td><td>readable-text-size, readable-text-spacing, text-magnification</td><td class="mid">Medium: OCR estimate ±1 sp; JS path needs debuggable WebView</td></tr>
+<tr><td>Truncation from OCR-vs-accessible-text comparison (visible text shorter than node text + ellipsis glyph)</td><td>text-truncation</td><td class="mid">Medium</td></tr>
+<tr><td>Allow FAIL for OCR-verified swatches under the WebView root; add swatches for web Button / EditText / CheckBox bounds</td><td>text-color-contrast, non-text-color-contrast</td><td class="mid">Medium: OCR over web pixels already used</td></tr>
+<tr><td>Map <code>android.widget.Image</code> (non-clickable <code>&lt;img&gt;</code>) to an image role</td><td>imageview-element-content-label, images-of-text</td><td class="ok">High</td></tr>
+<tr><td>Detect Capacitor / Ionic (<code>assets/public/</code> + <code>capacitor.config.json</code>) and report <code>webFramework</code></td><td>reporting, framework-specific tuning</td><td class="ok">High</td></tr>
+</table></div>
+
+<h3>A.4 · Angular on Android</h3>
+<p>The same shapes as §9a apply. Ionic + Capacitor / Cordova and Angular inside a WebView all run in Android System WebView (Chromium), and their DOM <b>is</b> exposed to talkback. Ionic's open shadow DOM is transparent to Chromium's AX tree, so nothing extra is needed to reach it.
+NativeScript-Angular renders native Android views, so it is supported like native. The gap on Android is not capture, as it is on iOS, but the importance gate and the missing text metrics. Both are fixable in the rule engine without touching the page.</p>
 
 <!-- ============================================================ -->
 <h2 id="refs">11 · Evidence appendix</h2>

@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Android run — Angular Rule Lab</title>
+<style>
+  body { margin:0 auto; max-width:1250px; padding:26px 26px 70px; font:15px/1.55 -apple-system,"Segoe UI",Roboto,sans-serif; color:#1a1d21; background:#fff; }
+  h1 { font-size:22px; margin:0 0 4px; } h2 { font-size:17px; margin:34px 0 6px; padding-top:6px; border-top:1px solid #eef0f2; }
+  h3 { font-size:15.5px; margin:0; }
+  .sub { color:#5c6570; margin:0 0 14px; font-size:13.5px; } .sub2 { color:#5c6570; margin:2px 0 8px; }
+  a { color:#0b57d0; }
+  code { background:#f0f2f4; padding:1px 5px; border-radius:4px; font-size:12.5px; }
+  .mono { font-family:ui-monospace,Menlo,monospace; font-size:12.5px; }
+  .rulebox { border:1px solid #e3e6ea; border-left:4px solid #0b57d0; background:#f7f9fb; border-radius:8px; padding:12px 16px; font-size:14px; margin:12px 0; }
+  .rulebox.warn { border-left-color:#c2410c; background:#fff8f4; }
+  .kpis { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin:12px 0; }
+  .kpi { border:1px solid #e3e6ea; border-radius:10px; padding:10px 12px; background:#fafbfc; }
+  .kpi b { display:block; font-size:24px; } .kpi span { font-size:12.5px; color:#5c6570; }
+  table { border-collapse:collapse; width:100%; font-size:13px; }
+  th,td { border:1px solid #e3e6ea; padding:5px 8px; text-align:left; vertical-align:top; } th { background:#f2f4f6; }
+  td.bad2 { background:#ffd7d4; } td.mid { background:#fff1c9; } td.bad { background:#ffd7d4; } td.ok { background:#d7f0dd; } td.na { background:#f4f5f7; color:#5c6570; }
+  .chip { font-size:11px; font-weight:700; border-radius:5px; padding:1px 6px; }
+  .c-fail { background:#fde2e1; color:#8a1c14; } .c-pass { background:#dcf2e3; color:#0b5a2a; } .c-edge { background:#fdf0c8; color:#6b4700; }
+  .rule { border:1px solid #e3e6ea; border-radius:12px; padding:14px 16px; margin:16px 0; }
+  .rule-head { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
+  .verdict { font-size:12px; font-weight:700; border-radius:8px; padding:3px 10px; }
+  .v-bad { background:#ffd7d4; color:#8f1b13; } .v-ok { background:#d7f0dd; color:#0a5d2a; } .v-mid { background:#fff1c9; color:#7a5200; } .v-na { background:#eef0f2; color:#4b5563; }
+  .grid2 { display:grid; grid-template-columns:1fr 1.25fr; gap:16px; align-items:start; }
+  .why { background:#fff8f4; border-left:3px solid #c2410c; padding:6px 10px; border-radius:6px; }
+  .tblwrap { overflow-x:auto; }
+  .shots { display:flex; gap:12px; overflow-x:auto; margin-top:10px; padding-bottom:4px; }
+  figure { margin:0; flex:0 0 220px; } figure img { width:220px; border:1px solid #d9dde3; border-radius:8px; }
+  figcaption { font-size:11.5px; color:#5c6570; }
+  nav.toc { columns:3; column-gap:24px; font-size:13px; } nav.toc a { display:block; text-decoration:none; padding:1px 0; }
+  .dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:6px; }
+  .dot.v-bad { background:#dc2626; } .dot.v-ok { background:#16a34a; } .dot.v-mid { background:#d97706; } .dot.v-na { background:#9ca3af; }
+  details summary { cursor:pointer; color:#0b57d0; font-size:13px; }
+  @media (max-width:860px) { .grid2 { grid-template-columns:1fr; } .kpis { grid-template-columns:repeat(2,1fr); } nav.toc { columns:1; } body { padding:18px 16px 60px; } }
+</style>
+</head>
+<body>
+<p class="sub"><a href="../">← iOS &amp; Android WebView / Angular support analysis</a> · <a href="../ios-run/">iOS run</a> · <a href="../compare/">iOS vs Android comparison</a></p>
+<h1>Android run: AppA11y Rule Lab (Angular + Ionic in Android System WebView)</h1>
+<p class="sub">On-device scan of every rule page · Xiaomi 22021211RI, Android 14, WebView 152.0.7977.64 · BS talkback 1.1.39 (versionCode 44) as the accessibility service ·
+on-device rule engine 2.0.5 · same APK as the iOS run (Angular 22.2 + Ionic 9.0.5 + Capacitor 8.5.2) · reported <code>framework</code>: native</p>
+
+<div class="kpis">
+  <div class="kpi"><b>70</b><span>scans (every scroll position of 41 rule pages)</span></div>
+  <div class="kpi"><b>4,075</b><span>web nodes captured (3,112 carry a name / text)</span></div>
+  <div class="kpi"><b>3,884</b><span>of them <code>isImportantForAccessibility=false</code></span></div>
+  <div class="kpi"><b>6 / 127</b><span>expected-FAIL test cases reported FAIL (11 more flagged review / AI)</span></div>
+  <div class="kpi"><b>0</b><span>FAILs on expected-PASS test cases</span></div>
+</div>
+
+<div class="rulebox warn"><b>Unlike iOS, Android captures the web content.</b> Chromium exposes the DOM as virtual
+<code>AccessibilityNodeInfo</code> nodes (Button, TextView, EditText, CheckBox, Switch… with names, headings, input types and URLs), and talkback serializes them.
+<b>The rule engine then discards most of them:</b> Chromium never marks virtual nodes <code>importantForAccessibility</code>, and 25 of 41 rules gate on that flag
+(<code>isAccessible</code> / <code>shouldFocusView</code> / <code>speakableTextApplicable</code>). Rules without the gate (touch-target, two-dimensional-scroll, the heading AI candidates, contrast) do reach web nodes,
+but contrast is capped at PASS / needs-review and truncation can never FAIL for web text (no font-size unit from Chromium). AI rules produce <code>ai_review</code> candidates whose verdict needs TCG, which was not run locally.</div>
+
+<h2>Method</h2>
+<ol>
+  <li>Installed <code>A11yAngularPOC-1.0.0.apk</code>. Enabled <code>com.android.talkback/…TalkBackService</code> (BSTalkback) via <code>settings put secure enabled_accessibility_services</code>, restored afterwards.</li>
+  <li><code>adb forward tcp:9333 localabstract:webview_devtools_remote_&lt;pid&gt;</code> (the app sets <code>webContentsDebuggingEnabled</code>). A CDP client navigates to <code>/rule/&lt;id&gt;</code> and scrolls <code>ion-content</code> in 85% steps.
+  At each step it records the test-case stage rectangles in <b>screen pixels</b> (CSS px × devicePixelRatio + WebView top offset).</li>
+  <li>Scan: <code>am broadcast -a triggerAccessibilityScan --es sessionId local --es reportId r&lt;ts&gt; --es bsUserId dev --ez on_device_rules true</code>. Wait for the
+  <code>TalkBackService: Accessibility scan completed</code> log line, then <code>run-as com.android.talkback cat …/accessibility_data/window.json</code> → snapshot (screenshot stripped) + screenshot.png.</li>
+  <li>Scoring: every rule-result element is attributed to the test case whose stage contains the element's centre. A FAIL test case counts as <b>detected</b> only if that rule emitted
+  <code>fail</code> on an element inside it (<code>needs_review</code> / <code>ai_review</code> are shown separately).</li>
+</ol>
+
+<h2>Rules <span class="sub">(● detects · ● partial / review only · ● silent or misses · ● works, app-level) — 3 · 6 · 32</span></h2>
+<nav class="toc"><a href="#label-at-front"><span class="dot v-bad"></span>Accessibility Label at front</a><a href="#accessible-input-field-label"><span class="dot v-bad"></span>Accessible Input Field Labels</a><a href="#interactive-element-accessibility"><span class="dot v-bad"></span>Accessible Interactive Elements</a><a href="#app-orientation-support"><span class="dot v-ok"></span>App Orientation Lock</a><a href="#button-element-content-label-capitalization"><span class="dot v-bad"></span>Button Element Accessibility Label Capitalization</a><a href="#checkbox-element-content-label"><span class="dot v-bad"></span>Checkbox Element Content Label</a><a href="#duplicate-element-content-label"><span class="dot v-bad"></span>Duplicate Accessibility Label on Screen</a><a href="#state-in-content-label"><span class="dot v-bad"></span>Duplicate State Info in Spoken Output</a><a href="#view-type-in-content-label"><span class="dot v-bad"></span>Duplicate Type Info in Spoken Output</a><a href="#editable-element-content-label"><span class="dot v-bad"></span>Editable Element Accessibility Label</a><a href="#editable-element-no-content-description"><span class="dot v-bad"></span>Editable Element Label Not Announced</a><a href="#text-magnification"><span class="dot v-bad"></span>Font Magnification Support</a><a href="#images-of-text"><span class="dot v-bad"></span>Images with Text</a><a href="#incorrect-heading"><span class="dot v-mid"></span>Incorrect Heading</a><a href="#input-type-for-input-field"><span class="dot v-bad"></span>Input type for Input Fields</a><a href="#interactable-element-content-label"><span class="dot v-bad"></span>Interactive Element Accessibility Label</a><a href="#interactive-element-unsupported-type"><span class="dot v-bad"></span>Interactive Elements with Unsupported Type</a><a href="#keyboard-focus-for-interactive-elements"><span class="dot v-bad"></span>Keyboard Focus for Interactive Elements</a><a href="#label-in-name"><span class="dot v-bad"></span>Label in Name</a><a href="#link-text-purpose"><span class="dot v-bad"></span>Link Text Purpose</a><a href="#imageview-element-content-label"><span class="dot v-bad"></span>Meaningful accessibility label for images</a><a href="#meaningful-reading-order"><span class="dot v-bad"></span>Meaningful Reading Order</a><a href="#meaningful-visual-order"><span class="dot v-mid"></span>Meaningful Visual Order</a><a href="#missing-heading"><span class="dot v-mid"></span>Missing Heading</a><a href="#missing-view-type-in-spoken-output"><span class="dot v-bad"></span>Missing View Type in Spoken Output</a><a href="#non-text-color-contrast"><span class="dot v-bad"></span>Non-Text Element Color Contrast</a><a href="#overlapping-interactive-elements"><span class="dot v-bad"></span>Overlapping Interactive Elements</a><a href="#readable-text-size"><span class="dot v-bad"></span>Readable Text Size</a><a href="#readable-text-spacing"><span class="dot v-bad"></span>Readable Text Spacing</a><a href="#responsive-containers"><span class="dot v-bad"></span>Responsive Containers</a><a href="#focus-order-for-interactive-elements"><span class="dot v-bad"></span>Screen Reader Focus for Interactive Elements</a><a href="#special-character-element-content-label"><span class="dot v-bad"></span>Special-Character Element Accessibility Label</a><a href="#screen-reader-for-interactive-elements"><span class="dot v-bad"></span>Spoken Description not Meaningful</a><a href="#screen-orientation"><span class="dot v-ok"></span>Supported Screen Orientations</a><a href="#switch-element-content-label"><span class="dot v-bad"></span>Switch Element Accessibility Label</a><a href="#text-color-contrast"><span class="dot v-mid"></span>Text Element Color Contrast (Minimum)</a><a href="#text-truncation"><span class="dot v-bad"></span>Text Truncation</a><a href="#touch-target-size"><span class="dot v-mid"></span>Touch Target Size</a><a href="#touch-target-size-and-spacing"><span class="dot v-ok"></span>Touch Target Size &amp; Spacing</a><a href="#traversal-order-cycle"><span class="dot v-bad"></span>Traversal Order Cycle</a><a href="#two-dimensional-scroll"><span class="dot v-mid"></span>Two-Dimensional Scrolling</a></nav>
+
+<section class="rule" id="label-at-front">
+  <div class="rule-head"><h3>Accessibility Label at front</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">label-at-front · 4 test cases · 1 scan(s) · web nodes captured 46 (35 with a name, 46 importantForAccessibility=false)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule</b> (status · node class · where):<br/><b>none</b></p>
+      <p><b>What the rule needs:</b> Label vs visible text.</p>
+      <p class="why"><b>Why web content is / isn't evaluated:</b> BSAdditionalRules.kt:2072 skips every node with <code>isImportantForAccessibility=false</code>: Chromium never sets it on WebView virtual nodes (BSRules.kt:604-607; BSViewAdapter.kt:100 → BSShouldFocusView.kt:27-38).</p>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>Android result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Visible “Buy now”; name “Tap to Buy now”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Visible “Settings”; name “Open the Settings”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Visible “Buy now”; name “Buy now, 2 items”.</td><td class="na">—</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-pass">PASS</span></td><td></td><td>No override; the name is the visible text.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/label-at-front-p1.jpg" target="_blank"><img loading="lazy" src="img/label-at-front-p1.jpg" alt="Android scan screenshot, Accessibility Label at front p1"></a><figcaption>p1 · TCs on screen: TC1, TC2, TC3, TC4</figcaption></figure></div>
+</section>
+<section class="rule" id="accessible-input-field-label">
+  <div class="rule-head"><h3>Accessible Input Field Labels</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">accessible-input-field-label · 6 test cases · 2 scan(s) · web nodes captured 142 (80 with a name, 121 importantForAccessibility=false)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule</b> (status · node class · where):<br/><b>none</b></p>
+      <p><b>What the rule needs:</b> Label / OCR / labeledBy of EditText.</p>
+      <p class="why"><b>Why web content is / isn't evaluated:</b> Gate at BSAdditionalRules.kt:1477 skips every node with <code>isImportantForAccessibility=false</code>: Chromium never sets it on WebView virtual nodes (BSRules.kt:604-607; BSViewAdapter.kt:100 → BSShouldFocusView.kt:27-38).</p>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>Android result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Placeholder “Email” is the only label.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td>Ionic</td><td>ion-input with placeholder only.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Named via aria-label only; nothing is visible.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>Visible label placed far from its field.</td><td class="na">—</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Visible &lt;label for&gt; “Email”.</td><td class="na">—</td></tr><tr><td class="mono">TC6</td><td><span class="chip c-pass">PASS</span></td><td>Ionic</td><td>ion-input with a stacked label “Full name”.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/accessible-input-field-label-p1.jpg" target="_blank"><img loading="lazy" src="img/accessible-input-field-label-p1.jpg" alt="Android scan screenshot, Accessible Input Field Labels p1"></a><figcaption>p1 · TCs on screen: TC1, TC2, TC3</figcaption></figure><figure><a href="img/accessible-input-field-label-p2.jpg" target="_blank"><img loading="lazy" src="img/accessible-input-field-label-p2.jpg" alt="Android scan screenshot, Accessible Input Field Labels p2"></a><figcaption>p2 · TCs on screen: TC3, TC4, TC5, TC6</figcaption></figure></div>
+</section>
+<section class="rule" id="interactive-element-accessibility">
+  <div class="rule-head"><h3>Accessible Interactive Elements</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">interactive-element-accessibility · 4 test cases · 1 scan(s) · web nodes captured 43 (32 with a name, 43 importantForAccessibility=false)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule</b> (status · node class · where):<br/><b>none</b></p>
+      <p><b>What the rule needs:</b> —</p>
+      <p class="why"><b>Why web content is / isn't evaluated:</b> Disabled placeholder on all platforms (BSAdditionalRules.kt:1054-1061).</p>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>Android result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Clickable span marked aria-hidden.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Canvas-drawn button (the only content is pixels).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Link inside an inert region.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Native button exposed to assistive tech.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/interactive-element-accessibility-p1.jpg" target="_blank"><img loading="lazy" src="img/interactive-element-accessibility-p1.jpg" alt="Android scan screenshot, Accessible Interactive Elements p1"></a><figcaption>p1 · TCs on screen: TC1, TC2, TC3, TC4</figcaption></figure></div>
+</section>
+<section class="rule" id="app-orientation-support">
+  <div class="rule-head"><h3>App Orientation Lock</h3><span class="verdict v-ok">Works (app-level)</span></div>
+  <p class="mono sub2">app-orientation-support · 2 test cases · 1 scan(s) · web nodes captured 32 (25 with a name, 32 importantForAccessibility=false)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule</b> (status · node class · where):<br/>1× <b>pass</b> on <code>FrameLayout</code> · outside TCs</p>
+      <p><b>What the rule needs:</b> Manifest orientations (app-level).</p>
+      <p class="why"><b>Why web content is / isn't evaluated:</b> Not web-dependent: manifest declares unspecified (all) → PASS.</p>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>Android result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Build declares all orientations (Info.plist / manifest): the default state of this app.</td><td class="na">—</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>Runtime lock to portrait (not visible in Info.plist); tap, then rotate.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/app-orientation-support-p1.jpg" target="_blank"><img loading="lazy" src="img/app-orientation-support-p1.jpg" alt="Android scan screenshot, App Orientation Lock p1"></a><figcaption>p1 · TCs on screen: TC1, TC2</figcaption></figure></div>
+</section>
+<section class="rule" id="button-element-content-label-capitalization">
+  <div class="rule-head"><h3>Button Element Accessibility Label Capitalization</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">button-element-content-label-capitalization · 6 test cases · 2 scan(s) · web nodes captured 124 (89 with a name, 115 importantForAccessibility=false)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule</b> (status · node class · where):<br/><b>none</b></p>
+      <p><b>What the rule needs:</b> Button-role nodes with speakable label.</p>
+      <p class="why"><b>Why web content is / isn't evaluated:</b> BSAdditionalRules.kt:478 skips every node with <code>isImportantForAccessibility=false</code>: Chromium never sets it on WebView virtual nodes (BSRules.kt:604-607; BSViewAdapter.kt:100 → BSShouldFocusView.kt:27-38).</p>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>Android result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Button text starts lowercase: “submit order”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Visible “Continue” but aria-label is lowercase “continue”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td>Ionic</td><td>ion-button text “cancel”: shown uppercase (md mode CSS) but the name stays lowercase.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>Name “Save” but CSS text-transform: lowercase renders “save” (name vs OCR).</td><td class="na">—</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>Brand that is lowercase by design: “iPhone settings”.</td><td class="na">—</td></tr><tr><td class="mono">TC6</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Capitalised label “Submit order”.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/button-element-content-label-capitalization-p1.jpg" target="_blank"><img loading="lazy" src="img/button-element-content-label-capitalization-p1.jpg" alt="Android scan screenshot, Button Element Accessibility Label Capitalization p1"></a><figcaption>p1 · TCs on screen: TC1, TC2, TC3, TC4</figcaption></figure><figure><a href="img/button-element-content-label-capitalization-p2.jpg" target="_blank"><img loading="lazy" src="img/button-element-content-label-capitalization-p2.jpg" alt="Android scan screenshot, Button Element Accessibility Label Capitalization p2"></a><figcaption>p2 · TCs on screen: TC2, TC3, TC4, TC5, TC6</figcaption></figure></div>
+</section>
+<section class="rule" id="checkbox-element-content-label">
+  <div class="rule-head"><h3>Checkbox Element Content Label</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">checkbox-element-content-label · 6 test cases · 2 scan(s) · web nodes captured 126 (90 with a name, 126 importantForAccessibility=false)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule</b> (status · node class · where):<br/><b>none</b></p>
+      <p><b>What the rule needs:</b> CheckBox-role nodes (Chromium maps checkbox → android.widget.CheckBox).</p>
+      <p class="why"><b>Why web content is / isn't evaluated:</b> BSAdditionalRules.kt:253 skips every node with <code>isImportantForAccessibility=false</code>: Chromium never sets it on WebView virtual nodes (BSRules.kt:604-607; BSViewAdapter.kt:100 → BSShouldFocusView.kt:27-38).</p>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>Android result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Native checkbox with no label at all.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Text sits next to the checkbox but is not associated with it.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td>Ionic</td><td>ion-checkbox without label text or aria-label.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Custom div role=checkbox with state but no name.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Checkbox wrapped in a label: “Accept terms”.</td><td class="na">—</td></tr><tr><td class="mono">TC6</td><td><span class="chip c-pass">PASS</span></td><td>Ionic</td><td>ion-checkbox with slotted label “Subscribe”.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/checkbox-element-content-label-p1.jpg" target="_blank"><img loading="lazy" src="img/checkbox-element-content-label-p1.jpg" alt="Android scan screenshot, Checkbox Element Content Label p1"></a><figcaption>p1 · TCs on screen: TC1, TC2, TC3, TC4, TC5</figcaption></figure><figure><a href="img/checkbox-element-content-label-p2.jpg" target="_blank"><img loading="lazy" src="img/checkbox-element-content-label-p2.jpg" alt="Android scan screenshot, Checkbox Element Content Label p2"></a><figcaption>p2 · TCs on screen: TC1, TC2, TC3, TC4, TC5, TC6</figcaption></figure></div>
+</section>
+<section class="rule" id="duplicate-element-content-label">
+  <div class="rule-head"><h3>Duplicate Accessibility Label on Screen</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">duplicate-element-content-label · 4 test cases · 2 scan(s) · web nodes captured 122 (99 with a name, 117 importantForAccessibility=false)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule</b> (status · node class · where):<br/><b>none</b></p>
+      <p><b>What the rule needs:</b> Speakable labels across focusable nodes.</p>
+      <p class="why"><b>Why web content is / isn't evaluated:</b> BSAdditionalRules.kt:122 skips every node with <code>isImportantForAccessibility=false</code>: Chromium never sets it on WebView virtual nodes (BSRules.kt:604-607; BSViewAdapter.kt:100 → BSShouldFocusView.kt:27-38).</p>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>Android result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Three rows, three different targets, all named “Edit”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td>Ionic</td><td>Two icon ion-buttons both aria-label “Delete” for different items.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>Same name, same destination (“Home” twice) is acceptable.</td><td class="na">—</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Unique names: “Edit address”, “Edit phone”, “Edit email”.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/duplicate-element-content-label-p1.jpg" target="_blank"><img loading="lazy" src="img/duplicate-element-content-label-p1.jpg" alt="Android scan screenshot, Duplicate Accessibility Label on Screen p1"></a><figcaption>p1 · TCs on screen: TC1, TC2, TC3</figcaption></figure><figure><a href="img/duplicate-element-content-label-p2.jpg" target="_blank"><img loading="lazy" src="img/duplicate-element-content-label-p2.jpg" alt="Android scan screenshot, Duplicate Accessibility Label on Screen p2"></a><figcaption>p2 · TCs on screen: TC1, TC2, TC3, TC4</figcaption></figure></div>
+</section>
+<section class="rule" id="state-in-content-label">
+  <div class="rule-head"><h3>Duplicate State Info in Spoken Output</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">state-in-content-label · 5 test cases · 1 scan(s) · web nodes captured 55 (44 with a name, 55 importantForAccessibility=false)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule</b> (status · node class · where):<br/><b>none</b></p>
+      <p><b>What the rule needs:</b> Label + state.</p>
+      <p class="why"><b>Why web content is / isn't evaluated:</b> BSAdditionalRules.kt:431 skips every node with <code>isImportantForAccessibility=false</code>: Chromium never sets it on WebView virtual nodes (BSRules.kt:604-607; BSViewAdapter.kt:100 → BSShouldFocusView.kt:27-38).</p>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>Android result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Checkbox aria-label “Notifications checked”, and it is checked.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Toggle button aria-pressed=true named “Wi-Fi on”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Selected tab named “Home selected”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-fail">FAIL</span></td><td>Ionic</td><td>ion-toggle labelled “Dark mode enabled”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Checkbox named “Notifications”; the checked state comes from the control.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/state-in-content-label-p1.jpg" target="_blank"><img loading="lazy" src="img/state-in-content-label-p1.jpg" alt="Android scan screenshot, Duplicate State Info in Spoken Output p1"></a><figcaption>p1 · TCs on screen: TC1, TC2, TC3, TC4, TC5</figcaption></figure></div>
+</section>
+<section class="rule" id="view-type-in-content-label">
+  <div class="rule-head"><h3>Duplicate Type Info in Spoken Output</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">view-type-in-content-label · 6 test cases · 2 scan(s) · web nodes captured 124 (99 with a name, 121 importantForAccessibility=false)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule</b> (status · node class · where):<br/><b>none</b></p>
+      <p><b>What the rule needs:</b> Label words vs role.</p>
+      <p class="why"><b>Why web content is / isn't evaluated:</b> BSAdditionalRules.kt:608 skips every node with <code>isImportantForAccessibility=false</code>: Chromium never sets it on WebView virtual nodes (BSRules.kt:604-607; BSViewAdapter.kt:100 → BSShouldFocusView.kt:27-38).</p>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>Android result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Button labelled “Save button”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Link labelled “Privacy policy link”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Checkbox labelled “Remember me checkbox”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-fail">FAIL</span></td><td>Ionic</td><td>ion-toggle labelled “Dark mode switch”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Image aria-label “Profile image”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC6</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Plain names: “Save”, “Privacy policy”.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/view-type-in-content-label-p1.jpg" target="_blank"><img loading="lazy" src="img/view-type-in-content-label-p1.jpg" alt="Android scan screenshot, Duplicate Type Info in Spoken Output p1"></a><figcaption>p1 · TCs on screen: TC1, TC2, TC3, TC4, TC5</figcaption></figure><figure><a href="img/view-type-in-content-label-p2.jpg" target="_blank"><img loading="lazy" src="img/view-type-in-content-label-p2.jpg" alt="Android scan screenshot, Duplicate Type Info in Spoken Output p2"></a><figcaption>p2 · TCs on screen: TC1, TC2, TC3, TC4, TC5, TC6</figcaption></figure></div>
+</section>
+<section class="rule" id="editable-element-content-label">
+  <div class="rule-head"><h3>Editable Element Accessibility Label</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">editable-element-content-label · 6 test cases · 2 scan(s) · web nodes captured 128 (86 with a name, 119 importantForAccessibility=false)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule</b> (status · node class · where):<br/><b>none</b></p>
+      <p><b>What the rule needs:</b> Speakable label of editable nodes.</p>
+      <p class="why"><b>Why web content is / isn't evaluated:</b> BSAIRules.kt:315 skips every node with <code>isImportantForAccessibility=false</code>: Chromium never sets it on WebView virtual nodes (BSRules.kt:604-607; BSViewAdapter.kt:100 → BSShouldFocusView.kt:27-38).</p>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>Android result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Text field with a value but no name.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Unnamed textarea.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>contenteditable div with no name.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-fail">FAIL</span></td><td>Ionic</td><td>ion-textarea with no label.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Labelled field with a value: name “First name”, value “John”.</td><td class="na">—</td></tr><tr><td class="mono">TC6</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Textarea named by aria-labelledby.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/editable-element-content-label-p1.jpg" target="_blank"><img loading="lazy" src="img/editable-element-content-label-p1.jpg" alt="Android scan screenshot, Editable Element Accessibility Label p1"></a><figcaption>p1 · TCs on screen: TC1, TC2, TC3, TC4</figcaption></figure><figure><a href="img/editable-element-content-label-p2.jpg" target="_blank"><img loading="lazy" src="img/editable-element-content-label-p2.jpg" alt="Android scan screenshot, Editable Element Accessibility Label p2"></a><figcaption>p2 · TCs on screen: TC2, TC3, TC4, TC5, TC6</figcaption></figure></div>
+</section>
+<section class="rule" id="editable-element-no-content-description">
+  <div class="rule-head"><h3>Editable Element Label Not Announced</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">editable-element-no-content-description · 4 test cases · 1 scan(s) · web nodes captured 43 (33 with a name, 43 importantForAccessibility=false)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule</b> (status · node class · where):<br/><b>none</b></p>
+      <p><b>What the rule needs:</b> desc / hint / value / labeledBy on EditText.</p>
+      <p class="why"><b>Why web content is / isn't evaluated:</b> Evaluates web fields when the label is "lost" (BSAdditionalRules.kt:372-386); Chromium never sets labeledBy, so filled web fields with hint/desc are FP-prone.</p>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>Android result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Field named only by aria-label (becomes contentDescription on Android).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>aria-label overrides a visible hint: “Search”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>title attribute used as the only name.</td><td class="na">—</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Visible label linked with for/id (labelFor on Android).</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/editable-element-no-content-description-p1.jpg" target="_blank"><img loading="lazy" src="img/editable-element-no-content-description-p1.jpg" alt="Android scan screenshot, Editable Element Label Not Announced p1"></a><figcaption>p1 · TCs on screen: TC1, TC2, TC3, TC4</figcaption></figure></div>
+</section>
+<section class="rule" id="text-magnification">
+  <div class="rule-head"><h3>Font Magnification Support</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">text-magnification · 5 test cases · 2 scan(s) · web nodes captured 106 (90 with a name, 106 importantForAccessibility=false)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule</b> (status · node class · where):<br/><b>none</b></p>
+      <p><b>What the rule needs:</b> fontSizeUnit / textSizeInPx.</p>
+      <p class="why"><b>Why web content is / isn't evaluated:</b> BSRules.kt:927 skips every node with <code>isImportantForAccessibility=false</code>: Chromium never sets it on WebView virtual nodes (BSRules.kt:604-607; BSViewAdapter.kt:100 → BSShouldFocusView.kt:27-38); unit null for web text.</p>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>Android result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Fixed 15px text with -webkit-text-size-adjust:none (never scales).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Text sized in vw units (tracks screen width, not text size).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Text in a fixed-height box that clips when enlarged.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-pass">PASS</span></td><td></td><td>iOS Dynamic Type via font: -apple-system-body; rem sizing elsewhere.</td><td class="na">—</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>Ionic default text (Ionic&#x27;s own dynamic-font support).</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/text-magnification-p1.jpg" target="_blank"><img loading="lazy" src="img/text-magnification-p1.jpg" alt="Android scan screenshot, Font Magnification Support p1"></a><figcaption>p1 · TCs on screen: TC1, TC2, TC3, TC4</figcaption></figure><figure><a href="img/text-magnification-p2.jpg" target="_blank"><img loading="lazy" src="img/text-magnification-p2.jpg" alt="Android scan screenshot, Font Magnification Support p2"></a><figcaption>p2 · TCs on screen: TC1, TC2, TC3, TC4, TC5</figcaption></figure></div>
+</section>
+<section class="rule" id="images-of-text">
+  <div class="rule-head"><h3>Images with Text</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">images-of-text · 6 test cases · 2 scan(s) · web nodes captured 118 (88 with a name, 102 importantForAccessibility=false)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule</b> (status · node class · where):<br/><b>none</b></p>
+      <p><b>What the rule needs:</b> Image-role nodes + OCR.</p>
+      <p class="why"><b>Why web content is / isn't evaluated:</b> No importance gate (BSAIRules.kt:403), but a non-clickable &lt;img&gt; is android.widget.Image → ROLE_NONE, so only clickable images qualify.</p>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>Android result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Promo banner image containing “50% OFF SUMMER SALE”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>CSS background-image that contains text (“FREE DELIVERY”).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Instructions rendered as an image.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>Logotype: brand text in a logo (exempt under WCAG 1.4.5).</td><td class="na">—</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-pass">PASS</span></td><td></td><td>The same banner built from real text + CSS.</td><td class="na">—</td></tr><tr><td class="mono">TC6</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Photo without text.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/images-of-text-p1.jpg" target="_blank"><img loading="lazy" src="img/images-of-text-p1.jpg" alt="Android scan screenshot, Images with Text p1"></a><figcaption>p1 · TCs on screen: TC1, TC2, TC3</figcaption></figure><figure><a href="img/images-of-text-p2.jpg" target="_blank"><img loading="lazy" src="img/images-of-text-p2.jpg" alt="Android scan screenshot, Images with Text p2"></a><figcaption>p2 · TCs on screen: TC3, TC4, TC5, TC6</figcaption></figure></div>
+</section>
+<section class="rule" id="incorrect-heading">
+  <div class="rule-head"><h3>Incorrect Heading</h3><span class="verdict v-mid">Partial: 0 FAIL, 4 review of 4</span></div>
+  <p class="mono sub2">incorrect-heading · 5 test cases · 2 scan(s) · web nodes captured 100 (85 with a name, 99 importantForAccessibility=false)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule</b> (status · node class · where):<br/>38× <b>ai_review</b> on <code>TextView</code> · outside TCs<br/>4× <b>ai_review</b> on <code>TextView</code> · TC3<br/>2× <b>ai_review</b> on <code>TextView</code> · TC1<br/>2× <b>ai_review</b> on <code>TextView</code> · TC2<br/>2× <b>ai_review</b> on <code>TextView</code> · TC4<br/>2× <b>ai_review</b> on <code>TextView</code> · TC5</p>
+      <p><b>What the rule needs:</b> TextView leaves with isHeading (Chromium setHeading).</p>
+      <p class="why"><b>Why web content is / isn't evaluated:</b> No importance gate (BSAIRules.kt:489-500): web headings become AI candidates (<code>ai_review</code>); the verdict needs TCG, not run locally.</p>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>Android result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Call to action marked as a heading: &lt;h2&gt;Tap to continue&lt;/h2&gt;.</td><td class="mid">AI candidate</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Whole sentence marked as a heading.</td><td class="mid">AI candidate</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Vague heading text that describes nothing: “Section”.</td><td class="mid">AI candidate</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Price value marked as role=heading.</td><td class="mid">AI candidate</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Heading “Saved payment methods” titles the content below it.</td><td class="na">AI candidate</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/incorrect-heading-p1.jpg" target="_blank"><img loading="lazy" src="img/incorrect-heading-p1.jpg" alt="Android scan screenshot, Incorrect Heading p1"></a><figcaption>p1 · TCs on screen: TC1, TC2, TC3, TC4</figcaption></figure><figure><a href="img/incorrect-heading-p2.jpg" target="_blank"><img loading="lazy" src="img/incorrect-heading-p2.jpg" alt="Android scan screenshot, Incorrect Heading p2"></a><figcaption>p2 · TCs on screen: TC1, TC2, TC3, TC4, TC5</figcaption></figure></div>
+</section>
+<section class="rule" id="input-type-for-input-field">
+  <div class="rule-head"><h3>Input type for Input Fields</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">input-type-for-input-field · 6 test cases · 2 scan(s) · web nodes captured 136 (83 with a name, 120 importantForAccessibility=false)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule</b> (status · node class · where):<br/><b>none</b></p>
+      <p><b>What the rule needs:</b> inputType vs label (Chromium sets inputType).</p>
+      <p class="why"><b>Why web content is / isn't evaluated:</b> BSAdditionalRules.kt:2604 skips every node with <code>isImportantForAccessibility=false</code>: Chromium never sets it on WebView virtual nodes (BSRules.kt:604-607; BSViewAdapter.kt:100 → BSShouldFocusView.kt:27-38).</p>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>Android result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Label “Email” but type=text and no autocomplete.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Label “Phone number” but type=text.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Label “Password” but type=text (not secure).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-fail">FAIL</span></td><td>Ionic</td><td>ion-input “Email address” with type=text.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-pass">PASS</span></td><td></td><td>type=email + autocomplete=email.</td><td class="na">—</td></tr><tr><td class="mono">TC6</td><td><span class="chip c-pass">PASS</span></td><td></td><td>type=tel + autocomplete=tel; type=password + current-password.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/input-type-for-input-field-p1.jpg" target="_blank"><img loading="lazy" src="img/input-type-for-input-field-p1.jpg" alt="Android scan screenshot, Input type for Input Fields p1"></a><figcaption>p1 · TCs on screen: TC1, TC2, TC3, TC4</figcaption></figure><figure><a href="img/input-type-for-input-field-p2.jpg" target="_blank"><img loading="lazy" src="img/input-type-for-input-field-p2.jpg" alt="Android scan screenshot, Input type for Input Fields p2"></a><figcaption>p2 · TCs on screen: TC3, TC4, TC5, TC6</figcaption></figure></div>
+</section>
+<section class="rule" id="interactable-element-content-label">
+  <div class="rule-head"><h3>Interactive Element Accessibility Label</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">interactable-element-content-label · 6 test cases · 2 scan(s) · web nodes captured 128 (85 with a name, 119 importantForAccessibility=false)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule</b> (status · node class · where):<br/><b>none</b></p>
+      <p><b>What the rule needs:</b> Speakable label of interactive nodes.</p>
+      <p class="why"><b>Why web content is / isn't evaluated:</b> BSAIRules.kt:60-64 skips every node with <code>isImportantForAccessibility=false</code>: Chromium never sets it on WebView virtual nodes (BSRules.kt:604-607; BSViewAdapter.kt:100 → BSShouldFocusView.kt:27-38).</p>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>Android result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Icon-only button (SVG) with no accessible name.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td>Ionic</td><td>Icon-only ion-button (heart) without aria-label.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Link wrapping only an image with empty alt.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Empty div role=button (no text, no label).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Icon button with aria-label “Share”.</td><td class="na">—</td></tr><tr><td class="mono">TC6</td><td><span class="chip c-pass">PASS</span></td><td>Ionic</td><td>Icon ion-button with aria-label “Add to favourites”.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/interactable-element-content-label-p1.jpg" target="_blank"><img loading="lazy" src="img/interactable-element-content-label-p1.jpg" alt="Android scan screenshot, Interactive Element Accessibility Label p1"></a><figcaption>p1 · TCs on screen: TC1, TC2, TC3, TC4</figcaption></figure><figure><a href="img/interactable-element-content-label-p2.jpg" target="_blank"><img loading="lazy" src="img/interactable-element-content-label-p2.jpg" alt="Android scan screenshot, Interactive Element Accessibility Label p2"></a><figcaption>p2 · TCs on screen: TC1, TC2, TC3, TC4, TC5, TC6</figcaption></figure></div>
+</section>
+<section class="rule" id="interactive-element-unsupported-type">
+  <div class="rule-head"><h3>Interactive Elements with Unsupported Type</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">interactive-element-unsupported-type · 5 test cases · 1 scan(s) · web nodes captured 54 (42 with a name, 54 importantForAccessibility=false)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule</b> (status · node class · where):<br/><b>none</b></p>
+      <p><b>What the rule needs:</b> Class prefix of interactive nodes.</p>
+      <p class="why"><b>Why web content is / isn't evaluated:</b> BSAdditionalRules.kt:1074 skips every node with <code>isImportantForAccessibility=false</code>: Chromium never sets it on WebView virtual nodes (BSRules.kt:604-607; BSViewAdapter.kt:100 → BSShouldFocusView.kt:27-38).</p>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>Android result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Clickable div with no role.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Invalid ARIA role “clickable”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Clickable element with role=text / generic.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-pass">PASS</span></td><td></td><td>div role=button tabindex=0.</td><td class="na">—</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Native &lt;a href&gt; link.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/interactive-element-unsupported-type-p1.jpg" target="_blank"><img loading="lazy" src="img/interactive-element-unsupported-type-p1.jpg" alt="Android scan screenshot, Interactive Elements with Unsupported Type p1"></a><figcaption>p1 · TCs on screen: TC1, TC2, TC3, TC4, TC5</figcaption></figure></div>
+</section>
+<section class="rule" id="keyboard-focus-for-interactive-elements">
+  <div class="rule-head"><h3>Keyboard Focus for Interactive Elements</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">keyboard-focus-for-interactive-elements · 7 test cases · 2 scan(s) · web nodes captured 146 (105 with a name, 129 importantForAccessibility=false)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule</b> (status · node class · where):<br/><b>none</b></p>
+      <p><b>What the rule needs:</b> Focusable flag of interactive nodes.</p>
+      <p class="why"><b>Why web content is / isn't evaluated:</b> BSAdditionalRules.kt:1265 skips every node with <code>isImportantForAccessibility=false</code>: Chromium never sets it on WebView virtual nodes (BSRules.kt:604-607; BSViewAdapter.kt:100 → BSShouldFocusView.kt:27-38).</p>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>Android result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>div with a click handler and no tabindex.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Real button removed from tab order (tabindex=-1).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Anchor without href (not focusable).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>role=button with tabindex=0 but no Enter/Space handling.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>Scrollable region that is not focusable.</td><td class="na">—</td></tr><tr><td class="mono">TC6</td><td><span class="chip c-pass">PASS</span></td><td></td><td>role=button, tabindex=0, handles Enter and Space.</td><td class="na">—</td></tr><tr><td class="mono">TC7</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Native button.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/keyboard-focus-for-interactive-elements-p1.jpg" target="_blank"><img loading="lazy" src="img/keyboard-focus-for-interactive-elements-p1.jpg" alt="Android scan screenshot, Keyboard Focus for Interactive Elements p1"></a><figcaption>p1 · TCs on screen: TC1, TC2, TC3, TC4</figcaption></figure><figure><a href="img/keyboard-focus-for-interactive-elements-p2.jpg" target="_blank"><img loading="lazy" src="img/keyboard-focus-for-interactive-elements-p2.jpg" alt="Android scan screenshot, Keyboard Focus for Interactive Elements p2"></a><figcaption>p2 · TCs on screen: TC2, TC3, TC4, TC5, TC6, TC7</figcaption></figure></div>
+</section>
+<section class="rule" id="label-in-name">
+  <div class="rule-head"><h3>Label in Name</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">label-in-name · 5 test cases · 2 scan(s) · web nodes captured 110 (84 with a name, 110 importantForAccessibility=false)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule</b> (status · node class · where):<br/><b>none</b></p>
+      <p><b>What the rule needs:</b> Label vs visible text.</p>
+      <p class="why"><b>Why web content is / isn't evaluated:</b> BSAdditionalRules.kt:2360 skips every node with <code>isImportantForAccessibility=false</code>: Chromium never sets it on WebView virtual nodes (BSRules.kt:604-607; BSViewAdapter.kt:100 → BSShouldFocusView.kt:27-38). The data IS captured (e.g. Button accessibleName "Submit message" for visible "Send") but never evaluated.</p>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>Android result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Visible “Send”; name “Submit message” (doesn&#x27;t contain “Send”).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Visible “Next”; name “Continue”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td>Ionic</td><td>ion-button “Search” with aria-label “Find”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>Visible “Q&amp;A”; name “Questions and answers” (abbreviation).</td><td class="na">—</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Visible “Send”; name “Send message”.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/label-in-name-p1.jpg" target="_blank"><img loading="lazy" src="img/label-in-name-p1.jpg" alt="Android scan screenshot, Label in Name p1"></a><figcaption>p1 · TCs on screen: TC1, TC2, TC3, TC4</figcaption></figure><figure><a href="img/label-in-name-p2.jpg" target="_blank"><img loading="lazy" src="img/label-in-name-p2.jpg" alt="Android scan screenshot, Label in Name p2"></a><figcaption>p2 · TCs on screen: TC1, TC2, TC3, TC4, TC5</figcaption></figure></div>
+</section>
+<section class="rule" id="link-text-purpose">
+  <div class="rule-head"><h3>Link Text Purpose</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">link-text-purpose · 6 test cases · 2 scan(s) · web nodes captured 136 (110 with a name, 134 importantForAccessibility=false)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule</b> (status · node class · where):<br/><b>none</b></p>
+      <p><b>What the rule needs:</b> clickableSpans / TextView link text.</p>
+      <p class="why"><b>Why web content is / isn't evaluated:</b> BSAIRules.kt:632 skips every node with <code>isImportantForAccessibility=false</code>: Chromium never sets it on WebView virtual nodes (BSRules.kt:604-607; BSViewAdapter.kt:100 → BSShouldFocusView.kt:27-38); the URLSpan data is captured (AppAccessibility.java:5835-5860).</p>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>Android result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Stop-word link: “Click here”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Generic “Read more” with no context.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Raw URL as link text.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Link with no text (image with no alt).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>“Read more” whose aria-label adds context: “Read more about pricing”.</td><td class="na">—</td></tr><tr><td class="mono">TC6</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Descriptive text: “Read the refund policy”.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/link-text-purpose-p1.jpg" target="_blank"><img loading="lazy" src="img/link-text-purpose-p1.jpg" alt="Android scan screenshot, Link Text Purpose p1"></a><figcaption>p1 · TCs on screen: TC1, TC2, TC3, TC4, TC5</figcaption></figure><figure><a href="img/link-text-purpose-p2.jpg" target="_blank"><img loading="lazy" src="img/link-text-purpose-p2.jpg" alt="Android scan screenshot, Link Text Purpose p2"></a><figcaption>p2 · TCs on screen: TC1, TC2, TC3, TC4, TC5, TC6</figcaption></figure></div>
+</section>
+<section class="rule" id="imageview-element-content-label">
+  <div class="rule-head"><h3>Meaningful accessibility label for images</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">imageview-element-content-label · 6 test cases · 2 scan(s) · web nodes captured 118 (83 with a name, 100 importantForAccessibility=false)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule</b> (status · node class · where):<br/><b>none</b></p>
+      <p><b>What the rule needs:</b> Image-role accessible nodes.</p>
+      <p class="why"><b>Why web content is / isn't evaluated:</b> BSAIRules.kt:263 skips every node with <code>isImportantForAccessibility=false</code>: Chromium never sets it on WebView virtual nodes (BSRules.kt:604-607; BSViewAdapter.kt:100 → BSShouldFocusView.kt:27-38); &lt;img&gt; is also ROLE_NONE.</p>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>Android result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Informative photo with no alt attribute.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Meaningless alt: “IMG_2024.png”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Generic alt: “image”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Inline SVG role=img with no title or label.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Accurate alt: “Golden retriever catching a ball”.</td><td class="na">—</td></tr><tr><td class="mono">TC6</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Decorative divider with alt=“” (should be ignored).</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/imageview-element-content-label-p1.jpg" target="_blank"><img loading="lazy" src="img/imageview-element-content-label-p1.jpg" alt="Android scan screenshot, Meaningful accessibility label for images p1"></a><figcaption>p1 · TCs on screen: TC1, TC2, TC3</figcaption></figure><figure><a href="img/imageview-element-content-label-p2.jpg" target="_blank"><img loading="lazy" src="img/imageview-element-content-label-p2.jpg" alt="Android scan screenshot, Meaningful accessibility label for images p2"></a><figcaption>p2 · TCs on screen: TC3, TC4, TC5, TC6</figcaption></figure></div>
+</section>
+<section class="rule" id="meaningful-reading-order">
+  <div class="rule-head"><h3>Meaningful Reading Order</h3><span class="verdict v-bad">Rows emitted, none on failing TCs</span></div>
+  <p class="mono sub2">meaningful-reading-order · 5 test cases · 2 scan(s) · web nodes captured 118 (96 with a name, 110 importantForAccessibility=false)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule</b> (status · node class · where):<br/>2× <b>ai_review</b> on <code>FrameLayout</code> · outside TCs</p>
+      <p><b>What the rule needs:</b> TalkBack focus caption sequence.</p>
+      <p class="why"><b>Why web content is / isn't evaluated:</b> Web nodes never appear in the focus caption (BSAIRules.kt ~535); one screen-level ai_review candidate only.</p>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>Android result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Visually 1-2-3, but DOM order is 3-1-2 (CSS order).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>row-reverse: the value is read before its label.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Two columns interleaved: reads Name, City, Email, Zip.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Absolutely positioned “Buy” button first in DOM, drawn last.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-pass">PASS</span></td><td></td><td>DOM order matches visual order.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/meaningful-reading-order-p1.jpg" target="_blank"><img loading="lazy" src="img/meaningful-reading-order-p1.jpg" alt="Android scan screenshot, Meaningful Reading Order p1"></a><figcaption>p1 · TCs on screen: TC1, TC2, TC3</figcaption></figure><figure><a href="img/meaningful-reading-order-p2.jpg" target="_blank"><img loading="lazy" src="img/meaningful-reading-order-p2.jpg" alt="Android scan screenshot, Meaningful Reading Order p2"></a><figcaption>p2 · TCs on screen: TC2, TC3, TC4, TC5</figcaption></figure></div>
+</section>
+<section class="rule" id="meaningful-visual-order">
+  <div class="rule-head"><h3>Meaningful Visual Order</h3><span class="verdict v-mid">Partial: 0 FAIL, 1 review of 3</span></div>
+  <p class="mono sub2">meaningful-visual-order · 4 test cases · 2 scan(s) · web nodes captured 104 (84 with a name, 101 importantForAccessibility=false)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule</b> (status · node class · where):<br/>1× <b>ai_review</b> on <code>FrameLayout</code> · TC2<br/>1× <b>ai_review</b> on <code>FrameLayout</code> · outside TCs</p>
+      <p><b>What the rule needs:</b> Accessible visible nodes.</p>
+      <p class="why"><b>Why web content is / isn't evaluated:</b> BSAIRules.kt:596 skips every node with <code>isImportantForAccessibility=false</code>: Chromium never sets it on WebView virtual nodes (BSRules.kt:604-607; BSViewAdapter.kt:100 → BSShouldFocusView.kt:27-38); one screen-level ai_review candidate only.</p>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>Android result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Submit is drawn above the fields it submits.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Price sits above an unrelated product; the label is far from its value.</td><td class="mid">AI candidate</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Step 3 appears before step 1 visually.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Logical flow: title, fields, then action.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/meaningful-visual-order-p1.jpg" target="_blank"><img loading="lazy" src="img/meaningful-visual-order-p1.jpg" alt="Android scan screenshot, Meaningful Visual Order p1"></a><figcaption>p1 · TCs on screen: TC1, TC2, TC3</figcaption></figure><figure><a href="img/meaningful-visual-order-p2.jpg" target="_blank"><img loading="lazy" src="img/meaningful-visual-order-p2.jpg" alt="Android scan screenshot, Meaningful Visual Order p2"></a><figcaption>p2 · TCs on screen: TC1, TC2, TC3, TC4</figcaption></figure></div>
+</section>
+<section class="rule" id="missing-heading">
+  <div class="rule-head"><h3>Missing Heading</h3><span class="verdict v-mid">Partial: 0 FAIL, 3 review of 3</span></div>
+  <p class="mono sub2">missing-heading · 5 test cases · 2 scan(s) · web nodes captured 118 (97 with a name, 111 importantForAccessibility=false)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule</b> (status · node class · where):<br/>35× <b>ai_review</b> on <code>TextView</code> · outside TCs<br/>4× <b>ai_review</b> on <code>TextView</code> · TC1<br/>4× <b>ai_review</b> on <code>TextView</code> · TC2<br/>4× <b>ai_review</b> on <code>TextView</code> · TC3<br/>4× <b>ai_review</b> on <code>TextView</code> · TC4<br/>2× <b>ai_review</b> on <code>TextView</code> · TC5</p>
+      <p><b>What the rule needs:</b> TextView leaf text.</p>
+      <p class="why"><b>Why web content is / isn't evaluated:</b> No importance gate (BSAIRules.kt:450-460): web text leaves become AI candidates (<code>ai_review</code>) with is_accessible:"0"; verdict needs TCG.</p>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>Android result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Large bold “Payment details” div that is not a heading.</td><td class="mid">AI candidate</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td>Ionic</td><td>ion-list-header “Recent orders” (renders a div, not a heading).</td><td class="mid">AI candidate</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Bold section title inside a card, styled with a &lt;b&gt; tag.</td><td class="mid">AI candidate</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Real &lt;h2&gt; “Payment details”.</td><td class="na">AI candidate</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-pass">PASS</span></td><td></td><td>div role=heading aria-level=2 “Shipping”.</td><td class="na">AI candidate</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/missing-heading-p1.jpg" target="_blank"><img loading="lazy" src="img/missing-heading-p1.jpg" alt="Android scan screenshot, Missing Heading p1"></a><figcaption>p1 · TCs on screen: TC1, TC2, TC3</figcaption></figure><figure><a href="img/missing-heading-p2.jpg" target="_blank"><img loading="lazy" src="img/missing-heading-p2.jpg" alt="Android scan screenshot, Missing Heading p2"></a><figcaption>p2 · TCs on screen: TC1, TC2, TC3, TC4, TC5</figcaption></figure></div>
+</section>
+<section class="rule" id="missing-view-type-in-spoken-output">
+  <div class="rule-head"><h3>Missing View Type in Spoken Output</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">missing-view-type-in-spoken-output · 5 test cases · 1 scan(s) · web nodes captured 56 (45 with a name, 56 importantForAccessibility=false)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule</b> (status · node class · where):<br/><b>none</b></p>
+      <p><b>What the rule needs:</b> Spoken caption of interactive nodes.</p>
+      <p class="why"><b>Why web content is / isn't evaluated:</b> BSAdditionalRules.kt:1599 skips every node with <code>isImportantForAccessibility=false</code>: Chromium never sets it on WebView virtual nodes (BSRules.kt:604-607; BSViewAdapter.kt:100 → BSShouldFocusView.kt:27-38).</p>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>Android result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Div acting as a switch: no role, no state.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Span styled as a link, with a click handler and no role.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Tab bar made of plain divs (no tablist/tab roles).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-pass">PASS</span></td><td></td><td>role=switch with aria-checked and a name.</td><td class="na">—</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Proper tablist / tab roles with aria-selected.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/missing-view-type-in-spoken-output-p1.jpg" target="_blank"><img loading="lazy" src="img/missing-view-type-in-spoken-output-p1.jpg" alt="Android scan screenshot, Missing View Type in Spoken Output p1"></a><figcaption>p1 · TCs on screen: TC1, TC2, TC3, TC4, TC5</figcaption></figure></div>
+</section>
+<section class="rule" id="non-text-color-contrast">
+  <div class="rule-head"><h3>Non-Text Element Color Contrast</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">non-text-color-contrast · 5 test cases · 2 scan(s) · web nodes captured 108 (85 with a name, 107 importantForAccessibility=false)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule</b> (status · node class · where):<br/><b>none</b></p>
+      <p><b>What the rule needs:</b> Swatch on ImageView / ImageButton / SeekBar / ProgressBar.</p>
+      <p class="why"><b>Why web content is / isn't evaluated:</b> Swatches are captured only for those native classes (AppAccessibility.java:5928-5934); web borders / icons have none.</p>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>Android result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Input border #e0e0e0 on #fff (1.3:1).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Icon-only button with a #cfcfcf icon on #fff (1.6:1).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Checkbox whose border is #d6d6d6 (unchecked state barely visible).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Selected vs unselected segment differ only by a #f2f2f2 fill.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Input border #767676 (4.5:1) and icon #5f6368.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/non-text-color-contrast-p1.jpg" target="_blank"><img loading="lazy" src="img/non-text-color-contrast-p1.jpg" alt="Android scan screenshot, Non-Text Element Color Contrast p1"></a><figcaption>p1 · TCs on screen: TC1, TC2, TC3, TC4</figcaption></figure><figure><a href="img/non-text-color-contrast-p2.jpg" target="_blank"><img loading="lazy" src="img/non-text-color-contrast-p2.jpg" alt="Android scan screenshot, Non-Text Element Color Contrast p2"></a><figcaption>p2 · TCs on screen: TC1, TC2, TC3, TC4, TC5</figcaption></figure></div>
+</section>
+<section class="rule" id="overlapping-interactive-elements">
+  <div class="rule-head"><h3>Overlapping Interactive Elements</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">overlapping-interactive-elements · 5 test cases · 2 scan(s) · web nodes captured 116 (92 with a name, 114 importantForAccessibility=false)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule</b> (status · node class · where):<br/><b>none</b></p>
+      <p><b>What the rule needs:</b> Bounds of speakable interactive nodes.</p>
+      <p class="why"><b>Why web content is / isn't evaluated:</b> BSAdditionalRules.kt:1001 speakableTextApplicable skips every node with <code>isImportantForAccessibility=false</code>: Chromium never sets it on WebView virtual nodes (BSRules.kt:604-607; BSViewAdapter.kt:100 → BSShouldFocusView.kt:27-38).</p>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>Android result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Close “×” button overlaps a “Details” link.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Two buttons overlap via negative margin.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td>Ionic</td><td>ion-fab-button floating over a row&#x27;s “Buy” button.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>Nested interactive: a button inside a clickable card.</td><td class="na">—</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Buttons spaced apart.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/overlapping-interactive-elements-p1.jpg" target="_blank"><img loading="lazy" src="img/overlapping-interactive-elements-p1.jpg" alt="Android scan screenshot, Overlapping Interactive Elements p1"></a><figcaption>p1 · TCs on screen: TC1, TC2, TC3, TC4</figcaption></figure><figure><a href="img/overlapping-interactive-elements-p2.jpg" target="_blank"><img loading="lazy" src="img/overlapping-interactive-elements-p2.jpg" alt="Android scan screenshot, Overlapping Interactive Elements p2"></a><figcaption>p2 · TCs on screen: TC1, TC2, TC3, TC4, TC5</figcaption></figure></div>
+</section>
+<section class="rule" id="readable-text-size">
+  <div class="rule-head"><h3>Readable Text Size</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">readable-text-size · 5 test cases · 1 scan(s) · web nodes captured 48 (41 with a name, 48 importantForAccessibility=false)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule</b> (status · node class · where):<br/><b>none</b></p>
+      <p><b>What the rule needs:</b> fontSize (sp) from ExtraRenderingInfo.</p>
+      <p class="why"><b>Why web content is / isn't evaluated:</b> Chromium does not populate EXTRA_DATA_RENDERING_INFO, so fontSize is null for web text (AppAccessibility.java:4503-4526); plus the importance gate (BSAdditionalRules.kt:680).</p>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>Android result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>9px caption.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>11px body text.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>13.5px, just under the 14 threshold.</td><td class="na">—</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-pass">PASS</span></td><td></td><td>14px (the threshold).</td><td class="na">—</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-pass">PASS</span></td><td></td><td>16px body text.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/readable-text-size-p1.jpg" target="_blank"><img loading="lazy" src="img/readable-text-size-p1.jpg" alt="Android scan screenshot, Readable Text Size p1"></a><figcaption>p1 · TCs on screen: TC1, TC2, TC3, TC4, TC5</figcaption></figure></div>
+</section>
+<section class="rule" id="readable-text-spacing">
+  <div class="rule-head"><h3>Readable Text Spacing</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">readable-text-spacing · 4 test cases · 2 scan(s) · web nodes captured 88 (74 with a name, 88 importantForAccessibility=false)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule</b> (status · node class · where):<br/><b>none</b></p>
+      <p><b>What the rule needs:</b> fontSize + OCR line geometry.</p>
+      <p class="why"><b>Why web content is / isn't evaluated:</b> <code>fontSize ?: return</code> (BSAdditionalRules.kt:2762): null for web text.</p>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>Android result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Line height 1.0 on multi-line text.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Paragraphs with no spacing between them.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Negative letter spacing and zero word spacing.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Line height 1.5, paragraph spacing 2×, word spacing 0.16em.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/readable-text-spacing-p1.jpg" target="_blank"><img loading="lazy" src="img/readable-text-spacing-p1.jpg" alt="Android scan screenshot, Readable Text Spacing p1"></a><figcaption>p1 · TCs on screen: TC1, TC2, TC3, TC4</figcaption></figure><figure><a href="img/readable-text-spacing-p2.jpg" target="_blank"><img loading="lazy" src="img/readable-text-spacing-p2.jpg" alt="Android scan screenshot, Readable Text Spacing p2"></a><figcaption>p2 · TCs on screen: TC1, TC2, TC3, TC4</figcaption></figure></div>
+</section>
+<section class="rule" id="responsive-containers">
+  <div class="rule-head"><h3>Responsive Containers</h3><span class="verdict v-bad">Rows emitted, none on failing TCs</span></div>
+  <p class="mono sub2">responsive-containers · 4 test cases · 1 scan(s) · web nodes captured 43 (36 with a name, 43 importantForAccessibility=false)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule</b> (status · node class · where):<br/>2× <b>pass</b> on <code>FrameLayout</code> · TC2<br/>1× <b>pass</b> on <code>FrameLayout</code> · outside TCs<br/>1× <b>pass</b> on <code>LinearLayout</code> · TC2<br/>1× <b>pass</b> on <code>LinearLayout</code> · outside TCs<br/>1× <b>pass</b> on <code>ViewGroup</code> · TC2</p>
+      <p><b>What the rule needs:</b> layoutSize from ExtraRenderingInfo.</p>
+      <p class="why"><b>Why web content is / isn't evaluated:</b> layoutSize null for web nodes → skipped (BSAdditionalRules.kt:1731); rows seen are on native containers.</p>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>Android result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Fixed width 600px card that overflows the screen (content cut off).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Fixed 72px-high box whose content overflows and is hidden.</td><td class="bad">PASS (missed)</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Fluid container (max-width:100%) that wraps.</td><td class="na">—</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>Content inside ion-content (the page itself scrolls).</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/responsive-containers-p1.jpg" target="_blank"><img loading="lazy" src="img/responsive-containers-p1.jpg" alt="Android scan screenshot, Responsive Containers p1"></a><figcaption>p1 · TCs on screen: TC1, TC2, TC3, TC4</figcaption></figure></div>
+</section>
+<section class="rule" id="focus-order-for-interactive-elements">
+  <div class="rule-head"><h3>Screen Reader Focus for Interactive Elements</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">focus-order-for-interactive-elements · 5 test cases · 2 scan(s) · web nodes captured 102 (82 with a name, 102 importantForAccessibility=false)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule</b> (status · node class · where):<br/><b>none</b></p>
+      <p><b>What the rule needs:</b> TalkBack focus caption vs touch reachability.</p>
+      <p class="why"><b>Why web content is / isn't evaluated:</b> WebView content out of scope by design (APPA11Y-5614, BSAdditionalRules.kt:1297-1316): TalkBack navigates web via ACTION_NEXT_HTML_ELEMENT; only the WebView host is checked.</p>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>Android result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Tappable button hidden from the screen reader (aria-hidden).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Clickable card inside an aria-hidden container.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Clickable image with role=presentation.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>Visually hidden skip link (reachable by swipe, not by touch).</td><td class="na">—</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Standard button reachable both ways.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/focus-order-for-interactive-elements-p1.jpg" target="_blank"><img loading="lazy" src="img/focus-order-for-interactive-elements-p1.jpg" alt="Android scan screenshot, Screen Reader Focus for Interactive Elements p1"></a><figcaption>p1 · TCs on screen: TC1, TC2, TC3, TC4</figcaption></figure><figure><a href="img/focus-order-for-interactive-elements-p2.jpg" target="_blank"><img loading="lazy" src="img/focus-order-for-interactive-elements-p2.jpg" alt="Android scan screenshot, Screen Reader Focus for Interactive Elements p2"></a><figcaption>p2 · TCs on screen: TC1, TC2, TC3, TC4, TC5</figcaption></figure></div>
+</section>
+<section class="rule" id="special-character-element-content-label">
+  <div class="rule-head"><h3>Special-Character Element Accessibility Label</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">special-character-element-content-label · 6 test cases · 2 scan(s) · web nodes captured 120 (88 with a name, 113 importantForAccessibility=false)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule</b> (status · node class · where):<br/><b>none</b></p>
+      <p><b>What the rule needs:</b> Label text.</p>
+      <p class="why"><b>Why web content is / isn't evaluated:</b> BSAdditionalRules.kt:547 skips every node with <code>isImportantForAccessibility=false</code>: Chromium never sets it on WebView virtual nodes (BSRules.kt:604-607; BSViewAdapter.kt:100 → BSShouldFocusView.kt:27-38).</p>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>Android result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Glyph in label: “★ Favourite”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Emoji in label: “🔥 Hot deals”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Arrow glyph via aria-label: “Next →”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Check mark only: “✓”.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>Currency symbols: “Pay ₹499”.</td><td class="na">—</td></tr><tr><td class="mono">TC6</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Plain text; the glyph is aria-hidden.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/special-character-element-content-label-p1.jpg" target="_blank"><img loading="lazy" src="img/special-character-element-content-label-p1.jpg" alt="Android scan screenshot, Special-Character Element Accessibility Label p1"></a><figcaption>p1 · TCs on screen: TC1, TC2, TC3, TC4</figcaption></figure><figure><a href="img/special-character-element-content-label-p2.jpg" target="_blank"><img loading="lazy" src="img/special-character-element-content-label-p2.jpg" alt="Android scan screenshot, Special-Character Element Accessibility Label p2"></a><figcaption>p2 · TCs on screen: TC1, TC2, TC3, TC4, TC5, TC6</figcaption></figure></div>
+</section>
+<section class="rule" id="screen-reader-for-interactive-elements">
+  <div class="rule-head"><h3>Spoken Description not Meaningful</h3><span class="verdict v-bad">Rows emitted, none on failing TCs</span></div>
+  <p class="mono sub2">screen-reader-for-interactive-elements · 4 test cases · 1 scan(s) · web nodes captured 46 (34 with a name, 46 importantForAccessibility=false)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule</b> (status · node class · where):<br/>1× <b>pass</b> on <code>Button</code> · TC1<br/>1× <b>pass</b> on <code>Button</code> · TC2<br/>1× <b>pass</b> on <code>Button</code> · TC3<br/>1× <b>pass</b> on <code>Button</code> · TC4<br/>1× <b>pass</b> on <code>Button</code> · outside TCs<br/>1× <b>pass</b> on <code>View</code> · outside TCs<br/>1× <b>pass</b> on <code>WebView</code> · TC2</p>
+      <p><b>What the rule needs:</b> isInScreenReaderTree + caption.</p>
+      <p class="why"><b>Why web content is / isn't evaluated:</b> Uses isInScreenReaderTree (virtual web nodes → true, BSAdditionalRules.kt:1386): emits metadata PASS rows only; no failing condition exercised by web content.</p>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>Android result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Spoken name is a developer ID: “btn_submit_01”.</td><td class="bad">PASS (missed)</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Icon button named after its file: “ic_settings_24dp”.</td><td class="bad">PASS (missed)</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Whitespace-only aria-label.</td><td class="bad">PASS (missed)</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Meaningful spoken name: “Settings”.</td><td class="na">PASS</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/screen-reader-for-interactive-elements-p1.jpg" target="_blank"><img loading="lazy" src="img/screen-reader-for-interactive-elements-p1.jpg" alt="Android scan screenshot, Spoken Description not Meaningful p1"></a><figcaption>p1 · TCs on screen: TC1, TC2, TC3, TC4</figcaption></figure></div>
+</section>
+<section class="rule" id="screen-orientation">
+  <div class="rule-head"><h3>Supported Screen Orientations</h3><span class="verdict v-ok">Works (app-level)</span></div>
+  <p class="mono sub2">screen-orientation · 2 test cases · 1 scan(s) · web nodes captured 32 (25 with a name, 32 importantForAccessibility=false)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule</b> (status · node class · where):<br/>1× <b>pass</b> on <code>FrameLayout</code> · outside TCs</p>
+      <p><b>What the rule needs:</b> Activity orientations (root only).</p>
+      <p class="why"><b>Why web content is / isn't evaluated:</b> Not web-dependent.</p>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>Android result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>This screen locks itself to portrait while it is open.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-pass">PASS</span></td><td></td><td>After Release, rotating the device re-lays out this screen.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/screen-orientation-p1.jpg" target="_blank"><img loading="lazy" src="img/screen-orientation-p1.jpg" alt="Android scan screenshot, Supported Screen Orientations p1"></a><figcaption>p1 · TCs on screen: TC1, TC2</figcaption></figure></div>
+</section>
+<section class="rule" id="switch-element-content-label">
+  <div class="rule-head"><h3>Switch Element Accessibility Label</h3><span class="verdict v-bad">Silent: 0 rows emitted</span></div>
+  <p class="mono sub2">switch-element-content-label · 6 test cases · 2 scan(s) · web nodes captured 130 (92 with a name, 130 importantForAccessibility=false)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule</b> (status · node class · where):<br/><b>none</b></p>
+      <p><b>What the rule needs:</b> Switch-role nodes (Chromium maps role=switch → android.widget.Switch).</p>
+      <p class="why"><b>Why web content is / isn't evaluated:</b> BSAdditionalRules.kt:297 skips every node with <code>isImportantForAccessibility=false</code>: Chromium never sets it on WebView virtual nodes (BSRules.kt:604-607; BSViewAdapter.kt:100 → BSShouldFocusView.kt:27-38).</p>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>Android result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Native checkbox role=switch with no label.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td>Ionic</td><td>ion-toggle with no label.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>div role=switch with aria-checked but no name.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>Vague label “Toggle” that doesn&#x27;t say what it does.</td><td class="na">—</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-pass">PASS</span></td><td>Ionic</td><td>ion-toggle labelled “Wi-Fi”.</td><td class="na">—</td></tr><tr><td class="mono">TC6</td><td><span class="chip c-pass">PASS</span></td><td></td><td>role=switch named “Bluetooth”.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/switch-element-content-label-p1.jpg" target="_blank"><img loading="lazy" src="img/switch-element-content-label-p1.jpg" alt="Android scan screenshot, Switch Element Accessibility Label p1"></a><figcaption>p1 · TCs on screen: TC1, TC2, TC3, TC4, TC5</figcaption></figure><figure><a href="img/switch-element-content-label-p2.jpg" target="_blank"><img loading="lazy" src="img/switch-element-content-label-p2.jpg" alt="Android scan screenshot, Switch Element Accessibility Label p2"></a><figcaption>p2 · TCs on screen: TC1, TC2, TC3, TC4, TC5, TC6</figcaption></figure></div>
+</section>
+<section class="rule" id="text-color-contrast">
+  <div class="rule-head"><h3>Text Element Color Contrast (Minimum)</h3><span class="verdict v-mid">Partial: 0 FAIL, 3 review of 4</span></div>
+  <p class="mono sub2">text-color-contrast · 7 test cases · 2 scan(s) · web nodes captured 124 (93 with a name, 110 importantForAccessibility=false)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule</b> (status · node class · where):<br/>35× <b>pass</b> on <code>TextView</code> · outside TCs<br/>2× <b>needs_review</b> on <code>TextView</code> · TC4<br/>1× <b>needs_review</b> on <code>Button</code> · TC2<br/>1× <b>needs_review</b> on <code>TextView</code> · TC1<br/>1× <b>pass</b> on <code>Button</code> · TC2<br/>1× <b>pass</b> on <code>TextView</code> · TC2<br/>1× <b>pass</b> on <code>TextView</code> · TC5<br/>1× <b>pass</b> on <code>TextView</code> · TC7</p>
+      <p><b>What the rule needs:</b> contrastSwatch + OCR text parts.</p>
+      <p class="why"><b>Why web content is / isn't evaluated:</b> No importance gate (PAAA-541), but the WebView root is forced PASS ("WebView marked as pass", BSRules.kt:666-700) and non-accessible nodes cap at NEEDS_REVIEW; web text cannot FAIL.</p>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>Android result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>#999 on #fff, 14px (2.8:1).</td><td class="mid">needs review</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>White on amber #ffc107 button (1.6:1).</td><td class="mid">needs review</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Light placeholder #c0c0c0 in a field (1.8:1).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>White text over a light photo area.</td><td class="mid">needs review</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>Large text 24px #949494 on #fff (3.0:1) meets the large-text threshold.</td><td class="na">PASS</td></tr><tr><td class="mono">TC6</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>Disabled button with low contrast (exempt: inactive component).</td><td class="na">—</td></tr><tr><td class="mono">TC7</td><td><span class="chip c-pass">PASS</span></td><td></td><td>#595959 on #fff (7:1).</td><td class="na">PASS</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/text-color-contrast-p1.jpg" target="_blank"><img loading="lazy" src="img/text-color-contrast-p1.jpg" alt="Android scan screenshot, Text Element Color Contrast (Minimum) p1"></a><figcaption>p1 · TCs on screen: TC1, TC2, TC3, TC4</figcaption></figure><figure><a href="img/text-color-contrast-p2.jpg" target="_blank"><img loading="lazy" src="img/text-color-contrast-p2.jpg" alt="Android scan screenshot, Text Element Color Contrast (Minimum) p2"></a><figcaption>p2 · TCs on screen: TC3, TC4, TC5, TC6, TC7</figcaption></figure></div>
+</section>
+<section class="rule" id="text-truncation">
+  <div class="rule-head"><h3>Text Truncation</h3><span class="verdict v-bad">Rows emitted, none on failing TCs</span></div>
+  <p class="mono sub2">text-truncation · 6 test cases · 2 scan(s) · web nodes captured 128 (104 with a name, 122 importantForAccessibility=false)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule</b> (status · node class · where):<br/>39× <b>pass</b> on <code>TextView</code> · outside TCs<br/>3× <b>pass</b> on <code>TextView</code> · TC1<br/>2× <b>pass</b> on <code>TextView</code> · TC2<br/>2× <b>pass</b> on <code>TextView</code> · TC3<br/>2× <b>pass</b> on <code>TextView</code> · TC4<br/>2× <b>pass</b> on <code>TextView</code> · TC5<br/>1× <b>pass</b> on <code>TextView</code> · TC6</p>
+      <p><b>What the rule needs:</b> TextView role + fontSizeUnit + layoutSize.</p>
+      <p class="why"><b>Why web content is / isn't evaluated:</b> <code>validContentText</code> returns true when fontSizeUnit≠2 (BSRules.kt:152): web TextViews always PASS, can never FAIL.</p>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>Android result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Single line with ellipsis (text-overflow).</td><td class="bad">PASS (missed)</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Two-line clamp (-webkit-line-clamp) on a description.</td><td class="bad">PASS (missed)</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Fixed height + overflow:hidden cuts the last line.</td><td class="bad">PASS (missed)</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-fail">FAIL</span></td><td>Ionic</td><td>ion-label with the ion-text-nowrap utility: single line, ellipsized.</td><td class="bad">PASS (missed)</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-pass">PASS</span></td><td>Ionic</td><td>Default ion-label (Ionic 9 wraps by default).</td><td class="na">PASS</td></tr><tr><td class="mono">TC6</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Plain wrapping paragraph.</td><td class="na">PASS</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/text-truncation-p1.jpg" target="_blank"><img loading="lazy" src="img/text-truncation-p1.jpg" alt="Android scan screenshot, Text Truncation p1"></a><figcaption>p1 · TCs on screen: TC1, TC2, TC3, TC4</figcaption></figure><figure><a href="img/text-truncation-p2.jpg" target="_blank"><img loading="lazy" src="img/text-truncation-p2.jpg" alt="Android scan screenshot, Text Truncation p2"></a><figcaption>p2 · TCs on screen: TC2, TC3, TC4, TC5, TC6</figcaption></figure></div>
+</section>
+<section class="rule" id="touch-target-size">
+  <div class="rule-head"><h3>Touch Target Size</h3><span class="verdict v-mid">Partial: 3 FAIL, 0 review of 4</span></div>
+  <p class="mono sub2">touch-target-size · 7 test cases · 2 scan(s) · web nodes captured 144 (109 with a name, 135 importantForAccessibility=false)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule</b> (status · node class · where):<br/>2× <b>fail</b> on <code>Button</code> · TC1<br/>2× <b>fail</b> on <code>Button</code> · TC2<br/>2× <b>fail</b> on <code>Button</code> · TC3<br/>2× <b>pass</b> on <code>Button</code> · outside TCs<br/>2× <b>pass</b> on <code>View</code> · outside TCs<br/>1× <b>pass</b> on <code>Button</code> · TC6<br/>1× <b>pass</b> on <code>Button</code> · TC7</p>
+      <p><b>What the rule needs:</b> Rect of clickable nodes vs 48 dp.</p>
+      <p class="why"><b>Why web content is / isn't evaluated:</b> No importance gate: web clickables ARE evaluated (inline-link exemption BSRuleHelpers.kt:161-166; ad-WebView exemption :340-359).</p>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>Android result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>24×24 icon button.</td><td class="ok">FAIL ✓</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>32×32 “Remove” button.</td><td class="ok">FAIL ✓</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>100×30 text button (height below 44).</td><td class="ok">FAIL ✓</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-fail">FAIL</span></td><td>Ionic</td><td>ion-button size=small (about 28px high).</td><td class="bad">not detected</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>Inline link inside a sentence (inline exception).</td><td class="na">—</td></tr><tr><td class="mono">TC6</td><td><span class="chip c-pass">PASS</span></td><td></td><td>44×44 icon button.</td><td class="na">PASS</td></tr><tr><td class="mono">TC7</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Small 20px icon with padding giving a 48×48 hit area.</td><td class="na">PASS</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/touch-target-size-p1.jpg" target="_blank"><img loading="lazy" src="img/touch-target-size-p1.jpg" alt="Android scan screenshot, Touch Target Size p1"></a><figcaption>p1 · TCs on screen: TC1, TC2, TC3, TC4, TC5</figcaption></figure><figure><a href="img/touch-target-size-p2.jpg" target="_blank"><img loading="lazy" src="img/touch-target-size-p2.jpg" alt="Android scan screenshot, Touch Target Size p2"></a><figcaption>p2 · TCs on screen: TC2, TC3, TC4, TC5, TC6, TC7</figcaption></figure></div>
+</section>
+<section class="rule" id="touch-target-size-and-spacing">
+  <div class="rule-head"><h3>Touch Target Size &amp; Spacing</h3><span class="verdict v-ok">Detects 2/2</span></div>
+  <p class="mono sub2">touch-target-size-and-spacing · 5 test cases · 1 scan(s) · web nodes captured 63 (56 with a name, 63 importantForAccessibility=false)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule</b> (status · node class · where):<br/>4× <b>fail</b> on <code>Button</code> · TC1<br/>3× <b>pass</b> on <code>Button</code> · TC3<br/>3× <b>pass</b> on <code>View</code> · TC5<br/>2× <b>fail</b> on <code>Button</code> · TC2<br/>2× <b>pass</b> on <code>Button</code> · TC4<br/>1× <b>pass</b> on <code>Button</code> · outside TCs<br/>1× <b>pass</b> on <code>View</code> · outside TCs</p>
+      <p><b>What the rule needs:</b> Rects + OCR presence.</p>
+      <p class="why"><b>Why web content is / isn't evaluated:</b> Evaluates web clickables; "phantom web element" guard NA's nodes without OCR confirmation (BSAdditionalRules.kt:755-791).</p>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>Android result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Four 16×16 buttons 2px apart.</td><td class="ok">FAIL ✓</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Two 20×20 buttons touching (0px gap).</td><td class="ok">FAIL ✓</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-pass">PASS</span></td><td></td><td>16×16 buttons with 24px spacing (the 24 pt circles don&#x27;t intersect).</td><td class="na">PASS</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-pass">PASS</span></td><td></td><td>24×24 adjacent buttons (minimum size met).</td><td class="na">PASS</td></tr><tr><td class="mono">TC5</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>Adjacent inline links in text (inline exception).</td><td class="na">PASS</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/touch-target-size-and-spacing-p1.jpg" target="_blank"><img loading="lazy" src="img/touch-target-size-and-spacing-p1.jpg" alt="Android scan screenshot, Touch Target Size &amp; Spacing p1"></a><figcaption>p1 · TCs on screen: TC1, TC2, TC3, TC4, TC5</figcaption></figure></div>
+</section>
+<section class="rule" id="traversal-order-cycle">
+  <div class="rule-head"><h3>Traversal Order Cycle</h3><span class="verdict v-bad">Rows emitted, none on failing TCs</span></div>
+  <p class="mono sub2">traversal-order-cycle · 4 test cases · 2 scan(s) · web nodes captured 106 (82 with a name, 98 importantForAccessibility=false)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule</b> (status · node class · where):<br/>1× <b>pass</b> on <code>FrameLayout</code> · TC1<br/>1× <b>pass</b> on <code>FrameLayout</code> · outside TCs<br/>1× <b>pass</b> on <code>ViewGroup</code> · TC1<br/>1× <b>pass</b> on <code>ViewGroup</code> · outside TCs</p>
+      <p><b>What the rule needs:</b> Traversal cycle flags.</p>
+      <p class="why"><b>Why web content is / isn't evaluated:</b> BSAdditionalRules.kt:966 skips every node with <code>isImportantForAccessibility=false</code>: Chromium never sets it on WebView virtual nodes (BSRules.kt:604-607; BSViewAdapter.kt:100 → BSShouldFocusView.kt:27-38).</p>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>Android result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Leaving field 3 jumps focus back to field 1: “Continue” is unreachable.</td><td class="bad">PASS (missed)</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Positive tabindex ping-pong: A(1)→B(2)→A via focus handler.</td><td class="bad">not detected</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>Modal focus trap with an accessible Close button (intended trap).</td><td class="na">—</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Linear order with no loops.</td><td class="na">—</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/traversal-order-cycle-p1.jpg" target="_blank"><img loading="lazy" src="img/traversal-order-cycle-p1.jpg" alt="Android scan screenshot, Traversal Order Cycle p1"></a><figcaption>p1 · TCs on screen: TC1, TC2, TC3</figcaption></figure><figure><a href="img/traversal-order-cycle-p2.jpg" target="_blank"><img loading="lazy" src="img/traversal-order-cycle-p2.jpg" alt="Android scan screenshot, Traversal Order Cycle p2"></a><figcaption>p2 · TCs on screen: TC2, TC3, TC4</figcaption></figure></div>
+</section>
+<section class="rule" id="two-dimensional-scroll">
+  <div class="rule-head"><h3>Two-Dimensional Scrolling</h3><span class="verdict v-mid">Partial: 1 FAIL, 0 review of 2</span></div>
+  <p class="mono sub2">two-dimensional-scroll · 4 test cases · 2 scan(s) · web nodes captured 144 (130 with a name, 144 importantForAccessibility=false)</p>
+  <div class="grid2">
+    <div>
+      <p><b>Rows for this rule</b> (status · node class · where):<br/>41× <b>pass</b> on <code>TextView</code> · outside TCs<br/>38× <b>pass</b> on <code>View</code> · TC3<br/>16× <b>pass</b> on <code>View</code> · outside TCs<br/>14× <b>pass</b> on <code>TextView</code> · TC1<br/>8× <b>pass</b> on <code>View</code> · TC1<br/>8× <b>pass</b> on <code>View</code> · TC2<br/>7× <b>pass</b> on <code>TextView</code> · TC2<br/>3× <b>pass</b> on <code>FrameLayout</code> · TC1<br/>3× <b>pass</b> on <code>FrameLayout</code> · outside TCs<br/>2× <b>fail</b> on <code>View</code> · TC1<br/>2× <b>pass</b> on <code>Button</code> · outside TCs<br/>2× <b>pass</b> on <code>GridView</code> · TC3<br/>2× <b>pass</b> on <code>LinearLayout</code> · TC1<br/>2× <b>pass</b> on <code>LinearLayout</code> · outside TCs<br/>2× <b>pass</b> on <code>TextView</code> · TC4<br/>2× <b>pass</b> on <code>View</code> · TC4<br/>2× <b>pass</b> on <code>WebView</code> · TC1<br/>2× <b>pass</b> on <code>WebView</code> · outside TCs<br/>1× <b>pass</b> on <code>ViewGroup</code> · TC1<br/>1× <b>pass</b> on <code>ViewGroup</code> · outside TCs</p>
+      <p><b>What the rule needs:</b> actionList scroll directions.</p>
+      <p class="why"><b>Why web content is / isn't evaluated:</b> No importance gate (BSAdditionalRules.kt:924-927): Chromium adds all four directional scroll actions, so web scrollers are evaluated.</p>
+    </div>
+    <div class="tblwrap"><table><tr><th>TC</th><th>Expect</th><th></th><th>Scenario</th><th>Android result</th></tr><tr><td class="mono">TC1</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Fixed-height region that scrolls both horizontally and vertically.</td><td class="ok">FAIL ✓</td></tr><tr><td class="mono">TC2</td><td><span class="chip c-fail">FAIL</span></td><td></td><td>Wide article text (900px) inside a vertically scrolling page.</td><td class="bad">PASS (missed)</td></tr><tr><td class="mono">TC3</td><td><span class="chip c-edge">EDGE</span></td><td></td><td>Data table: 2-D layout is essential (exempt under WCAG 1.4.10).</td><td class="na">PASS</td></tr><tr><td class="mono">TC4</td><td><span class="chip c-pass">PASS</span></td><td></td><td>Horizontal-only carousel (one scroll direction).</td><td class="na">PASS</td></tr></table></div>
+  </div>
+  <div class="shots"><figure><a href="img/two-dimensional-scroll-p1.jpg" target="_blank"><img loading="lazy" src="img/two-dimensional-scroll-p1.jpg" alt="Android scan screenshot, Two-Dimensional Scrolling p1"></a><figcaption>p1 · TCs on screen: TC1, TC2, TC3</figcaption></figure><figure><a href="img/two-dimensional-scroll-p2.jpg" target="_blank"><img loading="lazy" src="img/two-dimensional-scroll-p2.jpg" alt="Android scan screenshot, Two-Dimensional Scrolling p2"></a><figcaption>p2 · TCs on screen: TC1, TC2, TC3, TC4</figcaption></figure></div>
+</section>
+<p class="sub">Raw data (laptop scratch): <code>andscans/poc/&lt;rule&gt;/p&lt;N&gt;/{snapshot.json,screenshot.png,visible.json}</code> · per-rule outcomes: <a href="summary.json">summary.json</a>.</p>
+</body>
+</html>
