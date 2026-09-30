@@ -59,7 +59,7 @@ what is supported, what is not, and whether support can be added reliably · evi
 <span class="tag t-web">research</span> WebKit / Apple / Angular / Ionic primary sources ·
 <span class="tag t-inf">inference</span> reasoned, still to be confirmed on a device · 30 Sep 2026</p>
 
-<p class="sub"><b>Device runs:</b> <a href="ios-run/">iOS run</a> · <a href="android-run/">Android run</a> · <a href="compare/">iOS vs Android comparison</a></p>
+<p class="sub"><b>Device runs:</b> <a href="ios-run/">iOS run</a> · <a href="android-run/">Android run</a> · <a href="compare/">iOS vs Android comparison</a> · <b><a href="ios-dom-poc/">iOS DOM-layer POC (0 → 58 detected)</a></b></p>
 <nav class="toc">
   <a href="#tldr">0 · TL;DR</a><br/>
   <a href="#pipeline">1 · How an iOS scan sees the screen</a><br/>
@@ -399,6 +399,7 @@ Recommended sequencing: <b>(1)</b> ship the "web content not assessed" marker; <
 
 <!-- ============================================================ -->
 <h2 id="design">8 · Recommended design: in-webview DOM layer (option C)</h2>
+<div class="rulebox ok"><b>Built and measured:</b> <a href="ios-dom-poc/">iOS DOM-layer POC</a>. The dylib reports 58 of 127 expected-FAIL test cases (stock: 0) plus 24 AI candidates, with 0 false positives, and web Dynamic Type is measured on device. Accessible names match WebCore's own (Web Inspector) 10/10.</div>
 
 <pre class="mermaid">
 flowchart TB
