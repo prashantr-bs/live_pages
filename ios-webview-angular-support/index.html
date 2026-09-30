@@ -68,6 +68,7 @@ what is supported, what is not, and whether support can be added reliably · evi
   <a href="#rules">5 · Rule-by-rule matrix (37 iOS rules)</a><br/>
   <a href="#existing">6 · Existing web code is suppression, not evaluation</a><br/>
   <a href="#options">7 · Can support be added reliably? Options compared</a><br/>
+  <a href="#lca">7b · App LCA's iOS WebView work (LCAM-2671) — reuse?</a><br/>
   <a href="#design">8 · Recommended design: in-webview DOM layer</a><br/>
   <a href="#angular">9 · Angular: support and limitations</a><br/>
   <a href="#validate">10 · Validation plan (Angular POC)</a><br/>
@@ -166,7 +167,7 @@ flowchart LR
   <li>There is no <code>evaluateJavaScript</code>, <code>WKUserScript</code> or <code>WKScriptMessageHandler</code> anywhere in the dylib. Nothing reads the DOM, and nothing forces the web AX tree to build.</li>
   <li><code>WKContentView</code>, <code>WKCompositingView</code>, <code>WKChildScrollView</code>, <code>UIWebView</code>, <code>SFSafariViewController</code> and <code>_UIRemoteView</code> have <b>no special-casing</b>. They are walked as generic UIViews
   and are not in the capture-time OCR class allow-list (<code>:2737</code>). Full-screen OCR only enriches existing text nodes; it never creates nodes.</li>
-  <li><code>WKWebViewInspectableMocker</code> (forces <code>isInspectable</code>, iOS 16.4+) is gated on the <code>webviewInspect</code> patch flag for <b>App Live LCA / Appium contexts</b>.
+  <li><code>WKWebViewInspectableMocker</code> (forces <code>isInspectable</code>, iOS 16.4+) is gated on the <code>webviewInspect</code> patch flag, which realmobile sets only for <b>App LCA</b> sessions (LCAM-2671, §7b).
   Nothing in App A11y reads it.</li>
 </ul>
 
@@ -336,9 +337,42 @@ It is guarded only in label-in-name. A web-region mask built from the §8 layer 
 <td>full DOM semantics + CSS; open shadow roots; same-process iframes</td><td class="ok">public API (iOS 14+); CSP-proof in isolated worlds; deterministic; precedent exists (the Flutter <code>ensureSemanticsEnabled</code> + 3 s poll)</td><td class="ok">Yes</td></tr>
 <tr><td><b>D. Screenshot-only AI vision</b></td><td>send the web-region crop to TCG for label/contrast/heading judgement</td>
 <td>visual only: no names, roles or states</td><td class="mid">non-deterministic, costly, cannot check what VoiceOver says</td><td class="mid">Complement to C for images-of-text / visual headings</td></tr>
-<tr><td><b>E. Web Inspector protocol off-device</b></td><td>force <code>isInspectable</code> (mocker exists), drive it from realmobile via the remote debugger, run axe</td>
-<td>same as C</td><td class="mid">needs the Settings › Safari › Web Inspector toggle, host-side plumbing, and coordinate mapping without native context</td><td class="mid">Possible; C is simpler and in-process</td></tr>
+<tr><td><b>E. Web Inspector protocol from the host</b> (reuses LCAM-2671, §7b)</td><td>turn on the already-shipped <code>webviewInspect</code> patch for App A11y sessions; realmobile's per-device <code>ios_webkit_debug_proxy</code> runs JS/axe via <code>Runtime.evaluate</code></td>
+<td>same as C (minus native context)</td><td class="mid">plumbing is fleet-hardened (proxy + Web Inspector toggle already on). But: page↔webview matching when several are open, the proxy is shared with Appium/App Live DevTools, and rects must be mapped using the native frame</td><td class="ok">Cheapest PoC; C is the cleaner end state</td></tr>
 </table></div>
+
+<h3 id="lca">7b · What App LCA shipped for iOS WebViews (LCAM-2671), and can App A11y reuse it? <span class="tag t-code">code</span> <span class="tag t-web">internal docs</span></h3>
+<p class="sub">This was reported as "App Automate added iOS WebView support". The work was done by the <b>App Low-Code Automation (app-lcnc)</b> team. Its cloud runs execute as App Automate sessions,
+which is why it surfaced there. Epic LCAM-2560 "Webview Support" → <a href="https://browserstack.atlassian.net/browse/LCAM-2671">LCAM-2671</a> (closed, deployed Aug 2026).</p>
+<div class="tbl"><table>
+<tr><th>Layer</th><th>What shipped</th><th>Reference</th></tr>
+<tr><td>dylib</td><td><code>WKWebViewInspectableMocker</code> swizzles <code>WKWebView initWithFrame:configuration:</code> / <code>initWithCoder:</code> and sets <code>inspectable=true</code> via KVC on iOS 16.4+. It is gated on patch token <code>webviewInspect</code>. It is an <b>unlock only</b>: no DOM reading, no JS</td><td><a href="https://github.com/browserstack/ios_app_patcher/pull/255">ios_app_patcher#255</a> (2026-08-12), injector v105+ (default now v118)</td></tr>
+<tr><td>realmobile</td><td><code>/get_patch_type</code> appends <code>webviewInspect</code> only when <code>is_app_lcnc &amp;&amp; webview_inspect</code></td><td>realmobile#10911 (2026-08-14)</td></tr>
+<tr><td>railsApp</td><td>Live: forwards <code>webview_inspect</code>, forces dylib injection, iOS ≥ 16.4 floor. Cloud: the existing capability <code>browserstack.enableWebviewDebug</code> now maps to <code>webviewInspect</code> on iOS (<code>webviewDebug</code> on Android). Rollout gated by an LCA allowlist</td><td>railsApp#173140 (2026-08-24), #176731</td></tr>
+<tr><td>Appium bridge</td><td><code>appium:bundleId</code> + <code>ensureWebviewsHavePages</code> so XCUITest <code>getContexts()</code> returns <code>WEBVIEW_*</code></td><td>mobile-devtools#343/#350, app-lcnc-runner#244</td></tr>
+<tr><td>Already on every device host</td><td>realmobile runs <b><code>ios_webkit_debug_proxy</code> per device</b> (launchd; <code>--webkit-debug-proxy-port</code>). The device check fails unless Settings › Safari › Web Inspector is on, and cleanup auto-enables it. App Live's <code>devtools-proxy</code> already translates CDP↔WebKit (incl. <code>Runtime.evaluate</code>)</td><td>realmobile <code>lib/checks/check_device.rb</code>; Confluence "Webview Inspector — DevTools Upgrade"</td></tr>
+</table></div>
+<div class="grid2">
+  <div class="col">
+    <h3>Reusable for App A11y <span class="tag t-inf">inference</span></h3>
+    <ul class="tight">
+      <li><b>Unlock is free:</b> App A11y sessions already inject <code>BrowserStackInjector</code>, and the shipped binary already contains the mocker. The only change is letting realmobile append <code>webviewInspect</code> for App A11y sessions, as a gate change; no dylib rebuild.</li>
+      <li><b>JS channel exists:</b> once pages are inspectable they appear on the device's webkit proxy. realmobile can <code>Runtime.evaluate</code> an extractor or axe-core per page, without Appium.</li>
+      <li><b>A quick way to prototype the §8 extractor:</b> the same JS can run host-side first, then move in-process unchanged.</li>
+    </ul>
+  </div>
+  <div class="col">
+    <h3>Why it is not the end state</h3>
+    <ul class="tight">
+      <li><b>Mapping:</b> the host sees pages, not views. It must match each <code>/json</code> page to a WKWebView frame (order is not screen order) and combine it with <code>getBoundingClientRect</code>. In-process, the frame is known directly.</li>
+      <li><b>Contention:</b> the per-device proxy is shared with Appium (App Automate) and App Live DevTools.</li>
+      <li><b>Timing:</b> the host round-trip is separate from the dylib's capture of screenshot + tree, so the DOM can drift between the two.</li>
+      <li><b>Same hard limits:</b> SFSafariViewController / ASWebAuthenticationSession, closed shadow roots, canvas, per-frame injection for cross-origin iframes.</li>
+    </ul>
+  </div>
+</div>
+<div class="rulebox ok"><b>Net:</b> LCAM-2671 does not add accessibility scanning. It does remove the two costliest prerequisites for a host-side PoC: inspectability on iOS 16.4+ and a live WebKit inspector channel on every device.
+Recommended sequencing: <b>(1)</b> ship the "web content not assessed" marker; <b>(2)</b> PoC the DOM extractor host-side through <code>webviewInspect</code> + <code>ios_webkit_debug_proxy</code> on the Angular POC app; <b>(3)</b> move the same extractor in-process (§8) for production.</div>
 
 <!-- ============================================================ -->
 <h2 id="design">8 · Recommended design: in-webview DOM layer (option C)</h2>
