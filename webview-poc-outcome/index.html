@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WebView POC Outcome</title>
+<style>
+  :root { --bg:#f9f9f7; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e; --line:#e4e3de;
+          --good:#0ca30c; --warning:#fab219; --critical:#d03b3b; --na:#b9b8b1; --accent:#2a78d6;
+          --good-bg:#e3f4e3; --part-bg:#fdf2d6; --bad-bg:#fbe3e3; --na-bg:#efeeea; color-scheme: light; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#0d0d0d; --surface:#1a1a19; --ink:#fff; --ink2:#c3c2b7; --line:#383835;
+          --na:#6b6a64; --good-bg:#15321a; --part-bg:#3a2f12; --bad-bg:#3d1919; --na-bg:#262624; color-scheme: dark; } }
+  :root[data-theme="dark"] { --bg:#0d0d0d; --surface:#1a1a19; --ink:#fff; --ink2:#c3c2b7; --line:#383835; --na:#6b6a64; --good-bg:#15321a; --part-bg:#3a2f12; --bad-bg:#3d1919; --na-bg:#262624; color-scheme: dark; }
+  body { margin:0 auto; max-width:1100px; padding:30px 26px 70px; font:16px/1.55 -apple-system,"Segoe UI",Roboto,sans-serif; color:var(--ink); background:var(--bg); }
+  h1 { font-size:28px; line-height:1.2; margin:0 0 8px; } h2 { font-size:20px; margin:40px 0 8px; }
+  p { margin:6px 0; } .lead { font-size:18px; color:var(--ink2); max-width:860px; } small, .muted { color:var(--ink2); }
+  a { color:var(--accent); }
+  .tiles { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin:20px 0; }
+  .tile { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:16px 18px; }
+  .tile .num { font-size:44px; font-weight:700; line-height:1; margin:6px 0; } .tile .num small { font-size:18px; font-weight:500; }
+  .tile.poc { border:2px solid var(--good); }
+  .card { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:16px 18px; margin:12px 0; }
+  .barrow { display:grid; grid-template-columns:170px 1fr; gap:12px; align-items:center; margin:10px 0; }
+  .barname b { display:block; } .barname span { font-size:13px; color:var(--ink2); }
+  .barsvg { width:100%; height:34px; display:block; } .seg { cursor:default; outline:none; } .seg:focus { stroke:var(--ink); stroke-width:2; }
+  .seglabel { font:600 13px -apple-system,Roboto,sans-serif; fill:#fff; pointer-events:none; } .seglabel.dark { fill:#0b0b0b; }
+  .legend { display:flex; flex-wrap:wrap; gap:16px; margin:8px 0 2px; font-size:14px; } .lg i { display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:6px; vertical-align:-1px; }
+  #tip { position:fixed; pointer-events:none; background:var(--ink); color:var(--bg); font-size:13px; padding:6px 9px; border-radius:6px; opacity:0; transition:opacity .08s; z-index:9; }
+  table { border-collapse:collapse; width:100%; font-size:14.5px; } th,td { border-bottom:1px solid var(--line); padding:9px 10px; text-align:left; vertical-align:top; }
+  th { font-size:13px; color:var(--ink2); font-weight:600; }
+  td.c { text-align:center; border-left:3px solid var(--surface); } td.c small { font-size:12px; }
+  td.good { background:var(--good-bg); } td.part { background:var(--part-bg); } td.bad { background:var(--bad-bg); } td.na { background:var(--na-bg); color:var(--ink2); }
+  .lanes { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .lane h3 { margin:0 0 8px; font-size:16px; }
+  .step { display:flex; gap:10px; align-items:flex-start; padding:8px 10px; border-radius:10px; margin:6px 0; background:var(--na-bg); font-size:14.5px; }
+  .step b { min-width:22px; } .step.ok { background:var(--good-bg); } .step.lost { background:var(--bad-bg); } .step.part { background:var(--part-bg); }
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  ul { margin:6px 0; padding-left:20px; } li { margin:4px 0; }
+  details summary { cursor:pointer; color:var(--accent); font-weight:600; margin:8px 0; }
+  .pill { display:inline-block; font-size:12px; font-weight:700; border-radius:999px; padding:2px 9px; background:var(--na-bg); color:var(--ink2); margin-right:6px; }
+  @media (max-width:760px) { .tiles, .lanes, .two { grid-template-columns:1fr; } .barrow { grid-template-columns:1fr; } body { padding:20px 16px 60px; } .tbl { overflow-x:auto; } }
+</style>
+</head>
+<body>
+<p class="muted">App Accessibility · WebView &amp; Angular support · POC outcome · 30 Sep 2026</p>
+<h1>Can App Accessibility scan WebView content (e.g. Angular / Ionic apps)?</h1>
+<p class="lead"><b>Today: barely.</b> iOS reports nothing inside WebViews, and Android reports very little. <b>With the POC</b> (a change inside our iOS scanner), iOS finds most of the issues that
+can be found deterministically, with zero false alarms. Android can reach a similar level with a rule-engine change, because it already sees the content.</p>
+
+<div class="tiles">
+  <div class="tile"><small>iOS today</small><div class="num">0<small> / 127</small></div><small>known issues reported inside the WebView</small></div>
+  <div class="tile"><small>Android today</small><div class="num">6<small> / 127</small></div><small>reported (+11 flagged for review)</small></div>
+  <div class="tile poc"><small>iOS with the POC</small><div class="num" style="color:var(--good)">58<small> / 127</small></div><small>reported (+24 sent for AI review) · <b>0 false alarms</b></small></div>
+</div>
+
+<div class="card">
+  <p><b>How we measured.</b> We built a test app in <b>Angular + Ionic</b> (the most common way Angular ships on phones). It has one page for each of the <b>41 App A11y rules</b>, with
+  <b>127 deliberately broken examples</b> and passing counterparts. We scanned every page on a real iPad and a real Android phone, and checked each result against the known answer.</p>
+</div>
+
+<h2>What happens to the 127 known issues</h2>
+<div class="card">
+  <div class="legend"><span class="lg"><i style="background:var(--good)"></i>✓ Found</span><span class="lg"><i style="background:var(--warning)"></i>◐ Flagged for AI / review</span><span class="lg"><i style="background:var(--na)"></i>— Rule not on this platform</span><span class="lg"><i style="background:var(--critical)"></i>✕ Missed</span></div>
+  <div class="barrow"><div class="barname"><b>iOS today</b><span>stock scanner</span></div>
+      <svg viewBox="0 0 760 34" preserveAspectRatio="none" class="barsvg" role="img" aria-label="iOS today: Found 0, Flagged for AI / review 0, Rule not on this platform 23, Missed 104"><rect x="0.0" y="0" width="137.6" height="34" rx="4" fill="var(--na)" class="seg" tabindex="0" data-tip="iOS today · Rule not on this platform: 23 of 127 (18%)"/><text x="68.8" y="22.0" text-anchor="middle" class="seglabel">— 23</text><rect x="139.6" y="0" width="620.4" height="34" rx="4" fill="var(--critical)" class="seg" tabindex="0" data-tip="iOS today · Missed: 104 of 127 (82%)"/><text x="448.8" y="22.0" text-anchor="middle" class="seglabel">✕ 104</text></svg></div><div class="barrow"><div class="barname"><b>Android today</b><span>BS talkback</span></div>
+      <svg viewBox="0 0 760 34" preserveAspectRatio="none" class="barsvg" role="img" aria-label="Android today: Found 6, Flagged for AI / review 11, Rule not on this platform 6, Missed 104"><rect x="0.0" y="0" width="35.9" height="34" rx="4" fill="var(--good)" class="seg" tabindex="0" data-tip="Android today · Found: 6 of 127 (5%)"/><rect x="37.9" y="0" width="63.8" height="34" rx="4" fill="var(--warning)" class="seg" tabindex="0" data-tip="Android today · Flagged for AI / review: 11 of 127 (9%)"/><text x="68.8" y="22.0" text-anchor="middle" class="seglabel dark">◐ 11</text><rect x="103.7" y="0" width="33.9" height="34" rx="4" fill="var(--na)" class="seg" tabindex="0" data-tip="Android today · Rule not on this platform: 6 of 127 (5%)"/><rect x="139.6" y="0" width="620.4" height="34" rx="4" fill="var(--critical)" class="seg" tabindex="0" data-tip="Android today · Missed: 104 of 127 (82%)"/><text x="448.8" y="22.0" text-anchor="middle" class="seglabel">✕ 104</text></svg></div><div class="barrow"><div class="barname"><b>iOS with the POC</b><span>DOM layer in the dylib</span></div>
+      <svg viewBox="0 0 760 34" preserveAspectRatio="none" class="barsvg" role="img" aria-label="iOS with the POC: Found 58, Flagged for AI / review 24, Rule not on this platform 22, Missed 23"><rect x="0.0" y="0" width="347.1" height="34" rx="4" fill="var(--good)" class="seg" tabindex="0" data-tip="iOS with the POC · Found: 58 of 127 (46%)"/><text x="173.5" y="22.0" text-anchor="middle" class="seglabel">✓ 58</text><rect x="349.1" y="0" width="141.6" height="34" rx="4" fill="var(--warning)" class="seg" tabindex="0" data-tip="iOS with the POC · Flagged for AI / review: 24 of 127 (19%)"/><text x="418.9" y="22.0" text-anchor="middle" class="seglabel dark">◐ 24</text><rect x="492.7" y="0" width="129.7" height="34" rx="4" fill="var(--na)" class="seg" tabindex="0" data-tip="iOS with the POC · Rule not on this platform: 22 of 127 (17%)"/><text x="556.5" y="22.0" text-anchor="middle" class="seglabel">— 22</text><rect x="624.4" y="0" width="135.6" height="34" rx="4" fill="var(--critical)" class="seg" tabindex="0" data-tip="iOS with the POC · Missed: 23 of 127 (18%)"/><text x="691.2" y="22.0" text-anchor="middle" class="seglabel">✕ 23</text></svg></div>
+  <details><summary>Show as table</summary><table><tr><th>Scanner</th><th>Found</th><th>Flagged for AI / review</th><th>Rule not on this platform</th><th>Missed</th></tr><tr><td>iOS today</td><td>0</td><td>0</td><td>23</td><td>104</td></tr><tr><td>Android today</td><td>6</td><td>11</td><td>6</td><td>104</td></tr><tr><td>iOS with the POC</td><td>58</td><td>24</td><td>22</td><td>23</td></tr></table></details>
+  <p class="muted" style="margin-top:10px">"Flagged for AI" = the scanner hands the element to our AI checks (headings, image descriptions, label quality); those weren't run in this local test.
+  "Rule not on this platform" = e.g. Android-only rules, or rules that do nothing on iOS today for native apps either.</p>
+</div>
+
+<h2>Why the two platforms fail differently</h2>
+<div class="lanes">
+  <div class="card lane"><h3> iOS: the scanner can't see inside the WebView</h3>
+    <div class="step ok"><b>1</b><span>Scanner runs inside the app and reads the screen's views</span></div>
+    <div class="step lost"><b>2</b><span>A WebView's content lives in a <b>separate Apple process</b>. The scanner only sees an empty box.</span></div>
+    <div class="step lost"><b>3</b><span>No elements, so no rule can check anything, and the screen looks "clean"</span></div>
+    <div class="step part"><b>POC</b><span>The scanner now <b>asks the WebView for its content</b> (roles, names, sizes, colours) and feeds it to the <b>existing rules</b></span></div>
+  </div>
+  <div class="card lane"><h3>Android: the scanner sees it, then the rules skip it</h3>
+    <div class="step ok"><b>1</b><span>Scanner is an accessibility service; Chrome's WebView <b>shares its content</b></span></div>
+    <div class="step ok"><b>2</b><span>Buttons, links, fields and headings arrive with names and types</span></div>
+    <div class="step lost"><b>3</b><span>Most rules only check elements marked "important", and <b>Chrome never marks web elements that way</b>, so they are skipped</span></div>
+    <div class="step part"><b>Fix</b><span>Mostly a <b>rule-engine change</b> (treat screen-reader-visible web elements as checkable) plus text-size estimation</span></div>
+  </div>
+</div>
+
+<h2>By area of accessibility</h2>
+<div class="card tbl">
+<table><tr><th>Area</th><th>iOS today</th><th>Android today</th><th>iOS with POC</th></tr><tr><td><b>Names & labels</b><br/><small>Buttons, links, images and switches say what they are and do · 14 rules</small></td><td class="c bad"><b>✕ 0/41</b></td><td class="c bad"><b>✕ 0/48</b></td><td class="c part"><b>◐ 24/41</b><br/><small>+6 for AI review</small></td></tr><tr><td><b>Forms & inputs</b><br/><small>Fields have visible labels, names and the right keyboard type · 4 rules</small></td><td class="c bad"><b>✕ 0/11</b></td><td class="c bad"><b>✕ 0/13</b></td><td class="c part"><b>◐ 4/11</b><br/><small>+7 for AI review</small></td></tr><tr><td><b>Touch targets</b><br/><small>Tap areas are big enough and don't overlap · 3 rules</small></td><td class="c bad"><b>✕ 0/9</b></td><td class="c part"><b>◐ 5/9</b></td><td class="c good"><b>✓ 7/9</b></td></tr><tr><td><b>Colour, text size & layout</b><br/><small>Contrast, text scaling, truncation, reflow and scrolling · 8 rules</small></td><td class="c bad"><b>✕ 0/19</b></td><td class="c part"><b>◐ 1/24</b><br/><small>+3 for AI review</small></td><td class="c good"><b>✓ 15/19</b></td></tr><tr><td><b>Headings, order & images of text</b><br/><small>Screen structure reads in a sensible order · 5 rules</small></td><td class="c bad"><b>✕ 0/17</b></td><td class="c part"><b>◐ 0/17</b><br/><small>+8 for AI review</small></td><td class="c part"><b>◐ 0/17</b><br/><small>+11 for AI review</small></td></tr><tr><td><b>Keyboard & screen-reader focus</b><br/><small>Everything can be reached and operated without touch · 5 rules</small></td><td class="c bad"><b>✕ 0/7</b></td><td class="c bad"><b>✕ 0/9</b></td><td class="c good"><b>✓ 8/8</b></td></tr><tr><td><b>Orientation</b><br/><small>The app works in portrait and landscape · 2 rules</small></td><td class="c na">— not on this platform</td><td class="c bad"><b>✕ 0/1</b></td><td class="c na">— not on this platform</td></tr></table>
+<p class="muted">Cells show issues found / issues that platform's rules can check. ✓ ≥ 75% · ◐ partial or AI-dependent · ✕ none found.</p>
+<details><summary>All 41 rules</summary><table><tr><th>Rule</th><th>iOS today</th><th>Android today</th><th>iOS with POC</th></tr><tr><td>Accessibility Label at front</td><td class="c bad"><b>✕ 0/2</b></td><td class="c bad"><b>✕ 0/2</b></td><td class="c bad"><b>✕ 0/2</b></td></tr><tr><td>Accessible Input Field Labels</td><td class="c bad"><b>✕ 0/3</b></td><td class="c bad"><b>✕ 0/3</b></td><td class="c part"><b>◐ 2/3</b><br/><small>+1 for AI review</small></td></tr><tr><td>Accessible Interactive Elements</td><td class="c na">— not on this platform</td><td class="c na">— not on this platform</td><td class="c good"><b>✓ 1/1</b></td></tr><tr><td>App Orientation Lock</td><td class="c na">app-level<br/><small>works on both</small></td><td class="c na">app-level<br/><small>works on both</small></td><td class="c na">app-level<br/><small>works on both</small></td></tr><tr><td>Button Element Accessibility Label Capitalization</td><td class="c bad"><b>✕ 0/3</b></td><td class="c bad"><b>✕ 0/3</b></td><td class="c good"><b>✓ 3/3</b></td></tr><tr><td>Checkbox Element Content Label</td><td class="c na">— not on this platform</td><td class="c bad"><b>✕ 0/4</b></td><td class="c na">— not on this platform</td></tr><tr><td>Duplicate Accessibility Label on Screen</td><td class="c bad"><b>✕ 0/2</b></td><td class="c bad"><b>✕ 0/2</b></td><td class="c good"><b>✓ 2/2</b></td></tr><tr><td>Duplicate State Info in Spoken Output</td><td class="c bad"><b>✕ 0/4</b></td><td class="c bad"><b>✕ 0/4</b></td><td class="c bad"><b>✕ 0/4</b></td></tr><tr><td>Duplicate Type Info in Spoken Output</td><td class="c bad"><b>✕ 0/5</b></td><td class="c bad"><b>✕ 0/5</b></td><td class="c part"><b>◐ 3/5</b></td></tr><tr><td>Editable Element Accessibility Label</td><td class="c bad"><b>✕ 0/4</b></td><td class="c bad"><b>✕ 0/4</b></td><td class="c part"><b>◐ 2/4</b><br/><small>+2 for AI review</small></td></tr><tr><td>Editable Element Label Not Announced</td><td class="c na">— not on this platform</td><td class="c bad"><b>✕ 0/2</b></td><td class="c na">— not on this platform</td></tr><tr><td>Font Magnification Support</td><td class="c bad"><b>✕ 0/3</b></td><td class="c bad"><b>✕ 0/3</b></td><td class="c part"><b>◐ 2/3</b></td></tr><tr><td>Images with Text</td><td class="c bad"><b>✕ 0/3</b></td><td class="c bad"><b>✕ 0/3</b></td><td class="c part"><b>◐ 0/3</b><br/><small>+3 for AI review</small></td></tr><tr><td>Incorrect Heading</td><td class="c bad"><b>✕ 0/4</b></td><td class="c part"><b>◐ 0/4</b><br/><small>+4 for AI review</small></td><td class="c part"><b>◐ 0/4</b><br/><small>+4 for AI review</small></td></tr><tr><td>Input type for Input Fields</td><td class="c bad"><b>✕ 0/4</b></td><td class="c bad"><b>✕ 0/4</b></td><td class="c part"><b>◐ 0/4</b><br/><small>+4 for AI review</small></td></tr><tr><td>Interactive Element Accessibility Label</td><td class="c bad"><b>✕ 0/4</b></td><td class="c bad"><b>✕ 0/4</b></td><td class="c good"><b>✓ 3/4</b></td></tr><tr><td>Interactive Elements with Unsupported Type</td><td class="c bad"><b>✕ 0/3</b></td><td class="c bad"><b>✕ 0/3</b></td><td class="c good"><b>✓ 3/3</b></td></tr><tr><td>Keyboard Focus for Interactive Elements</td><td class="c bad"><b>✕ 0/4</b></td><td class="c bad"><b>✕ 0/4</b></td><td class="c good"><b>✓ 4/4</b></td></tr><tr><td>Label in Name</td><td class="c bad"><b>✕ 0/3</b></td><td class="c bad"><b>✕ 0/3</b></td><td class="c good"><b>✓ 3/3</b></td></tr><tr><td>Link Text Purpose</td><td class="c bad"><b>✕ 0/4</b></td><td class="c bad"><b>✕ 0/4</b></td><td class="c good"><b>✓ 3/4</b><br/><small>+1 for AI review</small></td></tr><tr><td>Meaningful accessibility label for images</td><td class="c bad"><b>✕ 0/4</b></td><td class="c bad"><b>✕ 0/4</b></td><td class="c part"><b>◐ 2/4</b><br/><small>+2 for AI review</small></td></tr><tr><td>Meaningful Reading Order</td><td class="c bad"><b>✕ 0/4</b></td><td class="c bad"><b>✕ 0/4</b></td><td class="c bad"><b>✕ 0/4</b></td></tr><tr><td>Meaningful Visual Order</td><td class="c bad"><b>✕ 0/3</b></td><td class="c part"><b>◐ 0/3</b><br/><small>+1 for AI review</small></td><td class="c part"><b>◐ 0/3</b><br/><small>+1 for AI review</small></td></tr><tr><td>Missing Heading</td><td class="c bad"><b>✕ 0/3</b></td><td class="c part"><b>◐ 0/3</b><br/><small>+3 for AI review</small></td><td class="c part"><b>◐ 0/3</b><br/><small>+3 for AI review</small></td></tr><tr><td>Missing View Type in Spoken Output</td><td class="c bad"><b>✕ 0/3</b></td><td class="c bad"><b>✕ 0/3</b></td><td class="c part"><b>◐ 2/3</b></td></tr><tr><td>Non-Text Element Color Contrast</td><td class="c bad"><b>✕ 0/4</b></td><td class="c bad"><b>✕ 0/4</b></td><td class="c part"><b>◐ 2/4</b></td></tr><tr><td>Overlapping Interactive Elements</td><td class="c bad"><b>✕ 0/3</b></td><td class="c bad"><b>✕ 0/3</b></td><td class="c part"><b>◐ 1/3</b></td></tr><tr><td>Readable Text Size</td><td class="c na">— not on this platform</td><td class="c bad"><b>✕ 0/2</b></td><td class="c na">— not on this platform</td></tr><tr><td>Readable Text Spacing</td><td class="c na">— not on this platform</td><td class="c bad"><b>✕ 0/3</b></td><td class="c na">— not on this platform</td></tr><tr><td>Responsive Containers</td><td class="c bad"><b>✕ 0/2</b></td><td class="c bad"><b>✕ 0/2</b></td><td class="c good"><b>✓ 2/2</b></td></tr><tr><td>Screen Reader Focus for Interactive Elements</td><td class="c na">— not on this platform</td><td class="c na">— not on this platform</td><td class="c na">— not on this platform</td></tr><tr><td>Special-Character Element Accessibility Label</td><td class="c bad"><b>✕ 0/4</b></td><td class="c bad"><b>✕ 0/4</b></td><td class="c good"><b>✓ 3/4</b></td></tr><tr><td>Spoken Description not Meaningful</td><td class="c na">— not on this platform</td><td class="c bad"><b>✕ 0/3</b></td><td class="c na">— not on this platform</td></tr><tr><td>Supported Screen Orientations</td><td class="c na">— not on this platform</td><td class="c bad"><b>✕ 0/1</b></td><td class="c na">— not on this platform</td></tr><tr><td>Switch Element Accessibility Label</td><td class="c bad"><b>✕ 0/3</b></td><td class="c bad"><b>✕ 0/3</b></td><td class="c part"><b>◐ 0/3</b><br/><small>+3 for AI review</small></td></tr><tr><td>Text Element Color Contrast (Minimum)</td><td class="c bad"><b>✕ 0/4</b></td><td class="c part"><b>◐ 0/4</b><br/><small>+3 for AI review</small></td><td class="c good"><b>✓ 4/4</b></td></tr><tr><td>Text Truncation</td><td class="c bad"><b>✕ 0/4</b></td><td class="c bad"><b>✕ 0/4</b></td><td class="c good"><b>✓ 3/4</b></td></tr><tr><td>Touch Target Size</td><td class="c bad"><b>✕ 0/4</b></td><td class="c good"><b>✓ 3/4</b></td><td class="c good"><b>✓ 4/4</b></td></tr><tr><td>Touch Target Size &amp; Spacing</td><td class="c bad"><b>✕ 0/2</b></td><td class="c good"><b>✓ 2/2</b></td><td class="c good"><b>✓ 2/2</b></td></tr><tr><td>Traversal Order Cycle</td><td class="c na">— not on this platform</td><td class="c bad"><b>✕ 0/2</b></td><td class="c na">— not on this platform</td></tr><tr><td>Two-Dimensional Scrolling</td><td class="c bad"><b>✕ 0/2</b></td><td class="c part"><b>◐ 1/2</b></td><td class="c good"><b>✓ 2/2</b></td></tr></table></details>
+</div>
+
+<h2>What is supported, what isn't</h2>
+<div class="two">
+  <div class="card"><h3> iOS</h3>
+    <p><span class="pill">Today</span>Only the app-level orientation check works; everything inside a WebView is unscanned and reads as clean.</p>
+    <p><span class="pill">With POC</span>Labels and names, touch targets, contrast (text and controls), truncation, text scaling (measured by actually enlarging the text), reflow and
+    two-direction scrolling, keyboard reachability, and click-only elements with no role, including Ionic components inside shadow DOM.</p>
+    <p><span class="pill">Still limited</span></p>
+    <ul>
+      <li>AI-judged rules need the AI step connected for web elements</li>
+      <li>reading / visual order rules need more work</li>
+      <li>a few iOS rules are narrower than their descriptions (e.g. "state in label" only checks "selected")</li>
+      <li><b>can't reach:</b> Safari sheets (<code>SFSafariViewController</code>), canvas-drawn UIs, some cross-site iframes</li>
+      <li>adds ~1.2 s per scan, mostly the text-scaling check</li>
+    </ul>
+  </div>
+  <div class="card"><h3>Android</h3>
+    <p><span class="pill">Today</span>Touch-target size / spacing and two-direction scrolling work on web content; contrast only reaches "needs review"; headings go to AI review.</p>
+    <p><span class="pill">Blocked</span>~27 rules skip web elements because of the "important for accessibility" flag. Text-size rules have no font-size data from Chrome.
+    Truncation always passes for web text.</p>
+    <p><span class="pill">Fix path</span>Rule-engine change to accept screen-reader-visible web elements. Text size estimated from the screenshot (already done for Flutter).
+    Let verified contrast fail.</p>
+    <p><span class="pill">Can't reach</span>Chrome Custom Tabs opened outside the app, canvas-drawn UIs.</p>
+  </div>
+</div>
+
+<h2>Angular specifically</h2>
+<div class="card">
+  <ul>
+    <li><b>Angular + Ionic / Capacitor / Cordova</b> (runs in a WebView): not scanned today on iOS and barely on Android. The POC covers it on iOS, including Ionic's shadow-DOM components.</li>
+    <li><b>NativeScript + Angular</b> (renders native views): already supported like any native app.</li>
+    <li><b>Angular website inside a native app</b> (checkout, help pages): same as the first row.</li>
+    <li>Angular's common defect, a clickable <code>&lt;div (click)&gt;</code>, is now detected on iOS: the POC notices click handlers.</li>
+  </ul>
+</div>
+
+<h2>Recommendation</h2>
+<div class="two">
+  <div class="card"><h3>1 · iOS: productionise the DOM layer</h3>
+    <p>A change in the iOS scanner library (~500 lines, POC exists and runs on device) plus small matching rule updates on the server. The measured result is 0 → 58 of 127, with no false alarms.
+    Next: connect AI review for web elements, gate the 1.2 s text-scaling check, and validate on customer hybrid apps.</p></div>
+  <div class="card"><h3>2 · Android: unblock the rule engine</h3>
+    <p>The content already reaches the scanner, so a rule-engine change unlocks most rules. We expect it to reach iOS-POC levels; that isn't measured yet, so the next step is a POC like iOS's.</p></div>
+</div>
+<div class="card"><h3>Meanwhile: stop reporting "clean"</h3><p>Mark screens with visible WebView content as <b>"web content not fully assessed"</b> on both platforms, so customers don't read silence as compliance.</p></div>
+
+<p class="muted" style="margin-top:28px">Details for engineers: <a href="../ios-webview-angular-support/">full code-backed analysis</a> ·
+<a href="../ios-webview-angular-support/ios-run/">iOS run</a> · <a href="../ios-webview-angular-support/android-run/">Android run</a> ·
+<a href="../ios-webview-angular-support/compare/">iOS vs Android</a> · <a href="../ios-webview-angular-support/ios-dom-poc/">iOS DOM-layer POC</a></p>
+
+<div id="tip" role="status"></div>
+<script>
+  const tip = document.getElementById('tip');
+  const show = (el, x, y) => { tip.textContent = el.dataset.tip; tip.style.left = (x + 12) + 'px'; tip.style.top = (y + 12) + 'px'; tip.style.opacity = 1; };
+  document.querySelectorAll('.seg').forEach(el => {
+    el.addEventListener('mousemove', e => show(el, e.clientX, e.clientY));
+    el.addEventListener('mouseleave', () => tip.style.opacity = 0);
+    el.addEventListener('focus', () => { const r = el.getBoundingClientRect(); show(el, r.left, r.bottom); });
+    el.addEventListener('blur', () => tip.style.opacity = 0);
+  });
+</script>
+</body>
+</html>
