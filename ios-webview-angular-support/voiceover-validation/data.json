@@ -1,0 +1,168 @@
+{
+ "totals": {
+  "exact": 232,
+  "name": 71,
+  "ours-only": 14,
+  "vo-only": 30,
+  "differs": 5
+ },
+ "confusion": {
+  "label-in-name": {
+   "TP": 3,
+   "edge": 1,
+   "TN": 1
+  },
+  "label-at-front": {
+   "FN": 2,
+   "TN": 2
+  },
+  "interactable-element-content-label": {
+   "TP": 3,
+   "FN": 1,
+   "ai": 2
+  },
+  "imageview-element-content-label": {
+   "TP": 2,
+   "ai": 3,
+   "TN": 1
+  },
+  "switch-element-content-label": {
+   "ai": 5,
+   "edge": 1
+  },
+  "duplicate-element-content-label": {
+   "TP": 2,
+   "edge": 1,
+   "TN": 1
+  },
+  "state-in-content-label": {
+   "FN": 4,
+   "TN": 1
+  },
+  "view-type-in-content-label": {
+   "TP": 3,
+   "FN": 2,
+   "TN": 1
+  },
+  "special-character-element-content-label": {
+   "TP": 3,
+   "FN": 1,
+   "edge": 1,
+   "TN": 1
+  },
+  "button-element-content-label-capitalization": {
+   "TP": 3,
+   "edge": 2,
+   "TN": 1
+  },
+  "link-text-purpose": {
+   "TP": 3,
+   "ai": 2,
+   "edge": 1
+  },
+  "missing-view-type-in-spoken-output": {
+   "FN": 1,
+   "TP": 2,
+   "TN": 2
+  },
+  "editable-element-content-label": {
+   "ai": 4,
+   "TP": 2
+  },
+  "accessible-input-field-label": {
+   "TP": 2,
+   "ai": 3,
+   "edge": 1
+  },
+  "screen-reader-for-interactive-elements": {
+   "FN": 3,
+   "TN": 1
+  },
+  "checkbox-element-content-label": {
+   "FN": 4,
+   "TN": 2
+  }
+ },
+ "patterns": [
+  [
+   "TextField: ours \u201c\u2026, Text field\u201d vs VO \u201c\u2026, \u2205\u201d",
+   27
+  ],
+  [
+   "WebCheckBox: ours \u201c\u2026, Checkbox\u201d vs VO \u201c\u2026, 0, Button, Toggle\u201d",
+   5
+  ],
+  [
+   "WebLabel: ours \u201c\u2026, Heading\u201d vs VO \u201c\u2026, 2, Header\u201d",
+   5
+  ],
+  [
+   "WebCheckBox: ours \u201c\u2026, Checkbox\u201d vs VO \u201c\u2026, \u2205\u201d",
+   4
+  ],
+  [
+   "WebSwitch: ours \u201c\u2026, Switch button\u201d vs VO \u201c\u2026, 1, Button, Toggle\u201d",
+   4
+  ],
+  [
+   "WebSwitch: ours \u201c\u2026, Switch button\u201d vs VO \u201c\u2026, 0, Button, Toggle\u201d",
+   4
+  ],
+  [
+   "WebLabel: ours \u201c\u2026, \u2205\u201d vs VO \u201c\u2026, 0, Button, Toggle\u201d",
+   3
+  ],
+  [
+   "UITextView: ours \u201c\u2026, Text field\u201d vs VO \u201c\u2026, \u2205\u201d",
+   3
+  ],
+  [
+   "WebImageView: ours \u201c\u2026, Image\u201d vs VO \u201c\u2026, \u2205\u201d",
+   3
+  ],
+  [
+   "WebLabel: ours \u201c\u2026, \u2205\u201d vs VO \u201c\u2026, \u2205\u201d",
+   3
+  ],
+  [
+   "WebTabButton: ours \u201c\u2026, Button, Tab\u201d vs VO \u201c\u2026, Selected\u201d",
+   2
+  ],
+  [
+   "WebTabButton: ours \u201c\u2026, Button, Tab\u201d vs VO \u201c\u2026, \u2205\u201d",
+   2
+  ],
+  [
+   "WebLabel: ours \u201c\u2026, Heading\u201d vs VO \u201c\u2026, 3, Header\u201d",
+   2
+  ],
+  [
+   "WebCheckBox: ours \u201c\u2026, Checkbox\u201d vs VO \u201c\u2026, 1, Button, Toggle\u201d",
+   1
+  ],
+  [
+   "WebButton: ours \u201c\u2026, Button\u201d vs VO \u201c\u2026, 1, Button, Toggle\u201d",
+   1
+  ],
+  [
+   "WebLabel: ours \u201c\u2026, \u2205\u201d vs VO \u201c\u2026, 1, Button, Toggle\u201d",
+   1
+  ],
+  [
+   "SearchField: ours \u201c\u2026, Search field\u201d vs VO \u201c\u2026, Search Field\u201d",
+   1
+  ],
+  [
+   "WebLabel: ours \u201c\u2026, 299, Heading\u201d vs VO \u201c\u2026, 299, 3, Header\u201d",
+   1
+  ],
+  [
+   "WebLink: ours \u201c\u2026, Link\u201d vs VO \u201c\u2026, Link, Image\u201d",
+   1
+  ],
+  [
+   "WebRadioButton: ours \u201c\u2026, Radio button\u201d vs VO \u201c\u2026, 1, Toggle\u201d",
+   1
+  ]
+ ]
+}
