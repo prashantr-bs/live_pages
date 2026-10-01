@@ -1,15 +1,15 @@
 {
  "totals": {
-  "exact": 232,
-  "real_matched": 230,
-  "real_name_ours": 223,
-  "real_name_audit": 222,
-  "real_exact_ours": 165,
-  "real_exact_audit": 156,
-  "name": 71,
-  "ours-only": 14,
-  "vo-only": 30,
-  "differs": 5
+  "exact": 217,
+  "real_matched": 249,
+  "real_name_ours": 233,
+  "real_name_audit": 231,
+  "real_exact_ours": 186,
+  "real_exact_audit": 172,
+  "name": 69,
+  "ours-only": 11,
+  "differs": 4,
+  "vo-only": 26
  },
  "confusion": {
   "label-in-name": {
@@ -114,10 +114,6 @@
    4
   ],
   [
-   "WebLabel: ours \u201c\u2026, \u2205\u201d vs VO \u201c\u2026, 0, Button, Toggle\u201d",
-   3
-  ],
-  [
    "UITextView: ours \u201c\u2026, Text field\u201d vs VO \u201c\u2026, \u2205\u201d",
    3
   ],
@@ -126,8 +122,8 @@
    3
   ],
   [
-   "WebLabel: ours \u201c\u2026, \u2205\u201d vs VO \u201c\u2026, \u2205\u201d",
-   3
+   "WebLabel: ours \u201c\u2026, \u2205\u201d vs VO \u201c\u2026, 0, Button, Toggle\u201d",
+   2
   ],
   [
    "WebTabButton: ours \u201c\u2026, Button, Tab\u201d vs VO \u201c\u2026, Selected\u201d",
@@ -142,15 +138,15 @@
    2
   ],
   [
+   "WebLabel: ours \u201c\u2026, \u2205\u201d vs VO \u201c\u2026, \u2205\u201d",
+   2
+  ],
+  [
    "WebCheckBox: ours \u201c\u2026, Checkbox\u201d vs VO \u201c\u2026, 1, Button, Toggle\u201d",
    1
   ],
   [
    "WebButton: ours \u201c\u2026, Button\u201d vs VO \u201c\u2026, 1, Button, Toggle\u201d",
-   1
-  ],
-  [
-   "WebLabel: ours \u201c\u2026, \u2205\u201d vs VO \u201c\u2026, 1, Button, Toggle\u201d",
    1
   ],
   [
@@ -167,6 +163,10 @@
   ],
   [
    "WebRadioButton: ours \u201c\u2026, Radio button\u201d vs VO \u201c\u2026, 1, Toggle\u201d",
+   1
+  ],
+  [
+   "WebRadioButton: ours \u201c\u2026, Radio button\u201d vs VO \u201c\u2026, 0, Toggle\u201d",
    1
   ]
  ]
