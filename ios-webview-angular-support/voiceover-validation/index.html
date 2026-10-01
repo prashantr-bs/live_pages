@@ -29,7 +29,7 @@
 <p class="muted">iPad Air 11" (M2), iPadOS 26.5 · Angular Rule Lab · <b>VoiceOver output</b> captured for every element of all 41 rule pages with the iOS accessibility audit service
 (<code>pymobiledevice3 developer accessibility list-items</code>, the same engine Accessibility Inspector uses for its VoiceOver "spoken description"; VoiceOver itself cannot be toggled remotely) ·
 <b>our capture</b> = the read-only in-process DOM layer (v5) scans · <b>plus a 44-min screen recording of real VoiceOver</b>
-navigating every rule page. Its on-screen caption panel was OCR'd at 2 fps; the full announcement after each pause is kept. · 1 Oct 2026</p>
+navigating every rule page (<a href="https://drive.google.com/file/d/1khfUuGTRsDOyXeP3-TZKgxEvmpYfkPVa/view?usp=drive_link">watch the recording</a>). Its on-screen caption panel was OCR'd at 2 fps; the full announcement after each pause is kept. · 1 Oct 2026</p>
 
 <div class="kpis">
   <div class="kpi"><b>322</b><span>captured accessible web elements compared with VoiceOver</span></div>
@@ -65,7 +65,7 @@ navigating every rule page. Its on-screen caption panel was OCR'd at 2 fps; the 
 <tr><td>Image</td><td>usually VoiceOver's own description ("Profile" · "Chart, Person"); SVG-as-img read by its inner text</td><td>"…, Image"</td><td>"…, Image"</td><td>keep; flag that VoiceOver may override</td></tr>
 <tr><td>Disabled control</td><td><i>not in the recording</i> (iOS VoiceOver normally says "Dimmed")</td><td>"…, Button, Not Enabled"</td><td>no state</td><td>append a disabled word; verify on device</td></tr>
 </table>
-<p class="muted">Method: the recording's caption panel (bottom in portrait, right edge in landscape) was OCR'd with Apple Vision at 2 fps. Consecutive captions that extend the previous one were merged, keeping the longest one (the full description after the pause).
+<p class="muted"><b>Source recording:</b> <a href="https://drive.google.com/file/d/1khfUuGTRsDOyXeP3-TZKgxEvmpYfkPVa/view?usp=drive_link">VoiceOver on the Rule Lab (iPad, 44 min, Google Drive)</a>.<br/>Method: the recording's caption panel (bottom in portrait, right edge in landscape) was OCR'd with Apple Vision at 2 fps. Consecutive captions that extend the previous one were merged, keeping the longest one (the full description after the pause).
 The page came from the title bar and the test case from the "TCn" item VoiceOver read. Back-and-forth navigation was de-duplicated. A few OCR artefacts remain, such as an extra comma where the caption wraps.</p></div>
 
 <h2>1 · Capture vs VoiceOver, element by element</h2>
