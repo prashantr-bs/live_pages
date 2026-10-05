@@ -25,7 +25,8 @@
 </style></head><body>
 <p class="sub"><a href="../">← WebView &amp; Angular support analysis</a> · <a href="../rule-support-summary/">Rule support summary</a></p>
 <h1>Partially supported rules: what's missing and what would fix it</h1>
-<p class="sub">The 9 rules marked <b>Partial</b> on the <a href="../rule-support-summary/">summary</a>, measured on the Angular + Ionic Rule Lab with the DOM-layer POC.
+<p class="sub"><b>Update (5 Oct):</b> the 3 fixable gaps are fixed and verified on the iPad. Non-Text Contrast 2/4 → <b>3/4</b>, Accessible Input Field Labels 2/3 → <b>3/3</b>, Text Truncation 3/4 → <b>4/4</b>. A full regression scan of all rule pages found 0 false positives; the POC total is now <b>61/127</b> (was 58). <code>ios_app_patcher</code> <code>5478df3</code> (PR #360), Rule Lab <code>9f73d1d</code>. All other gaps are parity with the existing implementation and were left unchanged.</p>
+<p class="sub">The 9 rules that were marked <b>Partial</b> on the <a href="../rule-support-summary/">summary</a>, measured on the Angular + Ionic Rule Lab with the DOM-layer POC.
 For each missed test case: whether the cause is <b>our WebView implementation</b> (fixable in the POC), <b>parity</b> with the existing iOS rule (it behaves the same on native screens), or the <b>test case itself</b>.
 Causes were checked against the captured nodes, the rule code (<code>ios_app_patcher</code> master) and, where noted, on the iPad.</p>
 <div class="legend"><span class="tag t-fix">POC fix</span> fixable in the WebView DOM layer
@@ -34,42 +35,42 @@ Causes were checked against the captured nodes, the rule code (<code>ios_app_pat
 
 <div class="tblw"><table>
 <tr><th>Rule</th><th>Detected</th><th>Missed</th><th>Cause</th><th>Type</th><th>What would increase support</th></tr>
-<tr><td><b>Non-Text Element Color Contrast</b><span class="id">non-text-color-contrast</span></td><td class="n">2/4</td><td>TC2</td>
+<tr><td><b>Non-Text Element Color Contrast</b><span class="id">non-text-color-contrast</span></td><td class="n">2/4 → <b>3/4</b></td><td>TC2</td>
  <td>The icon colour is read from the <code>&lt;svg&gt;</code>'s own fill, which defaults to black (21:1). The icon is drawn by the path's stroke, #cfcfcf (1.6:1).</td><td><span class="tag t-fix">POC fix</span></td>
- <td>Read the colour of the drawn shapes. <b>Verified on the iPad</b>: TC2 → #CFCFCF (fails), TC5 → #5F6368 (still passes).</td></tr>
+ <td><b>Fixed.</b> The colour now comes from the drawn shapes. On the iPad, TC2 → #CFCFCF (fails) and TC5 still passes.</td></tr>
 <tr><td></td><td></td><td>TC4</td><td>The selected segment differs from the unselected one only by a #f2f2f2 fill. The rule compares an element with its own background, never one state with another.</td><td><span class="tag t-par">Parity</span></td>
- <td>Rule change, native and web: compare a selected control's fill with its unselected sibling's (WCAG 1.4.11 state indicators).</td></tr>
-<tr><td><b>Accessible Input Field Labels</b><span class="id">accessible-input-field-label</span></td><td class="n">2/3</td><td>TC3</td>
- <td>Named only by <code>aria-label</code>, nothing visible. The rule only fails when the placeholder is the label; anything else goes to AI, which passed it.</td><td><span class="tag t-par">Parity</span> + <span class="tag t-fix">POC fix</span></td>
- <td>Web-only signal: the DOM knows whether the name comes from a visible <code>&lt;label&gt;</code> / <code>aria-labelledby</code> or from <code>aria-label</code> / <code>title</code> / <code>placeholder</code>. Capture <code>nameSource</code> and fail (or tell the AI) when no visible label exists.</td></tr>
+ <td>Parity with the existing implementation; nothing to change in the POC.</td></tr>
+<tr><td><b>Accessible Input Field Labels</b><span class="id">accessible-input-field-label</span></td><td class="n">2/3 → <b>3/3</b></td><td>TC3</td>
+ <td>Named only by <code>aria-label</code>, nothing visible. The rule only fails when the placeholder is the label; anything else goes to AI, which passed it.</td><td><span class="tag t-fix">POC fix</span></td>
+ <td><b>Fixed.</b> The extractor now reports where the name comes from (<code>webNameSource</code>) and whether a visible label exists (<code>webHasVisibleLabel</code>). A field named only by <code>aria-label</code> / <code>title</code> fails, and is still sent to AI like every failing field. Native screens are unchanged.</td></tr>
 <tr><td><b>Editable Element Accessibility Label</b><span class="id">editable-element-content-label</span></td><td class="n">2/4</td><td>TC1, TC3</td>
  <td>Field with a value (“John Appleseed”) and contenteditable text (“Type a note…”), both unnamed. The iOS rule takes label → <i>value</i> → name, so the text counts as a label and goes to AI review.</td><td><span class="tag t-par">Parity</span></td>
- <td>A native <code>UITextField</code> with text behaves the same, and VoiceOver also reads just the value. Rule change for both: a value alone is not a name for editable fields.</td></tr>
+ <td>Parity with the existing implementation; nothing to change in the POC.</td></tr>
 <tr><td><b>Switch Element Accessibility Label</b><span class="id">switch-element-content-label</span></td><td class="n">0/3 + 3 AI</td><td>TC1–TC3 (prod AI: 2/3)</td>
  <td>Unnamed switches fall back to their value, “0”, as the label. So the rule never fails them deterministically, and the report shows detectedLabel “0”.</td><td><span class="tag t-par">Parity</span></td>
- <td>Same for a native <code>UISwitch</code> (value “0” / “1”). Rule change for both: ignore the value for switches and checkboxes, which makes an empty name a deterministic FAIL.</td></tr>
+ <td>Parity with the existing implementation; nothing to change in the POC.</td></tr>
 <tr><td><b>Duplicate Type Info in Spoken Output</b><span class="id">view-type-in-content-label</span></td><td class="n">3/5</td><td>TC3, TC4</td>
- <td>“Remember me checkbox” and “Dark mode switch”: the rule's role vocabulary has no “checkbox” or “switch”.</td><td><span class="tag t-par">Parity</span></td><td>Add “checkbox”, “switch”, “toggle”, “tab” to the vocabulary (native and web).</td></tr>
+ <td>“Remember me checkbox” and “Dark mode switch”: the rule's role vocabulary has no “checkbox” or “switch”.</td><td><span class="tag t-par">Parity</span></td><td>Parity with the existing implementation; nothing to change in the POC.</td></tr>
 <tr><td><b>Missing View Type in Spoken Output</b><span class="id">missing-view-type-in-spoken-output</span></td><td class="n">2/3</td><td>TC1</td>
- <td>The clickable div has no text of its own (“Tap to toggle” is a separate sibling), so its spoken output is empty. The rule returns N/A by design, and VoiceOver doesn't focus it either.</td><td><span class="tag t-par">Parity</span></td><td>Covered elsewhere: an unnamed, role-less control is an Unsupported Type / Interactive Label issue.</td></tr>
+ <td>The clickable div has no text of its own (“Tap to toggle” is a separate sibling), so its spoken output is empty. The rule returns N/A by design, and VoiceOver doesn't focus it either.</td><td><span class="tag t-par">Parity</span></td><td>Parity with the existing implementation; nothing to change in the POC.</td></tr>
 <tr><td><b>Special-Character Element Accessibility Label</b><span class="id">special-character-element-content-label</span></td><td class="n">3/4</td><td>TC3</td>
- <td>“Next →”: the arrow isn't in the rule's special-character set.</td><td><span class="tag t-par">Parity</span></td><td>Add arrows and other dingbats to the set (native and web).</td></tr>
-<tr><td><b>Text Truncation</b><span class="id">text-truncation</span></td><td class="n">3/4</td><td>TC4</td>
- <td>The Ionic <code>ion-text-nowrap</code> label fits the iPad's 1180 pt width, so nothing is truncated (<code>scrollWidth</code> 1090 = <code>clientWidth</code>). <b>Measured on the iPad</b>: at 360 px it is ellipsized (395 &gt; 328), which the extractor already detects. Prod (iPhone) reports it.</td><td><span class="tag t-fx">Test case</span></td><td>Give TC4 a max-width like TC1, so it truncates on every device.</td></tr>
+ <td>“Next →”: the arrow isn't in the rule's special-character set.</td><td><span class="tag t-par">Parity</span></td><td>Parity with the existing implementation; nothing to change in the POC.</td></tr>
+<tr><td><b>Text Truncation</b><span class="id">text-truncation</span></td><td class="n">3/4 → <b>4/4</b></td><td>TC4</td>
+ <td>The Ionic <code>ion-text-nowrap</code> label fits the iPad's 1180 pt width, so nothing is truncated (<code>scrollWidth</code> 1090 = <code>clientWidth</code>). <b>Measured on the iPad</b>: at 360 px it is ellipsized (395 &gt; 328), which the extractor already detects. Prod (iPhone) reports it.</td><td><span class="tag t-fx">Test case</span></td><td><b>Fixed.</b> TC4 now has a bounded width like TC1, so it truncates on every device.</td></tr>
 <tr><td><b>Overlapping Interactive Elements</b><span class="id">overlapping-interactive-elements</span></td><td class="n">1/3</td><td>TC1, TC2</td>
- <td>The overlaps leave each control a 24×24 pt target of its own, which WCAG 2.5.8 accepts. Replaying the rule on the captured rects gives the same result.</td><td><span class="tag t-par">Parity</span></td><td>Either flag any overlap between controls (a stricter best-practice check), or re-label TC1 and TC2 as best-practice.</td></tr>
+ <td>The overlaps leave each control a 24×24 pt target of its own, which WCAG 2.5.8 accepts. Replaying the rule on the captured rects gives the same result.</td><td><span class="tag t-par">Parity</span></td><td>Parity with the existing implementation; nothing to change in the POC.</td></tr>
 </table></div>
 
 <h2>Summary</h2>
 <div class="card"><ul>
- <li><b>2 gaps come from our WebView implementation, and both are fixable in the POC:</b> the icon colour (verified on the device) and the missing visible-label signal for input fields.</li>
- <li><b>1 is a test-case problem:</b> Text Truncation TC4 doesn't truncate at iPad width, and is detected on phones.</li>
- <li><b>Everything else is parity:</b> the existing iOS rule gives the same result on native screens. Each has a rule change that would help native and web alike (value-as-label for switches and editable fields, role and special-character vocabularies, state-indicator contrast, stricter overlap). Those belong in the rule engine, not the WebView POC.</li>
+ <li><b>2 gaps came from our WebView implementation, both now fixed:</b> the icon colour and the missing visible-label signal for input fields.</li>
+ <li><b>1 was a test-case problem, now fixed:</b> Text Truncation TC4 didn't truncate at iPad width.</li>
+ <li><b>Everything else is parity with the existing implementation:</b> the existing iOS rule gives the same result on native screens, so nothing was changed.</li>
 </ul></div>
 
 <h2>The three rules in detail</h2>
-<div class="card"><h3>Non-Text Element Color Contrast: TC2 icon colour (POC fix, verified)</h3>
-<p>Today the extractor takes <code>getComputedStyle(svg).fill</code>. An <code>&lt;svg&gt;</code> with no fill computes to black, so a #cfcfcf stroked icon is measured as #000000 against white, which passes. Fix: take the colour from the first shape the SVG actually paints, also inside <code>ion-icon</code> shadow roots:</p>
+<div class="card"><h3>Non-Text Element Color Contrast: TC2 icon colour (fixed)</h3>
+<p>The extractor used to take <code>getComputedStyle(svg).fill</code>. An <code>&lt;svg&gt;</code> with no fill computes to black, so a #cfcfcf stroked icon is measured as #000000 against white, which passes. Fix (shipped in <code>5478df3</code>): take the colour from the first shape the SVG actually paints, also inside <code>ion-icon</code> shadow roots:</p>
 <pre>const drawn = (svg) =&gt; {
   for (const s of svg.querySelectorAll('path,circle,ellipse,rect,line,polyline,polygon,use')) {
     const st = getComputedStyle(s);
@@ -78,11 +79,11 @@ Causes were checked against the captured nodes, the rule code (<code>ios_app_pat
   }
   return '';
 };</pre>
-<p>Measured on the iPad: TC2 <b>#000000 → #CFCFCF</b> (1.6:1, FAIL as expected); TC5 <b>#000000 → #5F6368</b> (6.1:1, still PASS). TC4 (state indicator) stays a rule-level gap.</p></div>
+<p>Measured on the iPad: TC2 <b>#000000 → #CFCFCF</b> (1.6:1, FAIL as expected); TC5 <b>#000000 → #5F6368</b> (6.1:1, still PASS). TC4 (state indicator) is parity with the existing implementation.</p></div>
 <div class="card"><h3>Editable Element Accessibility Label: TC1, TC3 (parity)</h3>
 <p><code>BSRuleEditableElementContentLabel</code> uses <code>getBestAccessibilityLabelAndKey()</code> (label → value → name). An unnamed field showing “John Appleseed”, or a contenteditable showing “Type a note…”, gets its text as the label. It is then sent to AI review instead of failing. A native text field with text gets the same treatment, so the POC keeps parity. Prod AI flagged TC1 for review (“label repeats the value”) and passed TC3.</p>
-<p><b>Possible rule change</b> (native and web): for editable fields, judge only the accessible <i>name</i> (label / name), never the value. TC1 and TC3 then fail deterministically.</p></div>
-<div class="card"><h3>Accessible Input Field Labels: TC3 (parity today, improvable for web)</h3>
-<p>The rule fails deterministically only when the placeholder is the label. A field named by <code>aria-label</code> with nothing visible goes to AI review, which passed it. Native gives the same result: an <code>accessibilityLabel</code> on a <code>UITextField</code> says nothing about visible text.</p>
-<p><b>Web can do better, because the DOM says where the name came from.</b> Add a <code>nameSource</code> property in the extractor (<code>label</code> · <code>labelledby</code> · <code>aria-label</code> · <code>title</code> · <code>placeholder</code>). When it is <code>aria-label</code>, <code>title</code> or <code>placeholder</code>, and no visible label sits next to the field, fail deterministically or pass the fact to the AI. Native screens are unaffected, because they never set it.</p></div>
+</div>
+<div class="card"><h3>Accessible Input Field Labels: TC3 (fixed for web)</h3>
+<p>The rule failed deterministically only when the placeholder was the label. A field named by <code>aria-label</code> with nothing visible went to AI review, which passed it. Native gives the same result: an <code>accessibilityLabel</code> on a <code>UITextField</code> says nothing about visible text.</p>
+<p><b>Fixed for web, because the DOM says where the name came from.</b> The extractor emits <code>webNameSource</code> (<code>labelledby</code> · <code>aria-label</code> · <code>label</code> · <code>title</code> · <code>placeholder</code>) and <code>webHasVisibleLabel</code>. A field named by <code>aria-label</code> / <code>title</code> with no visible label now fails: “Input field of type TextField has no visible label (named only by aria-label)”. Like the existing placeholder failure, it still carries the <code>check_input_field_purpose</code> AI candidate. On the iPad: TC1–TC3 fail; the labelled fields TC5 and TC6 go to AI review as before (0 false positives). Native screens never set these keys and are unchanged.</p></div>
 </body></html>
