@@ -20,7 +20,7 @@
  .t-ok { color:var(--ok); background:var(--okb); } .t-bad { color:var(--bad); background:var(--badb); } .t-warn { color:var(--warn); background:var(--warnb); }
  @media (max-width:760px) { body { padding:18px 16px 48px; } .card { grid-template-columns:1fr; } }
 </style></head><body>
-<p class="sub"><a href="../">← WebView &amp; Angular support analysis</a> · <a href="../rule-support-summary/">Rule support summary</a> · <a href="../partial-rules/">Partial rules</a></p>
+<p class="sub"><a href="../">← WebView &amp; Angular support analysis</a> · <a href="../rule-support-summary/">Rule support summary</a> · <a href="../partial-rules/">Partial rules</a> · <b><a href="manual-scans/">Manual scans (41 screens) →</a></b></p>
 <h1>The WebView DOM-layer POC on four real Angular apps</h1>
 <p class="sub">The Rule Lab is our own test app. These are production App Store apps, sideloaded on the iPad (iPadOS 26.5) with the PR #360 injector
 (head <code>64ecda3</code> plus the shadow-root fix below), driven over Web Inspector and scanned on device. Customers' apps cannot be downloaded,
@@ -33,6 +33,7 @@ so these were picked from AppBrain's lists of apps that ship Ionic / Capacitor /
  <div class="kpi"><b>1</b><span>crash-class bug found &amp; fixed</span></div>
 </div>
 
+<div class="card full"><p><b>Follow-up:</b> 41 more screens scanned by hand across the four apps, covering what the automated run could not reach: <a href="manual-scans/">manual-scan analysis</a>.</p></div>
 <h2>Is it Angular?</h2>
 <div class="tblw"><table><tr><th>IPA</th><th>Found in the bundle</th><th>Scanned</th></tr>
 <tr><td>DartCounter 9.6.2 <code>com.dartcounter.app</code></td><td>Ionic + Angular (current), Capacitor</td><td>✅ 7 screens (guest mode)</td></tr>
