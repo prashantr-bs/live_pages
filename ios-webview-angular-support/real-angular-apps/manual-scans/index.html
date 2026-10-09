@@ -66,11 +66,24 @@ The required-field asterisk flagged as a special character (11) is rule semantic
 
 <h2>What to fix, in order</h2>
 <div class="card full"><ol>
- <li><b>Skip page-level click wrappers</b> (cover most of the viewport or contain other controls).</li>
- <li><b>Treat Ionic hosts as the control</b> (<code>ion-button</code>, <code>ion-tab-button</code>, <code>ion-item[button]</code>): role from the host, rect from the host, inner button folded in. Also fixes the small-touch-target reports on tab buttons.</li>
- <li><b>Overlays:</b> composite alpha, and skip elements whose hit-test lands on a backdrop / <code>[aria-modal]</code> layer.</li>
- <li><b>Background sampling:</b> read shadow-DOM background layers and CSS-variable colours (<code>ion-toolbar</code>, <code>ion-header</code>).</li>
+ <li>✅ <b>Skip page-level click wrappers</b> — <i>fixed (algorithm)</i>: a role-less tappable covering ≥60% of the web view or holding two or more controls becomes a non-interactive group.</li>
+ <li>✅ <b>Treat Ionic hosts as the control</b> — <i>fixed (algorithm)</i>: button-like hosts (<code>ion-button</code>, <code>ion-tab-button</code>, <code>ion-segment-button</code>, <code>ion-fab-button</code>, <code>ion-back-button</code>, <code>ion-menu-button</code>, <code>ion-chip</code>, clickable <code>ion-item</code>) become buttons; layout / overlay hosts (<code>ion-tab-bar</code>, <code>ion-modal</code>, <code>ion-alert</code>, <code>ion-action-sheet</code>, <code>ion-popover</code>, <code>ion-list</code>, <code>ion-header</code>, <code>ion-toolbar</code>…) become groups.</li>
+ <li>✅ <b>Overlays</b> — <i>fixed (algorithm)</i>: a web element the extractor already marks as covered is flagged behind-modal, so the contrast rules skip it exactly as they do native views behind a sheet. (Compositing backdrop alpha would need an extractor change; not needed once covered elements are skipped.)</li>
+ <li>⏳ <b>Background sampling</b> for shadow-DOM / CSS-variable colours (<code>ion-toolbar</code>) — <i>extractor change</i>, not done in this round.</li>
 </ol></div>
+
+<h2>Fixes applied: effect</h2>
+<div class="card full">
+<p>All three are one pass over the extracted web nodes in Swift (<code>bsMapWebNodes</code>), using only the tag, rect and covered flag the extractor already captures: no extractor change, no extra DOM access, well under 1 ms. PR #360 <code>1bc0a07</code> (plus the shadow-root fix <code>f692b9a</code>).</p>
+<div class="tblw"><table>
+<tr><th>Check</th><th>Before</th><th>After</th></tr>
+<tr><td>All real-app scans (automated + manual), replayed offline</td><td>3,695 failing / AI results on web elements</td><td><b>423 false positives removed</b>: contrast behind overlays 212, Keyboard Focus 70, Unsupported Type 69, Missing View Type 37, Overlapping 14, label rules 21</td></tr>
+<tr><td>On device: DartCounter launch (language dialog)</td><td>18 fails on web elements</td><td><b>0</b> (contrast 11 → 0, wrappers 3 → groups)</td></tr>
+<tr><td>On device: Italo home</td><td>6 role-less tappables</td><td><b>2</b> — the real ones ("Latest Searches", the clickable strike-notice row)</td></tr>
+<tr><td>On device: full Rule Lab regression (41 pages)</td><td>61 / 127 detected, 23 to AI, 0 FP</td><td><b>61 / 127, 23 to AI, 0 FP — every test case unchanged</b></td></tr>
+</table></div>
+<p class="muted">Not changed: the toolbar-background FP (needs extractor sampling), and the required-field asterisk (rule semantics, same on native).</p>
+</div>
 
 <h2>Every scan</h2>
 <p class="sub">Hidden = controls marked <code>aria-hidden</code> / total controls. Highlighted rows are the DartCounter test-artifact scans.</p>
