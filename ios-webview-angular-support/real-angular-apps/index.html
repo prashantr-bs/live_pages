@@ -1,0 +1,91 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>POC on Real Angular Apps</title>
+<style>
+ /* Layout: intro, verification table, per-screen table, then findings as cards with screenshots */
+ :root { --bg:#f7f7f4; --surface:#fff; --ink:#151714; --ink2:#5c605a; --line:#e3e4df; --acc:#2563c9; --ok:#15803d; --okb:#e7f6ec; --bad:#b42318; --badb:#fde8e6; --warn:#a16207; --warnb:#fdf3d9; color-scheme:light; }
+ @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#0f110f; --surface:#181a18; --ink:#eef0ec; --ink2:#a9ada6; --line:#30332f; --acc:#7aa7f0; --ok:#6fdc93; --okb:#15301f; --bad:#ff8e85; --badb:#3b1816; --warn:#f1c35a; --warnb:#352a10; color-scheme:dark; } }
+ :root[data-theme="dark"] { --bg:#0f110f; --surface:#181a18; --ink:#eef0ec; --ink2:#a9ada6; --line:#30332f; --acc:#7aa7f0; --ok:#6fdc93; --okb:#15301f; --bad:#ff8e85; --badb:#3b1816; --warn:#f1c35a; --warnb:#352a10; color-scheme:dark; }
+ body { margin:0 auto; max-width:1100px; padding:28px 24px 64px; font:14.5px/1.55 -apple-system,"Segoe UI",Roboto,sans-serif; color:var(--ink); background:var(--bg); }
+ h1 { font-size:23px; margin:0 0 6px; text-wrap:balance; } h2 { font-size:17px; margin:30px 0 10px; } h3 { font-size:15px; margin:0 0 6px; } a { color:var(--acc); }
+ .sub { color:var(--ink2); font-size:13.5px; max-width:84ch; margin:0 0 12px; } code { font:12.5px ui-monospace,Menlo,monospace; }
+ .tblw { overflow-x:auto; background:var(--surface); border:1px solid var(--line); border-radius:12px; }
+ table { border-collapse:collapse; width:100%; font-size:13.5px; } th,td { padding:8px 12px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; }
+ th { font-size:12px; color:var(--ink2); font-weight:600; } tr:last-child td { border-bottom:0; } td.n { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+ .kpis { display:flex; flex-wrap:wrap; gap:10px; margin:14px 0; } .kpi { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:10px 14px; min-width:150px; }
+ .kpi b { display:block; font-size:22px; } .kpi span { color:var(--ink2); font-size:12.5px; }
+ .card { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:14px 18px; margin:12px 0; display:grid; grid-template-columns:1fr 330px; gap:18px; align-items:start; }
+ .card.full { grid-template-columns:1fr; } .card p { margin:6px 0; } .card ul { margin:6px 0; padding-left:20px; }
+ figure { margin:0; } figure img { width:100%; border-radius:8px; border:1px solid var(--line); } figcaption { font-size:12px; color:var(--ink2); margin-top:4px; }
+ .tag { display:inline-block; font-size:11px; font-weight:700; border-radius:999px; padding:1px 9px; margin-right:6px; white-space:nowrap; }
+ .t-ok { color:var(--ok); background:var(--okb); } .t-bad { color:var(--bad); background:var(--badb); } .t-warn { color:var(--warn); background:var(--warnb); }
+ @media (max-width:760px) { body { padding:18px 16px 48px; } .card { grid-template-columns:1fr; } }
+</style></head><body>
+<p class="sub"><a href="../">← WebView &amp; Angular support analysis</a> · <a href="../rule-support-summary/">Rule support summary</a> · <a href="../partial-rules/">Partial rules</a></p>
+<h1>The WebView DOM-layer POC on three real Angular apps</h1>
+<p class="sub">The Rule Lab is our own test app. These are production App Store apps, sideloaded on the iPad (iPadOS 26.5) with the PR #360 injector
+(head <code>64ecda3</code> plus the shadow-root fix below), driven over Web Inspector and scanned on device. Customers' apps cannot be downloaded,
+so these were picked from AppBrain's lists of apps that ship Ionic / Capacitor / Cordova, then <b>verified as Angular by reading their web bundle</b> (<code>ng-version</code>).</p>
+<div class="kpis">
+ <div class="kpi"><b>3 / 4</b><span>IPAs confirmed Angular</span></div>
+ <div class="kpi"><b>14</b><span>screens with web content scanned</span></div>
+ <div class="kpi"><b>508</b><span>web elements extracted</span></div>
+ <div class="kpi"><b>8–65 ms</b><span>DOM layer per scan</span></div>
+ <div class="kpi"><b>1</b><span>crash-class bug found &amp; fixed</span></div>
+</div>
+
+<h2>Is it Angular?</h2>
+<div class="tblw"><table><tr><th>IPA</th><th>Found in the bundle</th><th>Scanned</th></tr>
+<tr><td>DartCounter 9.6.2 <code>com.dartcounter.app</code></td><td>Ionic + Angular (current), Capacitor</td><td>✅ 7 screens (guest mode)</td></tr>
+<tr><td>Italo 6.1.0 <code>com.accenture.ntvapp</code></td><td>Ionic + Angular 15.2.9, Capacitor</td><td>✅ 4 screens</td></tr>
+<tr><td>T-mobilitat 1.21.0 <code>cat.atm.tmobilitat</code></td><td>Ionic + Angular 8.2.14, Cordova, inside a native SwiftUI app</td><td>✅ 6 screens (3 native)</td></tr>
+<tr><td>McDonald's <code>com.mcdonalds.gma</code></td><td>No web bundle: the global app is fully native (Kotlin Multiplatform). The Angular app is McDonald's <i>India</i> (<code>com.il.mcdelivery</code>), a different app.</td><td>❌ skipped</td></tr>
+</table></div>
+
+<h2>Every scan</h2>
+<p class="sub">Issues = rule results on web elements only (<i>Accessible Interactive Elements</i> excluded: it is disabled in rule_config).</p>
+<div class="tblw"><table><tr><th>App</th><th>Screen</th><th>Nodes</th><th>Web elements</th><th>DOM ms</th><th>Fail</th><th>AI / review</th></tr><tr><td>DartCounter 9.6.2</td><td><code>01-language-dialog</code></td><td class=n>105</td><td class=n><b>58</b></td><td class=n>31</td><td class=n>18</td><td class=n>64</td></tr><tr><td>DartCounter 9.6.2</td><td><code>02-login</code></td><td class=n>57</td><td class=n><b>31</b></td><td class=n>16</td><td class=n>18</td><td class=n>44</td></tr><tr><td>DartCounter 9.6.2</td><td><code>03-terms-dialog</code></td><td class=n>72</td><td class=n><b>40</b></td><td class=n>23</td><td class=n>21</td><td class=n>51</td></tr><tr><td>DartCounter 9.6.2</td><td><code>04-dashboard</code></td><td class=n>102</td><td class=n><b>51</b></td><td class=n>36</td><td class=n>22</td><td class=n>42</td></tr><tr><td>DartCounter 9.6.2</td><td><code>05-play-local</code></td><td class=n>73</td><td class=n><b>38</b></td><td class=n>29</td><td class=n>17</td><td class=n>35</td></tr><tr><td>DartCounter 9.6.2</td><td><code>06-match-setup</code></td><td class=n>109</td><td class=n><b>65</b></td><td class=n>34</td><td class=n>31</td><td class=n>56</td></tr><tr><td>DartCounter 9.6.2</td><td><code>07-statistics</code></td><td class=n>161</td><td class=n><b>83</b></td><td class=n>65</td><td class=n>39</td><td class=n>94</td></tr><tr><td>Italo 6.1.0</td><td><code>01-home</code></td><td class=n>89</td><td class=n><b>36</b></td><td class=n>33</td><td class=n>30</td><td class=n>41</td></tr><tr><td>Italo 6.1.0</td><td><code>02-station-search</code></td><td class=n>109</td><td class=n><b>10</b></td><td class=n>31</td><td class=n>6</td><td class=n>8</td></tr><tr><td>Italo 6.1.0</td><td><code>03-retrieve-ticket</code></td><td class=n>87</td><td class=n><b>15</b></td><td class=n>21</td><td class=n>10</td><td class=n>18</td></tr><tr><td>Italo 6.1.0</td><td><code>04-loyalty-program</code></td><td class=n>117</td><td class=n><b>36</b></td><td class=n>26</td><td class=n>10</td><td class=n>54</td></tr><tr><td>Italo 6.1.0</td><td><code>x-inapp-browser-hidden</code></td><td class=n>147</td><td class=n><b>36</b></td><td class=n>34</td><td class=n>29</td><td class=n>41</td></tr><tr><td>T-mobilitat 1.21.0</td><td><code>01-launch</code></td><td class=n>28</td><td class=n><b>0</b></td><td class=n>—</td><td class=n>0</td><td class=n>0</td></tr><tr><td>T-mobilitat 1.21.0</td><td><code>02-identify-native</code></td><td class=n>28</td><td class=n><b>0</b></td><td class=n>—</td><td class=n>0</td><td class=n>0</td></tr><tr><td>T-mobilitat 1.21.0</td><td><code>03-home-native</code></td><td class=n>78</td><td class=n><b>0</b></td><td class=n>—</td><td class=n>0</td><td class=n>0</td></tr><tr><td>T-mobilitat 1.21.0</td><td><code>04-plan-journey-intro</code></td><td class=n>97</td><td class=n><b>4</b></td><td class=n>17</td><td class=n>3</td><td class=n>1</td></tr><tr><td>T-mobilitat 1.21.0</td><td><code>05-departures-intro</code></td><td class=n>83</td><td class=n><b>5</b></td><td class=n>8</td><td class=n>3</td><td class=n>1</td></tr><tr><td>T-mobilitat 1.21.0</td><td><code>06-faqs-loading</code></td><td class=n>60</td><td class=n><b>0</b></td><td class=n>8</td><td class=n>0</td><td class=n>0</td></tr></table></div>
+
+<h2>What works</h2>
+<div class="card full"><ul>
+ <li><b>Extraction works on production Angular builds</b> (Angular 8, 15 and current; Capacitor and Cordova): 10–83 web elements per screen in 16–65 ms, nothing truncated, no timeouts.</li>
+ <li><b>Mixed native + web screens are captured as one tree.</b> Italo's native consent sheet over the web page, T-mobilitat's SwiftUI host around its Cordova view, and the native tab bar all appear together with the web elements.</li>
+ <li><b>Real issues are found</b>, see the green boxes below: placeholder-only form fields (Italo), a visible label not linked to its field (DartCounter), unlabeled icon buttons (Italo), clickable rows and cards with no role (Italo).</li>
+</ul></div>
+
+<h2>Bug found and fixed: infinite recursion on nested shadow DOM</h2>
+<div class="card full"><p><span class="tag t-bad">POC bug</span> On Italo the extractor threw <code>RangeError: Maximum call stack size exceeded</code> and returned <b>0 web elements</b>. Two helpers walk shadow roots with <code>elementsFromPoint</code>, which also returns the outer shadow <i>hosts</i>; with two nested Ionic shadow roots they bounced between them forever:</p>
+<ul><li><code>deepStack</code> (background colour under a point) recursed into a shadow root it had already visited.</li>
+<li><code>deepHit</code> (topmost element at a point) looped between two hosts.</li></ul>
+<p><b>Fix:</b> remember visited roots / hosts and only descend into a host's own shadow tree. After the fix Italo's home screen gives 36 elements in 33 ms. Neither the Rule Lab nor DartCounter triggered it.</p></div>
+
+<h2>False positives seen on real apps</h2>
+<div class="card"><div><h3><span class="tag t-bad">FP</span> Content under a translucent overlay</h3>
+<p>DartCounter showed an update dialog over a dark, semi-transparent backdrop. The extractor takes the backdrop as an <b>opaque black</b> background (alpha is not composited), so every label behind it fails contrast: 99 fails across the DartCounter scans, all <code>#17211C</code> on <code>#000000</code>. The elements behind the dialog are also still evaluated, although they are covered.</p>
+<p><b>Fix:</b> composite alpha, and skip elements whose hit-test lands on an overlay (<code>ion-backdrop</code>, <code>[aria-modal]</code>).</p></div><figure><img src="img/dc-backdrop-contrast.png" alt="Red = text-contrast fails behind the dialog backdrop" loading="lazy"><figcaption>Red = text-contrast fails behind the dialog backdrop</figcaption></figure></div>
+<div class="card"><div><h3><span class="tag t-bad">FP</span> Whole-page containers with a click listener</h3>
+<p>Apps attach click listeners to page-level wrappers (a dismiss-on-tap backdrop, Ionic's app root, a swiper). The click-listener hook marks them, so a full-screen <code>div</code> becomes a role-less tappable and fails <i>Unsupported Type</i>, <i>Keyboard Focus</i>, <i>Missing View Type</i> and <i>Overlapping</i> on every screen.</p>
+<p><b>Fix:</b> ignore marked elements that cover most of the viewport or that contain other controls.</p></div><figure><img src="img/dc-page-container.png" alt="DartCounter login: the 820×1180 page wrapper is flagged" loading="lazy"><figcaption>DartCounter login: the 820×1180 page wrapper is flagged</figcaption></figure></div>
+<div class="card"><div><h3><span class="tag t-bad">FP</span> Ionic host elements counted twice</h3>
+<p><code>ion-button</code> renders a real <code>&lt;button&gt;</code> in its shadow root. The host (pointer cursor, no role) is emitted as a role-less tappable, and the inner button is emitted again with the size of its text only, so the tab-bar items "Home" (29×43) and "Real Time" (48×43) fail <i>Touch Target Size</i> although the tappable host is 93×71.</p>
+<p><b>Fix:</b> treat <code>ion-button</code> / <code>ion-tab-button</code> / <code>ion-item[button]</code> hosts as the control (role button, host rect) and fold the inner button into them.</p></div><figure><img src="img/italo-tappables.png" alt="Italo home: red = ion-button host, amber = carousel wrapper, green = real role-less clickables" loading="lazy"><figcaption>Italo home: red = ion-button host, amber = carousel wrapper, green = real role-less clickables</figcaption></figure></div>
+
+<h2>True positives</h2>
+<div class="card"><div><h3><span class="tag t-ok">TP</span> Placeholder-only fields</h3><p>Italo's "Search ticket" form has First Name / Last Name / Ticket Code fields named only by their placeholders; <i>Accessible Input Field Labels</i> fails all three. The screenshot confirms there is no visible label.</p></div><figure><img src="img/italo-placeholder-fields.png" alt="Italo retrieve ticket: green = placeholder-only fields" loading="lazy"><figcaption>Italo retrieve ticket: green = placeholder-only fields</figcaption></figure></div>
+<div class="card"><div><h3><span class="tag t-ok">TP</span> Visible label not linked to its field</h3><p>DartCounter's login shows "Email *" above the field, but the input's accessible name is its placeholder "Enter your email". VoiceOver reads the placeholder; the visible label is not associated. Flagged by <i>Accessible Input Field Labels</i> and sent to AI by <i>Editable Element Label</i>.</p></div><figure><img src="img/dc-email-label.png" alt="DartCounter login: green = the email field" loading="lazy"><figcaption>DartCounter login: green = the email field</figcaption></figure></div>
+
+<h2>Hybrid-app edge cases</h2>
+<div class="card"><div><h3><span class="tag t-warn">Gap</span> Meaningful images marked decorative</h3><p>T-mobilitat's "Plan journey" intro is a Cordova web view embedded in SwiftUI. Each slide, heading and text included, is one image with <code>alt=""</code>. Screen readers skip it entirely, and no rule reports it: images with an empty alt are treated as decorative and never reach <i>Images with Text</i>.</p><p>The close control is again a full-screen tappable backdrop (red).</p></div><figure><img src="img/tm-slide-images.png" alt="T-mobilitat: amber = slide image (text drawn into it), red = full-screen tappable" loading="lazy"><figcaption>T-mobilitat: amber = slide image (text drawn into it), red = full-screen tappable</figcaption></figure></div>
+<div class="card"><div><h3><span class="tag t-warn">Gap</span> Native sheet over web content</h3><p>Italo's consent dialog is native and covers the bottom of the web page. Both are captured; the web elements under the dimmed area (blue) are not marked as covered, so visual rules still judge them.</p></div><figure><img src="img/italo-native-consent.png" alt="Italo station search: blue = web elements behind the native consent sheet" loading="lazy"><figcaption>Italo station search: blue = web elements behind the native consent sheet</figcaption></figure></div>
+<div class="card full"><h3><span class="tag t-warn">Gap</span> In-app browser in its own window</h3><p>Italo's "Real Time" opens an external site in a second web view in its own window. The scan screenshots a blank page and extracts the <b>hidden</b> home page underneath (36 elements), while the visible page is missed. <b>Fix:</b> collect web views from every window in z-order and drop those that are fully covered.</p></div>
+<div class="card full"><h3><span class="tag t-warn">Note</span> Remote content still loading</h3><p>T-mobilitat's FAQ and two other web screens returned 0 elements because their content was still loading at scan time. Correct for that instant, but a continuous scan should re-capture when the web view finishes loading.</p></div>
+
+<h2>Side finding outside the POC</h2>
+<div class="card full"><p><span class="tag t-warn">Shipped feature</span> The injector's <code>webviewInspect</code> patch (LCAM-2671) makes web views inspectable by setting <code>isInspectable</code> at <code>WKWebView</code> init. Capacitor release builds set <code>isInspectable = isWebDebuggable</code> (false) <i>after</i> creating the web view, so the flag is reset and the web view stays hidden from Web Inspector. For these scans the test build re-applies it at scan time; the shipped patch would need to swizzle <code>setInspectable:</code> or re-apply after load.</p></div>
+
+<h2>How it was run</h2>
+<div class="card full"><ul>
+ <li>Angular check: unzip the IPA and search the web bundle (<code>public/</code> or <code>www/</code>) for <code>ng-version</code> / <code>@angular/core</code>.</li>
+ <li>Injector: PR #360 head built on the Mac mini (Xcode 27, deployment target overridden to 15.0 for the build only) with three local-only test tweaks, not in the PR: the DOM layer and web-view inspection also enabled under the sideload fallback patch type, and <code>isInspectable</code> re-applied at scan time.</li>
+ <li>Driving: <code>pymobiledevice3 webinspector cdp</code> + JS clicks and router navigation; native onboarding screens were tapped by hand.</li>
+</ul></div>
+</body></html>
