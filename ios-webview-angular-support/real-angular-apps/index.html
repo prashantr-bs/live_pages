@@ -20,7 +20,7 @@
  .t-ok { color:var(--ok); background:var(--okb); } .t-bad { color:var(--bad); background:var(--badb); } .t-warn { color:var(--warn); background:var(--warnb); }
  @media (max-width:760px) { body { padding:18px 16px 48px; } .card { grid-template-columns:1fr; } }
 </style></head><body>
-<p class="sub"><a href="../">← WebView &amp; Angular support analysis</a> · <a href="../rule-support-summary/">Rule support summary</a> · <a href="../partial-rules/">Partial rules</a> · <b><a href="manual-scans/">Manual scans (41 screens) →</a></b></p>
+<p class="sub"><a href="../">← WebView &amp; Angular support analysis</a> · <a href="../rule-support-summary/">Rule support summary</a> · <a href="../partial-rules/">Partial rules</a> · <b><a href="manual-scans/">Manual scans (41 screens)</a></b> · <b><a href="full-run/">Complete rerun →</a></b></p>
 <h1>The WebView DOM-layer POC on four real Angular apps</h1>
 <p class="sub">The Rule Lab is our own test app. These are production App Store apps, sideloaded on the iPad (iPadOS 26.5) with the PR #360 injector
 (head <code>64ecda3</code> plus the shadow-root fix below), driven over Web Inspector and scanned on device. Customers' apps cannot be downloaded,
@@ -33,7 +33,7 @@ so these were picked from AppBrain's lists of apps that ship Ionic / Capacitor /
  <div class="kpi"><b>1</b><span>crash-class bug found &amp; fixed</span></div>
 </div>
 
-<div class="card full"><p><b>Follow-up:</b> 41 more screens scanned by hand across the four apps, covering what the automated run could not reach: <a href="manual-scans/">manual-scan analysis</a>.</p></div>
+<div class="card full"><p><b>Follow-ups:</b> 41 more screens scanned by hand across the four apps: <a href="manual-scans/">manual-scan analysis</a>. A <a href="full-run/">complete rerun on the current build</a> (<code>89797cb</code>) supersedes the counts on this page.</p></div>
 <h2>Is it Angular?</h2>
 <div class="tblw"><table><tr><th>IPA</th><th>Found in the bundle</th><th>Scanned</th></tr>
 <tr><td>DartCounter 9.6.2 <code>com.dartcounter.app</code></td><td>Ionic + Angular (current), Capacitor</td><td>✅ 7 screens (guest mode)</td></tr>
@@ -62,8 +62,8 @@ so these were picked from AppBrain's lists of apps that ship Ionic / Capacitor /
 <li><code>deepHit</code> (topmost element at a point) looped between two hosts.</li></ul>
 <p><b>Fix:</b> remember visited roots / hosts and only descend into a host's own shadow tree. After the fix Italo's home screen gives 36 elements in 33 ms. Neither the Rule Lab nor DartCounter triggered it.</p></div>
 
-<h2>False positive still open</h2>
-<div class="card full"><p><span class="tag t-bad">FP · WebView</span> <b>Background painted in shadow DOM.</b> Amtrak's action-sheet items (white sheet) and Italo's white toolbar titles (red <code>ion-toolbar</code>) are judged against the backdrop or the page, because those colours are painted on a shadow-DOM layer the background sampler misses. Needs an extractor change. Details: <a href="manual-scans/">manual-scan analysis</a>.</p></div>
+<h2>False positive found in the manual scans, now fixed</h2>
+<div class="card full"><p><span class="tag t-bad">FP · WebView</span> <span class="tag t-ok">Fixed</span> <b>Toolbar and action-sheet backgrounds.</b> Amtrak's action-sheet items (white sheet) and Italo's white toolbar titles (red <code>ion-toolbar</code>) were judged against the backdrop or the page. The backdrop's transparency was ignored (fixed in <code>3ef51ec</code>), and the toolbar colour sits on a shadow-DOM layer with <code>pointer-events: none</code> that the sampler's <code>elementsFromPoint</code> skipped (fixed in <code>89797cb</code>). Both verified on device. Details: <a href="manual-scans/">manual-scan analysis</a>; current results: <a href="full-run/">complete rerun</a>.</p></div>
 
 <h2>True positives</h2>
 <div class="card"><div><h3><span class="tag t-ok">TP</span> Placeholder-only fields</h3><p>Italo's "Search ticket" form has First Name / Last Name / Ticket Code fields named only by their placeholders; <i>Accessible Input Field Labels</i> fails all three. The screenshot confirms there is no visible label.</p></div><figure><img src="img/italo-placeholder-fields.png" alt="Italo retrieve ticket: green = placeholder-only fields" loading="lazy"><figcaption>Italo retrieve ticket: green = placeholder-only fields</figcaption></figure></div>
