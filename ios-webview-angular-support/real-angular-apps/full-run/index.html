@@ -17,10 +17,11 @@
  .card { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:14px 18px; margin:12px 0; display:grid; grid-template-columns:1fr 300px; gap:18px; align-items:start; }
  .card.full { grid-template-columns:1fr; } .card p { margin:6px 0; } .card ul { margin:6px 0; padding-left:20px; } .card li { margin:3px 0; }
  .pair { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:8px; }
+ .trio { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:14px; margin:10px 0; max-width:760px; }
  figure { margin:0; } figure img { width:100%; border-radius:8px; border:1px solid var(--line); } figcaption { font-size:12px; color:var(--ink2); margin-top:4px; }
  .tag { display:inline-block; font-size:11px; font-weight:700; border-radius:999px; padding:1px 9px; white-space:nowrap; }
  .t-ok { color:var(--ok); background:var(--okb); } .t-bad { color:var(--bad); background:var(--badb); } .t-warn { color:var(--warn); background:var(--warnb); } .t-ai { color:var(--ai); background:var(--aib); }
- @media (max-width:760px) { body { padding:18px 16px 48px; } .card, .pair { grid-template-columns:1fr; } }
+ @media (max-width:760px) { body { padding:18px 16px 48px; } .card, .pair, .trio { grid-template-columns:1fr; } }
 </style></head><body>
 <p class="sub"><a href="../">← POC on real Angular apps</a> · <a href="../manual-scans/">Manual scans</a> · <a href="../../">WebView &amp; Angular support analysis</a></p>
 <h1>Complete rerun of the real Angular apps on the current build</h1>
@@ -71,6 +72,7 @@ fail several rules and repeat across screens); <i>Accessible Interactive Element
 <h2>WebView gaps after this run</h2>
 <div class="card full"><h3><span class="tag t-bad">FP · WebView</span> Page hidden under Apple's in-app Safari view</h3>
 <p>Italo's "Italo in Real Time" opens the website <code>italoinviaggio.italotreno.com</code> in Apple's in-app Safari view (<code>SFSafariViewController</code>: close and address bar at the top, back / share / "open in Safari" at the bottom). This is not a new window inside the app's web view: it is a system browser screen presented over the app, and its page runs in Safari's own process, so the app (and the injector inside it) cannot read it or draw it. The scan therefore captures the app's own web page that is hidden underneath: in this run, 36 web elements and 65 results on a page the user can't see, with a blank screenshot. Re-checked on device: with the Safari view open, the scan is a duplicate of the home page behind it.</p>
+<div class="trio"><figure><img src="img/rt-before.png" alt="1. Scan before tapping &quot;Real Time&quot;: Italo home, as captured" loading="lazy"><figcaption>1. Scan before tapping "Real Time": Italo home, as captured</figcaption></figure><figure><img src="img/rt-device.png" alt="2. What the phone shows: the website in Apple’s in-app Safari view" loading="lazy"><figcaption>2. What the phone shows: the website in Apple’s in-app Safari view</figcaption></figure><figure><img src="img/rt-after.png" alt="3. What the scan captures with Safari open: an all-black screenshot; red = the web elements of the hidden home page that failed rules" loading="lazy"><figcaption>3. What the scan captures with Safari open: an all-black screenshot; red = the web elements of the hidden home page that failed rules</figcaption></figure></div>
 <p><b>Fix:</b> detect that a system browser view (or any presented screen the app can't capture) covers the app, and mark the page underneath as covered, as for a native sheet, or skip the scan. The website itself is out of scope for an app scan.</p></div>
 
 <h2>True positives</h2>
