@@ -210,14 +210,53 @@ not only those inside test cases. The Chromium-only numbers reproduce the previo
 
 <h2>9 · Risks and open questions</h2>
 <div class="card"><ul>
-  <li><b>Debuggable builds:</b> some apps refuse to run when re-signed or debuggable (anti-tamper, banking). That is the same class of risk as iOS dylib injection, and it needs the same gate and fallback.</li>
+  <li><b>Debuggable builds:</b> some apps refuse to run when re-signed or debuggable (anti-tamper, banking). That is the same class of risk as iOS dylib injection, and it needs the same gate and fallback. Section 10 has the evidence so far.</li>
   <li><b>DevTools socket on the device:</b> scope it to the session and remove the forward at cleanup, as <code>AppLiveWebview</code> already does.</li>
   <li><b>Several WebViews or cross-origin iframes:</b> one CDP target per WebView; out-of-process iframes need <code>Target.setAutoAttach</code>. Not covered by this POC.</li>
   <li><b>Timing:</b> the layer and TalkBack's tree are captured a few hundred ms apart. Animations can misalign them; matching is by rectangle with an 8 px tolerance.</li>
   <li><b>What TalkBack actually says</b> for label-named fields is still unconfirmed by ear. The layer judges by Blink's name. If TalkBack really drops it, those fields are genuine Android failures, and the layer can report them as such.</li>
 </ul></div>
 
-<h2>10 · Code</h2>
+<h2>10 · Do apps survive re-signing, and is the patch needed at all?</h2>
+<div class="card">
+<h3>Production: App Live already re-signs customer apps (Android, last 14 days)</h3>
+<p>App Live patches and re-signs customer APKs for image, video, shake-gesture and WebView features, the same re-signing step <code>webviewDebug</code> uses.
+In 14 days <b>801 distinct customer apps</b> ran on re-signed builds (4,977 sessions).</p>
+<div class="tbl"><table>
+<thead><tr><th>Patch (7 days)</th><th>Started</th><th>Patched APK built</th></tr></thead>
+<tbody>
+<tr><td>WebView</td><td>411</td><td>399 (97%)</td></tr>
+<tr><td>Image injection</td><td>2,563</td><td>2,448 (95.5%)</td></tr>
+<tr><td>Video injection</td><td>2,664</td><td>2,597 (97.5%)</td></tr>
+<tr><td>Shake gesture</td><td>203</td><td>193 (95%)</td></tr>
+</tbody></table></div>
+<div class="tbl"><table>
+<thead><tr><th>Android sessions (14 days)</th><th>Sessions</th><th>Launch started, never finished</th><th>Ended under 60 s</th><th>Median length</th></tr></thead>
+<tbody>
+<tr><td>Not patched</td><td>305,786</td><td>0.88%</td><td>14.1%</td><td>358 s</td></tr>
+<tr><td>Re-signed (other patches)</td><td>4,325</td><td>0.47%</td><td>9.5%</td><td>705 s</td></tr>
+<tr><td>WebView patch</td><td>650</td><td>0.49%</td><td>13.4%</td><td>309 s</td></tr>
+</tbody></table></div>
+<p>Re-signed apps fail at launch no more often than unpatched ones, and users don't leave them sooner. <b>Caveats:</b>
+customers choose which apps to patch, so apps they already know refuse re-signing may never appear here.
+An app that detects re-signing usually shows its own warning screen rather than crashing, which these metrics can't see.
+There is no per-app category, so banking and finance apps can't be singled out.</p>
+
+<h3>Shipping builds: is the DevTools socket already there?</h3>
+<p>Unmodified Play Store builds of 17 popular apps were installed on the test phone and launched. They covered travel, food ordering, education, news, games, utilities and one finance app.
+For each we checked for a WebView DevTools socket, the debuggable flag, and whether the code references <code>setWebContentsDebuggingEnabled</code>.</p>
+<ul>
+  <li><b>None of the 17 is debuggable, and none exposes a DevTools socket.</b> The DOM layer cannot attach to a production app without the patch, so App Accessibility on Android needs <code>webviewDebug</code>, as planned.</li>
+  <li>16 of the 17 reference <code>setWebContentsDebuggingEnabled</code>, but hybrid frameworks (Capacitor, Cordova) only turn debugging on in debug builds, which none of these are.</li>
+</ul>
+
+<h3>Still open: banking apps under the real patch</h3>
+<p>The open question is whether banking-style apps reject a re-signed, debuggable build. The way to settle it is BrowserStack's own pipeline:
+an App LCA session with <code>webview_inspect</code> (or App Automate with <code>browserstack.enableWebviewDebug</code>) on apps we are entitled to test.
+That applies the real <code>webviewDebug</code> patch and shows directly whether each app launches, warns, or works.</p>
+</div>
+
+<h2>11 · Code</h2>
 <div class="card"><ul>
   <li><code>browserstack/talkback</code>, local branch <code>prashantr/webview-android-poc</code> (not pushed): new <code>BSWebLayer.kt</code> (merge, DOM facts, hidden-element nodes), plus web arms in <code>BSRules.kt</code>, <code>BSAdditionalRules.kt</code>, <code>BSAIRules.kt</code>, <code>BSRuleHelpers.kt</code>, <code>BSWebContent.kt</code>.</li>
   <li>Host side (POC scripts): <code>weblayer.mjs</code> (the layer), <code>sweep.mjs</code> (Rule Lab sweep), <code>tabgraph.mjs</code> (keyboard probe). In production these become a <code>mobile</code> helper next to <code>AppLiveWebview</code>.</li>
