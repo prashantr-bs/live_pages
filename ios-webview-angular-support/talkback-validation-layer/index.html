@@ -31,7 +31,7 @@
  .g-full { color:var(--ok); background:var(--ok-bg); } .g-part { color:var(--part); background:var(--part-bg); } .g-none { color:var(--no); background:var(--no-bg); } .g-na { color:var(--off); background:var(--off-bg); }
  @media (max-width:900px) { .kpis { grid-template-columns:repeat(2,1fr); } body { padding:18px 16px 60px; } }
 </style></head><body>
-<p class="muted"><a href="../">← WebView &amp; Angular support analysis</a> · <a href="../android-run/">Android run</a> · <a href="../voiceover-validation/">iOS: VoiceOver vs capture</a> · <a href="#rules">Per rule</a></p>
+<p class="muted"><a href="../">← WebView &amp; Angular support analysis</a> · <a href="../android-run/">Android run</a> · <a href="../voiceover-validation/">iOS: VoiceOver vs capture</a> · <a href="#rules">Per rule</a> · <b><a href="#qa">Questions on the report</a></b></p>
 <p class="muted">Rule engine: <a href="../talkback-validation/">Stock engine</a> · <a href="../talkback-validation-poc/">Chromium-only POC</a> · <b>POC + DOM layer</b></p>
 <h1>TalkBack vs capture: POC + DOM layer</h1>
 <p class="muted">Xiaomi 22021211RI, Android 14 · Angular Rule Lab (APK of 30 Sep) · <b>real TalkBack</b> (the BrowserStack build, "BSTalkback") recorded while navigating
@@ -97,6 +97,278 @@ TalkBack's list / pager / group context ("In list, 41 items", "Out of pager", "I
 <div class="card tblw"><table><tr><th>Rule</th><th>TC</th><th>Scenario</th><th>Why it is still missed</th></tr><tr><td><a href="#interactive-element-accessibility">Accessible Interactive Elements</a></td><td class="mono">TC1</td><td>Clickable span marked aria-hidden.</td><td class="d">n/a on Android: Rule is disabled server-side. TC1 and TC3 are reported by focus-order (hidden from screen readers).</td></tr><tr><td><a href="#interactive-element-accessibility">Accessible Interactive Elements</a></td><td class="mono">TC2</td><td>Canvas-drawn button (the only content is pixels).</td><td class="d">n/a on Android: Rule is disabled server-side. TC1 and TC3 are reported by focus-order (hidden from screen readers).</td></tr><tr><td><a href="#interactive-element-accessibility">Accessible Interactive Elements</a></td><td class="mono">TC3</td><td>Link inside an inert region.</td><td class="d">n/a on Android: Rule is disabled server-side. TC1 and TC3 are reported by focus-order (hidden from screen readers).</td></tr><tr><td><a href="#state-in-content-label">Duplicate State Info in Spoken Output</a></td><td class="mono">TC1</td><td>Checkbox aria-label “Notifications checked”, and it is checked.</td><td class="d">native parity: This device&#x27;s TalkBack says “ticked”, so “checked” appears once (same for native on en-GB).</td></tr><tr><td><a href="#state-in-content-label">Duplicate State Info in Spoken Output</a></td><td class="mono">TC3</td><td>Selected tab named “Home selected”.</td><td class="d">native parity: The tab role has no state words in the rule.</td></tr><tr><td><a href="#state-in-content-label">Duplicate State Info in Spoken Output</a></td><td class="mono">TC4</td><td>ion-toggle labelled “Dark mode enabled”.</td><td class="d">native parity: The switch pattern only matches on/off.</td></tr><tr><td><a href="#view-type-in-content-label">Duplicate Type Info in Spoken Output</a></td><td class="mono">TC1</td><td>Button labelled “Save button”.</td><td class="d">native parity: Visible text “Save button”: the rule only fails names from contentDescription.</td></tr><tr><td><a href="#view-type-in-content-label">Duplicate Type Info in Spoken Output</a></td><td class="mono">TC2</td><td>Link labelled “Privacy policy link”.</td><td class="d">native parity: Visible text, as TC1.</td></tr><tr><td><a href="#view-type-in-content-label">Duplicate Type Info in Spoken Output</a></td><td class="mono">TC4</td><td>ion-toggle labelled “Dark mode switch”.</td><td class="d">native parity: Visible text, as TC1.</td></tr><tr><td><a href="#editable-element-no-content-description">Editable Element Label Not Announced</a></td><td class="mono">TC1</td><td>Field named only by aria-label (becomes contentDescription on Android).</td><td class="d">n/a on Android: Android-only defect (an unannounced contentDescription) that web fields cannot have.</td></tr><tr><td><a href="#link-text-purpose">Link Text Purpose</a></td><td class="mono">TC4</td><td>Link with no text (image with no alt).</td><td class="d">native parity: An image-only link is skipped by this rule natively; caught by the image-label rule.</td></tr><tr><td><a href="#meaningful-reading-order">Meaningful Reading Order</a></td><td class="mono">TC1</td><td>Visually 1-2-3, but DOM order is 3-1-2 (CSS order).</td><td class="d">AI review: Page-level AI check; it now receives the web content in DOM order.</td></tr><tr><td><a href="#meaningful-reading-order">Meaningful Reading Order</a></td><td class="mono">TC2</td><td>row-reverse: the value is read before its label.</td><td class="d">AI review: Page-level AI check; it now receives the web content in DOM order.</td></tr><tr><td><a href="#meaningful-reading-order">Meaningful Reading Order</a></td><td class="mono">TC4</td><td>Absolutely positioned “Buy” button first in DOM, drawn last.</td><td class="d">AI review: Page-level AI check; it now receives the web content in DOM order.</td></tr><tr><td><a href="#special-character-element-content-label">Special-Character Element Accessibility Label</a></td><td class="mono">TC3</td><td>Arrow glyph via aria-label: “Next →”.</td><td class="d">native parity: “→” is not an emoji-presentation character (Ruby parity).</td></tr><tr><td><a href="#screen-reader-for-interactive-elements">Spoken Description not Meaningful</a></td><td class="mono">TC1</td><td>Spoken name is a developer ID: “btn_submit_01”.</td><td class="d">native parity: The Android rule never fails by design.</td></tr><tr><td><a href="#screen-reader-for-interactive-elements">Spoken Description not Meaningful</a></td><td class="mono">TC2</td><td>Icon button named after its file: “ic_settings_24dp”.</td><td class="d">native parity: The Android rule never fails by design.</td></tr><tr><td><a href="#screen-reader-for-interactive-elements">Spoken Description not Meaningful</a></td><td class="mono">TC3</td><td>Whitespace-only aria-label.</td><td class="d">native parity: The Android rule never fails by design.</td></tr><tr><td><a href="#traversal-order-cycle">Traversal Order Cycle</a></td><td class="mono">TC2</td><td>Positive tabindex ping-pong: A(1)→B(2)→A via focus handler.</td><td class="d">keyboard probe: Found by the Tab probe: Option A ⇄ Option B.</td></tr></table>
 <p class="muted">Expected FAIL, the recording shows the defect, and the POC + DOM layer verdict was no result (test cases sent to AI / review are not listed). </p></div>
 <h2>3b · Newly reported FAIL compared with the stock engine (66, 39 of them heard by TalkBack users)</h2><div class="card tblw"><table><tr><th>Rule</th><th>TC</th><th>Scenario</th><th>Defect heard in the recording</th></tr><tr><td><a href="#label-at-front">Accessibility Label at front</a></td><td class="mono">TC1</td><td>Visible “Buy now”; name “Tap to Buy now”.</td><td>yes</td></tr><tr><td><a href="#label-at-front">Accessibility Label at front</a></td><td class="mono">TC2</td><td>Visible “Settings”; name “Open the Settings”.</td><td>yes</td></tr><tr><td><a href="#accessible-input-field-label">Accessible Input Field Labels</a></td><td class="mono">TC1</td><td>Placeholder “Email” is the only label.</td><td>yes</td></tr><tr><td><a href="#accessible-input-field-label">Accessible Input Field Labels</a></td><td class="mono">TC2</td><td>ion-input with placeholder only.</td><td>TalkBack can't judge</td></tr><tr><td><a href="#accessible-input-field-label">Accessible Input Field Labels</a></td><td class="mono">TC3</td><td>Named via aria-label only; nothing is visible.</td><td>not in the recording</td></tr><tr><td><a href="#button-element-content-label-capitalization">Button Element Accessibility Label Capitalization</a></td><td class="mono">TC1</td><td>Button text starts lowercase: “submit order”.</td><td>yes</td></tr><tr><td><a href="#button-element-content-label-capitalization">Button Element Accessibility Label Capitalization</a></td><td class="mono">TC2</td><td>Visible “Continue” but aria-label is lowercase “continue”.</td><td>yes</td></tr><tr><td><a href="#checkbox-element-content-label">Checkbox Element Content Label</a></td><td class="mono">TC1</td><td>Native checkbox with no label at all.</td><td>yes</td></tr><tr><td><a href="#checkbox-element-content-label">Checkbox Element Content Label</a></td><td class="mono">TC2</td><td>Text sits next to the checkbox but is not associated with it.</td><td>yes</td></tr><tr><td><a href="#checkbox-element-content-label">Checkbox Element Content Label</a></td><td class="mono">TC3</td><td>ion-checkbox without label text or aria-label.</td><td>yes</td></tr><tr><td><a href="#checkbox-element-content-label">Checkbox Element Content Label</a></td><td class="mono">TC4</td><td>Custom div role=checkbox with state but no name.</td><td>yes</td></tr><tr><td><a href="#duplicate-element-content-label">Duplicate Accessibility Label on Screen</a></td><td class="mono">TC1</td><td>Three rows, three different targets, all named “Edit”.</td><td>not in the recording</td></tr><tr><td><a href="#duplicate-element-content-label">Duplicate Accessibility Label on Screen</a></td><td class="mono">TC2</td><td>Two icon ion-buttons both aria-label “Delete” for different items.</td><td>yes</td></tr><tr><td><a href="#view-type-in-content-label">Duplicate Type Info in Spoken Output</a></td><td class="mono">TC5</td><td>Image aria-label “Profile image”.</td><td>yes</td></tr><tr><td><a href="#editable-element-content-label">Editable Element Accessibility Label</a></td><td class="mono">TC1</td><td>Text field with a value but no name.</td><td>yes</td></tr><tr><td><a href="#editable-element-content-label">Editable Element Accessibility Label</a></td><td class="mono">TC2</td><td>Unnamed textarea.</td><td>yes</td></tr><tr><td><a href="#editable-element-content-label">Editable Element Accessibility Label</a></td><td class="mono">TC3</td><td>contenteditable div with no name.</td><td>yes</td></tr><tr><td><a href="#editable-element-content-label">Editable Element Accessibility Label</a></td><td class="mono">TC4</td><td>ion-textarea with no label.</td><td>yes</td></tr><tr><td><a href="#text-magnification">Font Magnification Support</a></td><td class="mono">TC3</td><td>Text in a fixed-height box that clips when enlarged.</td><td>TalkBack can't judge</td></tr><tr><td><a href="#interactable-element-content-label">Interactive Element Accessibility Label</a></td><td class="mono">TC1</td><td>Icon-only button (SVG) with no accessible name.</td><td>yes</td></tr><tr><td><a href="#interactable-element-content-label">Interactive Element Accessibility Label</a></td><td class="mono">TC2</td><td>Icon-only ion-button (heart) without aria-label.</td><td>yes</td></tr><tr><td><a href="#interactable-element-content-label">Interactive Element Accessibility Label</a></td><td class="mono">TC4</td><td>Empty div role=button (no text, no label).</td><td>yes</td></tr><tr><td><a href="#interactive-element-unsupported-type">Interactive Elements with Unsupported Type</a></td><td class="mono">TC1</td><td>Clickable div with no role.</td><td>yes</td></tr><tr><td><a href="#interactive-element-unsupported-type">Interactive Elements with Unsupported Type</a></td><td class="mono">TC2</td><td>Invalid ARIA role “clickable”.</td><td>yes</td></tr><tr><td><a href="#interactive-element-unsupported-type">Interactive Elements with Unsupported Type</a></td><td class="mono">TC3</td><td>Clickable element with role=text / generic.</td><td>yes</td></tr><tr><td><a href="#keyboard-focus-for-interactive-elements">Keyboard Focus for Interactive Elements</a></td><td class="mono">TC1</td><td>div with a click handler and no tabindex.</td><td>TalkBack can't judge</td></tr><tr><td><a href="#keyboard-focus-for-interactive-elements">Keyboard Focus for Interactive Elements</a></td><td class="mono">TC2</td><td>Real button removed from tab order (tabindex=-1).</td><td>TalkBack can't judge</td></tr><tr><td><a href="#keyboard-focus-for-interactive-elements">Keyboard Focus for Interactive Elements</a></td><td class="mono">TC3</td><td>Anchor without href (not focusable).</td><td>TalkBack can't judge</td></tr><tr><td><a href="#keyboard-focus-for-interactive-elements">Keyboard Focus for Interactive Elements</a></td><td class="mono">TC4</td><td>role=button with tabindex=0 but no Enter/Space handling.</td><td>TalkBack can't judge</td></tr><tr><td><a href="#label-in-name">Label in Name</a></td><td class="mono">TC1</td><td>Visible “Send”; name “Submit message” (doesn&#x27;t contain “Send”).</td><td>yes</td></tr><tr><td><a href="#label-in-name">Label in Name</a></td><td class="mono">TC2</td><td>Visible “Next”; name “Continue”.</td><td>yes</td></tr><tr><td><a href="#label-in-name">Label in Name</a></td><td class="mono">TC3</td><td>ion-button “Search” with aria-label “Find”.</td><td>yes</td></tr><tr><td><a href="#link-text-purpose">Link Text Purpose</a></td><td class="mono">TC1</td><td>Stop-word link: “Click here”.</td><td>yes</td></tr><tr><td><a href="#link-text-purpose">Link Text Purpose</a></td><td class="mono">TC2</td><td>Generic “Read more” with no context.</td><td>yes</td></tr><tr><td><a href="#imageview-element-content-label">Meaningful accessibility label for images</a></td><td class="mono">TC1</td><td>Informative photo with no alt attribute.</td><td>yes</td></tr><tr><td><a href="#imageview-element-content-label">Meaningful accessibility label for images</a></td><td class="mono">TC4</td><td>Inline SVG role=img with no title or label.</td><td>yes</td></tr><tr><td><a href="#missing-view-type-in-spoken-output">Missing View Type in Spoken Output</a></td><td class="mono">TC1</td><td>Div acting as a switch: no role, no state.</td><td>yes</td></tr><tr><td><a href="#missing-view-type-in-spoken-output">Missing View Type in Spoken Output</a></td><td class="mono">TC2</td><td>Span styled as a link, with a click handler and no role.</td><td>yes</td></tr><tr><td><a href="#missing-view-type-in-spoken-output">Missing View Type in Spoken Output</a></td><td class="mono">TC3</td><td>Tab bar made of plain divs (no tablist/tab roles).</td><td>yes</td></tr><tr><td><a href="#non-text-color-contrast">Non-Text Element Color Contrast</a></td><td class="mono">TC1</td><td>Input border #e0e0e0 on #fff (1.3:1).</td><td>TalkBack can't judge</td></tr><tr><td><a href="#non-text-color-contrast">Non-Text Element Color Contrast</a></td><td class="mono">TC2</td><td>Icon-only button with a #cfcfcf icon on #fff (1.6:1).</td><td>TalkBack can't judge</td></tr><tr><td><a href="#non-text-color-contrast">Non-Text Element Color Contrast</a></td><td class="mono">TC3</td><td>Checkbox whose border is #d6d6d6 (unchecked state barely visible).</td><td>TalkBack can't judge</td></tr><tr><td><a href="#overlapping-interactive-elements">Overlapping Interactive Elements</a></td><td class="mono">TC1</td><td>Close “×” button overlaps a “Details” link.</td><td>TalkBack can't judge</td></tr><tr><td><a href="#overlapping-interactive-elements">Overlapping Interactive Elements</a></td><td class="mono">TC2</td><td>Two buttons overlap via negative margin.</td><td>TalkBack can't judge</td></tr><tr><td><a href="#overlapping-interactive-elements">Overlapping Interactive Elements</a></td><td class="mono">TC3</td><td>ion-fab-button floating over a row&#x27;s “Buy” button.</td><td>TalkBack can't judge</td></tr><tr><td><a href="#readable-text-size">Readable Text Size</a></td><td class="mono">TC1</td><td>9px caption.</td><td>TalkBack can't judge</td></tr><tr><td><a href="#readable-text-size">Readable Text Size</a></td><td class="mono">TC2</td><td>11px body text.</td><td>TalkBack can't judge</td></tr><tr><td><a href="#readable-text-spacing">Readable Text Spacing</a></td><td class="mono">TC1</td><td>Line height 1.0 on multi-line text.</td><td>TalkBack can't judge</td></tr><tr><td><a href="#responsive-containers">Responsive Containers</a></td><td class="mono">TC1</td><td>Fixed width 600px card that overflows the screen (content cut off).</td><td>TalkBack can't judge</td></tr><tr><td><a href="#responsive-containers">Responsive Containers</a></td><td class="mono">TC2</td><td>Fixed 72px-high box whose content overflows and is hidden.</td><td>TalkBack can't judge</td></tr><tr><td><a href="#focus-order-for-interactive-elements">Screen Reader Focus for Interactive Elements</a></td><td class="mono">TC1</td><td>Tappable button hidden from the screen reader (aria-hidden).</td><td>yes</td></tr><tr><td><a href="#focus-order-for-interactive-elements">Screen Reader Focus for Interactive Elements</a></td><td class="mono">TC2</td><td>Clickable card inside an aria-hidden container.</td><td>yes</td></tr><tr><td><a href="#focus-order-for-interactive-elements">Screen Reader Focus for Interactive Elements</a></td><td class="mono">TC3</td><td>Clickable image with role=presentation.</td><td>yes</td></tr><tr><td><a href="#special-character-element-content-label">Special-Character Element Accessibility Label</a></td><td class="mono">TC1</td><td>Glyph in label: “★ Favourite”.</td><td>yes</td></tr><tr><td><a href="#special-character-element-content-label">Special-Character Element Accessibility Label</a></td><td class="mono">TC2</td><td>Emoji in label: “🔥 Hot deals”.</td><td>yes</td></tr><tr><td><a href="#switch-element-content-label">Switch Element Accessibility Label</a></td><td class="mono">TC1</td><td>Native checkbox role=switch with no label.</td><td>yes</td></tr><tr><td><a href="#switch-element-content-label">Switch Element Accessibility Label</a></td><td class="mono">TC2</td><td>ion-toggle with no label.</td><td>yes</td></tr><tr><td><a href="#switch-element-content-label">Switch Element Accessibility Label</a></td><td class="mono">TC3</td><td>div role=switch with aria-checked but no name.</td><td>yes</td></tr><tr><td><a href="#text-color-contrast">Text Element Color Contrast (Minimum)</a></td><td class="mono">TC1</td><td>#999 on #fff, 14px (2.8:1).</td><td>TalkBack can't judge</td></tr><tr><td><a href="#text-color-contrast">Text Element Color Contrast (Minimum)</a></td><td class="mono">TC2</td><td>White on amber #ffc107 button (1.6:1).</td><td>TalkBack can't judge</td></tr><tr><td><a href="#text-color-contrast">Text Element Color Contrast (Minimum)</a></td><td class="mono">TC3</td><td>Light placeholder #c0c0c0 in a field (1.8:1).</td><td>TalkBack can't judge</td></tr><tr><td><a href="#text-color-contrast">Text Element Color Contrast (Minimum)</a></td><td class="mono">TC4</td><td>White text over a light photo area.</td><td>TalkBack can't judge</td></tr><tr><td><a href="#text-truncation">Text Truncation</a></td><td class="mono">TC1</td><td>Single line with ellipsis (text-overflow).</td><td>TalkBack can't judge</td></tr><tr><td><a href="#text-truncation">Text Truncation</a></td><td class="mono">TC2</td><td>Two-line clamp (-webkit-line-clamp) on a description.</td><td>TalkBack can't judge</td></tr><tr><td><a href="#text-truncation">Text Truncation</a></td><td class="mono">TC4</td><td>ion-label with the ion-text-nowrap utility: single line, ellipsized.</td><td>TalkBack can't judge</td></tr><tr><td><a href="#touch-target-size">Touch Target Size</a></td><td class="mono">TC4</td><td>ion-button size=small (about 28px high).</td><td>TalkBack can't judge</td></tr></table><p class="muted">Expected-FAIL test cases the POC + DOM layer reports FAIL and the stock engine (same replay) did not.</p></div>
+
+<h2 id="qa">5 · Questions on the POC + DOM layer report</h2>
+<p class="muted">Answers to the review of the local report <span class="mono">8ed0ac9c-29b1-44f1-b3c0-32f99a05a80e</span> (69 scans; scan <i>n</i> = upload order: 12 Screen Reader Focus p1, 25 Unsupported type, 28 Label at front, 31 Link Text Purpose p1, 44 Readable Text Size, 45/46 Readable Text Spacing p1/p2, 47 Responsive Containers, 52 Duplicate State Info, 59 Text Truncation p1, 68/69 Duplicate Type Info p1/p2).
+Every answer was checked against the rule-engine source (talkback branch <code>prashantr/webview-android-poc</code>; files under <code>talkback-rule-engine/…/bsruleengine/</code>), the stored snapshots, the DOM-layer capture (<code>weblayer.json</code>) and the replay results. Line numbers refer to that branch.</p>
+
+<div class="card tblw" style="padding:0"><table class="stbl">
+<tr><th>Question</th><th>Short answer</th><th>Verdict</th></tr>
+<tr><td><a href="#qa-class">Why <code>android.widget.*</code> classes?</a></td><td>That is Chromium's translation of the web role into an Android class, and it is what TalkBack itself uses to choose the role word. The DOM tag and role are more informative and should be reported as well.</td><td><span class="pill p-part">Report gap</span></td></tr>
+<tr><td><a href="#qa-unsupported">Interactive Element Unsupported Type: not accurate</a></td><td>The verdicts are right (TC1–TC3 FAIL, TC4–TC5 PASS). The issue details are wrong: they show "TextView" and the native custom-class fix text.</td><td><span class="pill p-part">Report bug</span></td></tr>
+<tr><td><a href="#qa-12">12: nothing highlighted for Screen Reader Focus</a></td><td>A bug in how I built the report, now fixed: the hidden elements' nodes had no <code>hashCode</code>, so the issue and its box had different keys.</td><td><span class="pill p-ok">Fixed</span></td></tr>
+<tr><td><a href="#qa-parity">Android vs iOS property parity</a></td><td>Not at parity. iOS stores web tag, role, name and CSS font size; Android stores the real input type and checked state. The same rule can therefore behave differently on each.</td><td><span class="pill p-no">Gap</span></td></tr>
+<tr><td><a href="#qa-28">28: isn't #14's visible text "Buy now"?</a></td><td>Yes. The report says "Buy" because web visible text comes from OCR, and the rule keeps only its first word. The FAIL itself is correct.</td><td><span class="pill p-part">Display bug</span></td></tr>
+<tr><td><a href="#qa-31">31: Link Text Purpose TC3, TC4</a></td><td>TC3 (raw URL) goes to AI review, as it does natively. TC4 (image-only link) is outside this rule natively too, and Meaningful Image Label flags it instead.</td><td><span class="pill p-ai">By design</span></td></tr>
+<tr><td><a href="#qa-44">44: where does the font size come from?</a></td><td>Not from Chromium, which gives no font size for web text. The DOM layer reads computed CSS <code>font-size</code> (CSS px, roughly equal to dp).</td><td><span class="pill p-ok">Correct</span></td></tr>
+<tr><td><a href="#qa-45">45: Readable Text Spacing TC2, TC3</a></td><td>The rule checks only line height and word gap, natively too. Paragraph and letter spacing are not part of it.</td><td><span class="pill p-part">Rule scope</span></td></tr>
+<tr><td><a href="#qa-46">46/47: how Responsive Containers works</a></td><td>A box with <code>overflow: hidden/clip</code> whose content is larger than the box fails. Correct on all four test cases.</td><td><span class="pill p-ok">Correct</span></td></tr>
+<tr><td><a href="#qa-52">52: no Duplicate State Info violation</a></td><td>Three false negatives. The state words are English and fixed ("checked", but this TalkBack says "ticked"), the role comes from the class (tabs fall through), and "enabled" is not a state word.</td><td><span class="pill p-no">Rule bug</span></td></tr>
+<tr><td><a href="#qa-59">59: is TC3 iOS-only?</a></td><td>No. The fixture's text is not cut at this width. Clipping at larger text sizes is detected, but under Font Magnification.</td><td><span class="pill p-part">Fixture bug</span></td></tr>
+<tr><td><a href="#qa-69">69: only TC5 for Duplicate Type Info</a></td><td>Two narrow gates: the name must be in <code>desc</code> (web names from content are in <code>text</code>), and the role word list is narrow (no "link", no "switch" for <code>Switch</code>).</td><td><span class="pill p-no">Rule bug</span></td></tr>
+<tr><td><a href="#qa-focus">Focus order for web elements</a></td><td>The capture records none: the snapshot's focus order is just "Web view". The reading order sent to AI is rebuilt from Chromium's tree order, which matches what TalkBack did. Keyboard (Tab) order is not available.</td><td><span class="pill p-part">Partial</span></td></tr>
+<tr><td><a href="#qa-diff">What does the DOM layer add?</a></td><td>Names Chromium drops, CSS sizes, spacing and colours, overflow, listeners and tabindex, and nodes for clickable elements hidden from TalkBack. 42 → 72 test cases found.</td><td><span class="pill p-ok">+30 TCs</span></td></tr>
+<tr><td><a href="#qa-ai">Do the AI rules get what they need?</a></td><td>Partly. None of the DOM layer's facts reach the server. Labels carry TalkBack's role word, links have no href or context, the heading level is lost, and input autocomplete is lost.</td><td><span class="pill p-no">Gap</span></td></tr>
+</table></div>
+
+<section class="rule" id="qa-class"><h3>Why is the class <code>android.widget.*</code>? Is it translated to a native view first? What is more accurate?</h3>
+<p><b>Yes, Chromium translates it.</b> A WebView has no Android views inside it. Chromium publishes the page's accessibility tree to Android as virtual <code>AccessibilityNodeInfo</code> nodes and has to give each one a class name. It maps the web role onto the closest Android widget class. The capture records that node as it is, which is why the report shows it. Data from all 69 scans (Android class against the matching DOM element):</p>
+<div class="tblw"><table><tr><th>DOM element</th><th>Android class from Chromium</th><th>What is lost</th></tr>
+<tr><td><code>&lt;button&gt;</code>, <code>&lt;div role=button&gt;</code></td><td>Button</td><td>whether it is a real button or a div</td></tr>
+<tr><td><code>&lt;input type=text|email|password&gt;</code></td><td>EditText (plus <code>inputType</code> 209 / 225 / 3)</td><td>autocomplete, the label relation</td></tr>
+<tr><td><code>&lt;input type=checkbox&gt;</code>, <code>&lt;span role=radio&gt;</code>, <code>&lt;ion-toggle&gt;</code></td><td>CheckBox, RadioButton, Switch</td><td>little</td></tr>
+<tr><td><code>&lt;h2&gt;</code>, <code>&lt;p&gt;</code>, <code>&lt;span&gt;</code></td><td>TextView (headings: <code>isHeading</code>; the level is only in roleText "heading 2")</td><td>the tag, the heading level</td></tr>
+<tr><td><code>&lt;a href&gt;</code></td><td>View or TextView, roleText "link"</td><td>the href; there is no link class</td></tr>
+<tr><td><code>&lt;label&gt;</code>, <code>&lt;td&gt;</code>, <code>&lt;div&gt;</code>, Ionic hosts</td><td>View</td><td>everything except geometry</td></tr>
+<tr><td><code>&lt;img&gt;</code></td><td>Image (a missing alt becomes the file name, e.g. "divider")</td><td>whether an alt exists, the src</td></tr></table></div>
+<p><b>Which is more accurate depends on the purpose.</b></p>
+<ul>
+ <li><b>For rules that predict what a TalkBack user hears,</b> the Android class is the right input. TalkBack reads that class (and roleText) to say "Button", "Edit box" or "Tick box", and the <a href="#rules">recording</a> confirms it.</li>
+ <li><b>For a developer fixing the issue,</b> the DOM tag and role (and id or selector) are more accurate. A web developer cannot "change the className"; they change <code>&lt;div&gt;</code> to <code>&lt;button&gt;</code> or add <code>role</code>.</li>
+ <li><b>The DOM layer already holds those facts</b> (tag, role, Blink name and its source, attributes) for every matched node, but only inside the rule engine. They are not written into the snapshot, so the report cannot show them.</li>
+</ul>
+<p><b>Recommendation:</b> keep <code>className</code> for rule logic, and add a <code>web</code> block (tag, role, name, nameSource, htmlType, autocomplete, headingLevel, href) to each web node in the snapshot. Show it in issue details. iOS already stores <code>webTag</code> / <code>webRole</code> (see <a href="#qa-parity">parity</a>).</p></section>
+
+<section class="rule" id="qa-unsupported"><h3>Interactive Element Unsupported Type: not accurate</h3>
+<p><b>The verdicts are correct; what the report shows about them is not.</b></p>
+<div class="tblw"><table><tr><th>TC</th><th>DOM</th><th>Chromium node</th><th>Result</th></tr>
+<tr><td>TC1</td><td><code>div.fake-btn</code>, click listener</td><td>TextView "Add to cart", clickable, no roleText</td><td>FAIL ✔</td></tr>
+<tr><td>TC2</td><td><code>div role="clickable" tabindex=0</code> (an invalid role, so Blink treats it as generic)</td><td>TextView "Buy now", clickable</td><td>FAIL ✔</td></tr>
+<tr><td>TC3</td><td><code>span</code>, click listener</td><td>TextView "Open map", clickable</td><td>FAIL ✔</td></tr>
+<tr><td>TC4</td><td><code>div role=button</code></td><td>Button</td><td>PASS ✔</td></tr>
+<tr><td>TC5</td><td><code>a href</code></td><td>View, roleText "link"</td><td>PASS ✔</td></tr></table></div>
+<p><b>What makes it look wrong in the report:</b></p>
+<ul>
+ <li>Each issue shows <code>className "android.widget.TextView"</code> as the important property. That is a standard class, so a reader sees "a standard TextView flagged as an unsupported class".</li>
+ <li>The how-to-fix text is the native one: "custom view class (com.example.MyCoolButton)… set className to android.widget.Button".</li>
+ <li>The real reason, <code>class_name: "web element with no role"</code>, is stored in <code>rule_dynamic_meta</code> but never displayed.</li>
+ <li>Chromium turns a role-less div that contains text into a TextView. The highlighted box is that flattened node, a few px off the DOM box.</li>
+</ul>
+<p><b>The DOM layer adds nothing here.</b> The web arm (<code>BSAdditionalRules.kt:1153-1163</code>) is "web node, clickable, no roleText, no interactive descendant" and never reads <code>view.dom</code>. That is why the POC and layer results are byte-identical. No false positives were found elsewhere either: scan 26 (role-less click div) and scan 39 (fake switch, link and tabs) are real. Ionic hosts are correctly exempt.</p>
+<p><b>Fix:</b></p>
+<ul>
+ <li>For web nodes, report tag, the authored <code>role</code> attribute, Blink's role and the listeners, with a web how-to-fix: "use a native element or a valid ARIA role".</li>
+ <li>Use DOM evidence (a click listener or <code>cursor:pointer</code> with Blink role generic or none, or an invalid role attribute) instead of Chromium's <code>isClickable</code> guess.</li>
+ <li>Stop counting static text as checked elements.</li>
+</ul></section>
+
+<section class="rule" id="qa-12"><h3>12: no element highlighted for Screen Reader Focus</h3>
+<p><b>This was a bug in how I built the report, not in the rule.</b> Background:</p>
+<ul>
+ <li>The three expected defects (TC1 the aria-hidden button, TC2 the card inside an aria-hidden container, TC3 the role=presentation image) do not exist in the Android tree at all. Chromium omits elements hidden from assistive technology.</li>
+ <li>The DOM layer adds a synthetic node for each (<code>BSWebLayer.kt:158-176</code>, id <code>dom-x-y-w-h</code>) so the rule can report them. That node exists only inside the engine, not in the stored snapshot.</li>
+</ul>
+<p><b>The two report bugs, and their fixes:</b></p>
+<ul>
+ <li>The first upload left these elements out of the snapshot. The server dropped them, and a rule left with no elements returns HTTP 500 for that whole page of 10 scans, so the report stopped at scan 10. <b>The server bug itself is still open:</b> <code>scan_helper.rb:3284</code> calls <code>.size</code> on nil.</li>
+ <li>The second upload added the nodes but without a <code>hashCode</code>. The issue's key became <code>_36</code> while its box was keyed <code>dom-79-859-340-121_36</code>, so nothing was drawn.</li>
+ <li>The current report builds these nodes the way the engine does: class from the tag (Button / View / Image), text = Blink's name, outside the screen-reader tree, <code>hashCode</code> = id. All three are now highlighted on scan 12 (and scan 13 and the scan-24 TCs).</li>
+</ul>
+<p><b>Production impact.</b> For the real flow, the capture must persist these synthetic nodes in the snapshot (as iOS persists its web nodes), otherwise the server cannot show them.</p></section>
+
+<section class="rule" id="qa-parity"><h3>Parity of properties for the same element on Android and iOS</h3>
+<p>Compared on the same Rule Lab elements: Android POC + DOM layer scans vs iOS DOM-layer POC scans.</p>
+<div class="tblw"><table><tr><th>Element</th><th>Android snapshot</th><th>iOS snapshot</th></tr>
+<tr><td>Button</td><td><code>android.widget.Button</code>, text, roleText "Button"; no font size; colours measured from pixels; physical-px rect</td><td><code>WebButton</code>, traits [button], <code>webTag button</code>, <code>webRole button</code>, textSize (CSS px); point rect; a duplicate <code>WebLabel</code> child</td></tr>
+<tr><td><code>&lt;label&gt;</code> + email field</td><td>EditText, <code>inputType</code> 209 (email), id as <code>viewIdResourceName</code>; <b>name missing</b>; TalkBack says "Edit box"</td><td>TextField, label "Email"; <b>no input type</b> (text and email both become ROLE_TEXT_FIELD)</td></tr>
+<tr><td>Checkbox</td><td>CheckBox, isCheckable / isChecked; <b>name missing</b></td><td>WebCheckBox, traits [button], value "0", name "Accept terms"</td></tr>
+<tr><td><code>div role=switch</code></td><td>Switch, desc, stateDesc "On", clickable</td><td>WebSwitch but <code>isUserInteractionEnabled 0</code>, so it looks non-interactive</td></tr>
+<tr><td><code>&lt;h2&gt;</code></td><td>TextView, isHeading; level only in roleText</td><td>WebLabel, traits [header], webTag h2</td></tr>
+<tr><td><code>&lt;img&gt;</code></td><td>Image, desc = alt (or the file name when there is no alt)</td><td>WebImageView, label = alt</td></tr>
+<tr><td>Link</td><td>View + TextView child, roleText link; no href</td><td>traits [link], webTag a; no href</td></tr>
+<tr><td>Order</td><td>none in the snapshot (see <a href="#qa-focus">focus order</a>)</td><td><code>webIndex</code> (DOM order) on every node, unused by the server</td></tr></table></div>
+<p><b>Mismatches that make the same rule behave differently:</b></p>
+<ul>
+ <li>Label-named fields and checkboxes fail or show "Tick box" on Android but pass on iOS.</li>
+ <li>iOS cannot tell an email or tel field from text, so Input Type is weaker on iOS.</li>
+ <li>An iOS <code>role=switch</code> div reads as non-interactive.</li>
+ <li>Android labels end in TalkBack's role word (", Button", ", Image"); iOS labels do not.</li>
+ <li>Reading order (MRO) never runs on iOS web captures, because there is no caption order. It runs on Android.</li>
+</ul>
+<p><b>Already collected but thrown away.</b> The iOS injected JS collects <code>autocomplete</code>, <code>inputmode</code>, the HTML <code>type</code> and the heading level, but the Swift serializer never writes them out (<code>AppAccessibility.swift:6556-6558</code> vs <code>6209-6233</code>). The Android DOM layer collects tag, name source and attributes but keeps them inside the engine.</p>
+<p><b>To reach parity:</b> one shared <code>web</code> block on each web node on both platforms (tag, role, name, nameSource, htmlType, autocomplete, headingLevel, href, src/altPresent, domIndex). Have the server's tree builders pass it on and the report show it.</p></section>
+
+<section class="rule" id="qa-28"><h3>28: isn't #14's visible text "Buy now"?</h3>
+<p><b>Yes; the report's "Buy" is wrong, but the FAIL is correct.</b></p>
+<ul>
+ <li>The element is <code>&lt;button aria-label="Tap to Buy now"&gt;Buy now&lt;/button&gt;</code>.</li>
+ <li>Chromium gives the node the accessible name and drops the text child, so the snapshot has <code>text ""</code>, desc "Tap to Buy now", and only the OCR sees the visible words (<code>ocrText "Buy nowW"</code>, with a misread tail).</li>
+ <li>For web nodes the rule falls back to OCR (<code>webOcrVisibleText</code>, <code>BSAdditionalRules.kt:2239-2248</code>). To avoid misread tails it keeps only the <b>first word of 3+ characters</b>, which gives "Buy".</li>
+ <li>The verdict is unaffected: "Tap to Buy now" does not start with "Buy" either.</li>
+</ul>
+<p><b>Why the DOM layer did not help:</b> it does not capture element text content (only tag, role, name, attributes, CSS, listeners and sizes).</p>
+<p><b>Fix:</b> add <code>innerText</code> to the DOM-layer capture and use it as visible text for web nodes, with OCR as a fallback. Otherwise, at least report the full cleaned OCR string.</p></section>
+
+<section class="rule" id="qa-31"><h3>31: why is Link Text Purpose not violated on TC3, TC4?</h3>
+<p>The rule (<code>BSAIRules.kt:654-768</code>) only looks at links that have clickable spans or exactly one TextView child. A text that is exactly a stop word ("click here", "read more"…) is a FAIL; any other text goes to <b>AI review</b>.</p>
+<ul>
+ <li><b>TC3 (raw URL "https://www.example.com/docs/terms?id=42&amp;ref=app").</b> It is not a stop word, so it becomes an AI candidate (in both POCs), the same as native. The local report has no AI service, so it shows nothing. It would FAIL only when the AI answers. An optional deterministic check (link text starting with <code>https?://</code> or a bare domain) could FAIL it without AI.</li>
+ <li><b>TC4 (image-only link, no alt).</b> The link's only child is an Image, not a TextView, so the rule returns at line 679, as natively.
+  <ul>
+   <li>The defect is still reported on this scan, by Meaningful Image Label ("divider, Image") and by Interactive Element Label (AI).</li>
+   <li>Chromium fills a missing alt from the file name ("divider"); the DOM says the name is empty.</li>
+   <li><b>Fix:</b> for web links whose only content is an image, use the DOM's empty name to FAIL a link with no accessible name.</li>
+  </ul></li>
+ <li><b>Side note: TC5</b> ("Read more" with an aria-label that adds context, expected EDGE) is flagged FAIL. The rule reads the child's text, not the link's aria-label name.</li>
+</ul></section>
+
+<section class="rule" id="qa-44"><h3>44: how do we get the font size? Is it px only, from Chromium?</h3>
+<p><b>Chromium gives no font size for web text.</b> Every web TextView in the snapshot has <code>fontSize</code>, <code>textSizeInPx</code> and <code>fontSizeUnit</code> null (Chromium's virtual nodes return no ExtraRenderingInfo), and its per-character boxes are just the node rect repeated.</p>
+<ul>
+ <li><b>Chromium-only POC</b> (<code>BSWebContent.kt:23</code> <code>lineBoxPx</code>): uses the line-box height in physical px ÷ density (2.75) as the size.
+  <ul>
+   <li>The line box is about 1.3× the font size, so this can only miss, never over-report.</li>
+   <li>The 9 / 11 / 13.5 / 14 / 16 px test cases came out as 12.0 / 13.8 / 17.1 / 18.2 / 20.0, so TC3 (13.5 px) was missed.</li>
+  </ul></li>
+ <li><b>DOM layer</b> (<code>BSWebLayer.kt:131-134</code>): reads the computed CSS <code>font-size</code>, which is in <b>CSS px</b>.
+  <ul>
+   <li>The rule compares CSS px directly with the 14 threshold (shown as <code>desired_font_size 14.0</code>, <code>font_size_source web_css</code>).</li>
+   <li>In a WebView, 1 CSS px = 1 dp (device pixel ratio = display density), so 14 CSS px is the same physical size as a native 14 sp/dp text at font scale 1.0.</li>
+   <li>TC1–TC3 now FAIL with 9.0 / 11.0 / 13.5.</li>
+  </ul></li>
+ <li><b>Two limitations:</b>
+  <ul>
+   <li><b>System font scale is not captured.</b> The scan has neither fontScale nor the WebView's textZoom. A WebView scales text with the system font size, and it is unverified whether <code>getComputedStyle</code> then reports the scaled size. The fix is to capture textZoom/fontScale and divide by it, for parity with sp.</li>
+   <li><b>Some chips fall back to the line box.</b> The "Expect FAIL" chips are 13.8 (<code>web_line_box</code>) because the DOM box and the Chromium box differ by 17 px (padding), beyond the 8 px matching tolerance.</li>
+  </ul></li>
+</ul>
+<p>The many other readable-text-size findings are the Rule Lab's own 11–13 px labels, which are real by this rule.</p></section>
+
+<section class="rule" id="qa-45"><h3>45: why are TC2 and TC3 not violated for Readable Text Spacing?</h3>
+<p>The rule checks only two things (web arm <code>BSAdditionalRules.kt:2947-2964</code>, same as the native Ruby rule):</p>
+<ul>
+ <li><b>Line height</b> ≥ 1.5 × font size, only for text with 2+ lines.</li>
+ <li><b>Word gap</b> (0.25 × font size + word-spacing + letter-spacing) ≥ 0.16 × font size.</li>
+</ul>
+<p>There is no paragraph-spacing or letter-spacing check. The native rule defines <code>PARAGRAPH_SPACING_MULTIPLIER</code> and <code>calculate_paragraph_spacing</code> but never calls them.</p>
+<ul>
+ <li><b>TC2</b> (two paragraphs with no gap): each is one line, so line height does not apply, and the word gap is 4.0 ≥ 2.56. PASS.</li>
+ <li><b>TC3</b> (<code>letter-spacing:-0.8px</code>): one line, word gap 3.2 ≥ 2.56. PASS.</li>
+ <li><b>TC1</b> (line-height = font size over 2 lines) FAILs correctly.</li>
+</ul>
+<p><b>Verdict:</b> TC2 and TC3 test checks the rule does not have. Add a web paragraph check (gap between sibling text blocks ≥ 2 × font size) and a letter-spacing floor, or mark these TCs out of scope.</p>
+<p><b>Noise on this page:</b> any wrapped text with <code>line-height: normal</code> is assumed to be 1.2 × and fails (the page intro, the TC4 description).</p></section>
+
+<section class="rule" id="qa-46"><h3>46/47: how is Responsive Containers working here?</h3>
+<p><b>Web arm</b> (<code>BSAdditionalRules.kt:1867-1880</code>): a box with text, at least 10 CSS px, whose <code>overflow-x/y</code> is <code>hidden</code> or <code>clip</code>, fails when its content is larger than the box (<code>scrollWidth/Height</code> &gt; <code>clientWidth/Height</code> + 4 CSS px). Both come from the DOM layer; Chromium exposes neither overflow nor scroll sizes.</p>
+<ul>
+ <li><b>Scan 46</b> (Readable Text Spacing p2) has no Responsive Containers finding. Its issues are text-spacing and text-size.</li>
+ <li><b>Scan 47:</b>
+  <ul>
+   <li>TC1: <code>div.clip-x</code>, 600 px of content in a 335 px box. FAIL ✔</li>
+   <li>TC2: <code>height:72px</code>, 88 px of content. FAIL ✔ (the same box is also reported by Text Truncation, Font Magnification and Text Spacing).</li>
+   <li>TC3 (fluid) and TC4 (scrolling ion-content): PASS ✔</li>
+  </ul></li>
+</ul>
+<p><b>Gap vs native:</b> no growth prediction. A fixed-height <code>overflow:hidden</code> box that fits today passes, while native predicts it will clip at larger text. The DOM layer already captures the stylesheet's fixed height (Font Magnification uses it), so the fix is cheap.</p></section>
+
+<section class="rule" id="qa-52"><h3>52: why no "Duplicate State Info in Spoken Description" violation?</h3>
+<p>The rule (<code>BSAdditionalRules.kt:427-466</code>, a port of the Ruby rule) fails when a state word appears <b>twice</b> in the spoken text. The words depend on the class: CheckBox <code>checked</code>, RadioButton <code>selected</code>, Switch <code>on|off</code>; otherwise it looks for "tap/click/swipe X". The POC and the layer give the same result.</p>
+<div class="tblw"><table><tr><th>TC</th><th>Spoken (capture)</th><th>Why it passes</th><th>Real TalkBack</th></tr>
+<tr><td>TC1</td><td>"ticked, Notifications checked, Tick box"</td><td>This device's TalkBack says <b>"ticked"</b>, not "checked", so "checked" occurs once</td><td>defect heard → FN</td></tr>
+<tr><td>TC2</td><td>"ticked, Wi-Fi, Switch" (ToggleButton; Chromium dropped the aria-label "Wi-Fi on")</td><td>ToggleButton is not in the role map</td><td>no defect heard ✔</td></tr>
+<tr><td>TC3</td><td>"selected, Home selected, tab" (View, roleText tab)</td><td>the class is View, so tab state is never checked</td><td>defect heard → FN</td></tr>
+<tr><td>TC4</td><td>"On, Dark mode enabled, Switch"</td><td>"On" occurs once; "enabled" is not a state word</td><td>defect heard → FN</td></tr>
+<tr><td>TC5</td><td>"ticked, Tick box"</td><td>no state word in the name</td><td>✔</td></tr></table></div>
+<p><b>Fix:</b></p>
+<ul>
+ <li>Take the role from roleText and the checkable/selected flags, not the class.</li>
+ <li>Take the state token from the start of the spoken text or stateDescription (which is locale-proof).</li>
+ <li>Fail when the author's name (desc, text, or the DOM name for web) contains a word of that state family: checked/ticked/unchecked, selected, on/off/enabled/disabled/pressed.</li>
+</ul></section>
+
+<section class="rule" id="qa-59"><h3>59: is TC3 only applicable to iOS (numberOfLines)?</h3>
+<p><b>No.</b> Neither platform's rule uses numberOfLines for this.</p>
+<ul>
+ <li><b>TC3</b> is <code>height:42px; overflow:hidden; line-height:21px</code>. At this phone's 392 px viewport the sentence wraps into exactly 2 lines and fits: scroll size 335×42 = client size 335×42, and the OCR reads the whole sentence. Nothing is cut now, so Text Truncation (a "cut now" test: a clipping box or an ellipsis in the OCR) correctly passes it. TC1 (ellipsis), TC2 (line-clamp) and TC4 (nowrap) fail.</li>
+ <li><b>"Will clip when text grows"</b> is predicted natively on both platforms (Android: sp text in a fixed layout size; iOS: textMayClipAtLargeSizes). For this web element it <b>is</b> reported, under <b>Font Magnification</b>: "Text will be cut off at 200% text size (height: 42px, overflow hidden)".</li>
+</ul>
+<p><b>Fix:</b> make the fixture actually truncate (3 lines of text, or a smaller height). If Text Truncation should also predict, add a web "may clip at larger text" arm (fixed height + overflow hidden + 2 × scroll height &gt; client height) as needs-review.</p></section>
+
+<section class="rule" id="qa-69"><h3>69: why is TC5 the only violation for "Duplicate Type Info in Spoken Output"?</h3>
+<p>The rule (<code>BSAdditionalRules.kt:603-665</code>) has two gates:</p>
+<ul>
+ <li>The name must come from <code>desc</code> (line 622).</li>
+ <li>A role word from a class-based list must appear twice (line 641).</li>
+</ul>
+<div class="tblw"><table><tr><th>TC</th><th>Node</th><th>Outcome</th></tr>
+<tr><td>TC1</td><td>Button, text "Save button" → "Save button, Button"</td><td>"button" twice, but a web name from content arrives in <b>text</b>, not desc. Blocked by gate 1 → FN (defect heard)</td></tr>
+<tr><td>TC2</td><td>View, roleText link, desc "Privacy policy link" → "…link, link"</td><td>"link" is in no list (the class View maps to "view") → FN (defect heard)</td></tr>
+<tr><td>TC3</td><td>CheckBox, the label name "Remember me checkbox" dropped by Chromium → "Tick box"</td><td>No duplicate is spoken on Android; arguably correct for Android</td></tr>
+<tr><td>TC4</td><td>Switch, text "Dark mode switch" → "Off, Dark mode switch, Switch"</td><td>"switch" twice, but the name is in text, not desc → FN (defect heard)</td></tr>
+<tr><td>TC5</td><td>Image, desc "Profile image" (alt) → "Profile image, Image"</td><td>Both gates pass → <b>FAIL</b> ✔</td></tr></table></div>
+<p><b>Fix (web nodes):</b> accept the name from text as well as desc, and build the role-word list from roleText plus synonyms (button; link; switch/toggle; checkbox/check box/tick box; image/icon; tab).</p></section>
+
+<section class="rule" id="qa-focus"><h3>What is the limitation for the focus order of WebView elements? Do we get it right?</h3>
+<p><b>The capture records no web focus order.</b> In every scan, the snapshot's <code>focusOrder</code> is a single entry, <code>"Web view"</code>, and <code>keyboardOrder</code> holds only the WebView. Every web node has <code>traversalIndex</code> and <code>focusOrder</code> −1. When TalkBack's swipe reaches the WebView, it hands navigation to Chromium (next HTML element), so TalkBack's own traversal never lists the web elements.</p>
+<p><b>What the engine does instead.</b> For Meaningful Reading Order (<code>BSAIRules.kt:545-598</code>), the POC builds the order itself: Chromium's virtual nodes in tree order (Blink's accessibility-tree order, i.e. DOM order after aria-owns and shadow-DOM slotting), keeping the nodes TalkBack would stop on.</p>
+<ul>
+ <li>On scan 33 that gives "3·Pay → 1·Cart → 2·Address", "Total → ₹2,450", "Name → Email → City → Zip", "Buy → Wireless earbuds → ₹3,999".</li>
+ <li>That is <b>exactly what real TalkBack did</b> on TC1–TC4 in the recording. CSS <code>order</code>, <code>flex-direction:*-reverse</code>, grid placement and absolute positioning are correctly <i>not</i> applied, which matches TalkBack.</li>
+</ul>
+<p><b>Limitations:</b></p>
+<ul>
+ <li>The order is <b>synthesized, not recorded</b>. Our rule for which nodes TalkBack stops on only approximates Chromium's own navigation, which merges and skips some nodes.</li>
+ <li>Only on-screen nodes: TalkBack keeps going while scrolling; a scan is one viewport.</li>
+ <li>The order exists only in the AI candidate, not in the snapshot, so nothing else (and no report view) can use it.</li>
+ <li><b>Keyboard (Tab) order is not available at all.</b> The DOM layer carries <code>tabindex</code> only. The offline probe <code>cdp_layer/tabgraph.mjs</code> does find the Tab traps (TC1 Card→Expiry→CVV→Card, TC2 Option A↔B, TC3 the modal), but it is not wired into the engine.</li>
+</ul>
+<p><b>Rules that depend on it:</b></p>
+<ul>
+ <li><b>Traversal Order Cycle</b> reads Android traversalBefore/After, which Chromium never sets, so it finds nothing in every variant.</li>
+ <li><b>Screen Reader Focus</b> treats web content as not applicable and only reports the DOM layer's hidden-element nodes.</li>
+ <li><b>Keyboard Focus</b> uses focusability, tabindex and listeners, not order.</li>
+</ul>
+<p><b>Fix:</b> write the synthesized order into the snapshot's <code>focusOrder</code> (marked as derived), and wire the Tab-order probe into the host capture for Traversal Order Cycle.</p></section>
+
+<section class="rule" id="qa-diff"><h3>What does the DOM layer do differently, so that new rules now violate?</h3>
+<p><b>Why the Chromium-only POC can't see these.</b> It can only use what Chromium puts on the Android nodes: class, text/desc/hint, state flags and rect. That has no CSS, no listeners, no label relations and no hidden elements. The DOM layer (<code>BSWebLayer.kt</code>) reads the page over CDP while the scan runs: Blink's accessibility tree, the computed CSS, the event listeners and the scroll sizes. It matches each DOM element onto the Chromium node with the same rect. <b>Found test cases: 42 → 72; review 28 → 18; missed 57 → 37.</b></p>
+<div class="tblw"><table><tr><th>Mechanism</th><th>Code</th><th>Test cases that changed</th></tr>
+<tr><td>DOM present, so "no name" is known rather than "maybe named by a &lt;label&gt;"</td><td><code>BSWebContent.kt:86</code></td><td>Checkbox TC1–4, Switch TC1–3, Editable label TC1–4, Input label TC4: review → FAIL</td></tr>
+<tr><td>Blink's name source: a placeholder or aria-label is not a visible label</td><td><code>BSAdditionalRules.kt:1614</code></td><td>Accessible Input Field Labels TC1–3: review → FAIL</td></tr>
+<tr><td>Name restored from &lt;label&gt; / aria-labelledby</td><td><code>BSWebLayer.kt:140-144</code></td><td>Input Type TC1–6: none → AI review (the purpose is now known)</td></tr>
+<tr><td>Nodes for clickable elements hidden from TalkBack</td><td><code>BSWebLayer.kt:158-176</code></td><td>Screen Reader Focus TC1–3: none → FAIL</td></tr>
+<tr><td>tabindex and keyboard listeners</td><td><code>BSAdditionalRules.kt:1336-1348</code></td><td>Keyboard Focus TC2 (tabindex=-1), TC4 (no Enter/Space handler): FAIL</td></tr>
+<tr><td>CSS font size</td><td><code>BSWebLayer.kt:131</code></td><td>Readable Text Size TC3 (13.5 px): FAIL</td></tr>
+<tr><td>CSS line-height and letter/word spacing</td><td><code>BSAdditionalRules.kt:2947-2963</code></td><td>Readable Text Spacing TC1: FAIL</td></tr>
+<tr><td>Border colour vs. the backdrop; ::placeholder colour</td><td><code>BSWebLayer.kt:90-106, 147-157</code></td><td>Non-text Contrast TC1, TC3; Text Contrast TC3</td></tr>
+<tr><td>overflow + scroll/client sizes; fixed height</td><td><code>BSAdditionalRules.kt:1868</code>, <code>BSRules.kt:1041-1050</code></td><td>Responsive Containers TC1, TC2; Font Magnification TC3</td></tr>
+<tr><td>DOM tags for partial overlap</td><td><code>BSAdditionalRules.kt:1030-1072</code></td><td>Overlapping Interactive Elements TC1–3</td></tr>
+<tr><td>CSS <code>display</code> (inline-text exemption)</td><td><code>BSRuleHelpers.kt:174</code></td><td>Touch Target Size TC4 (small ion-button): FAIL</td></tr></table></div>
+<p><b>Costs:</b></p>
+<ul>
+ <li>No verdict got worse.</li>
+ <li>Input Type TC5/TC6 (expected PASS) now go to AI review.</li>
+ <li>Fails outside any TC rose from 9 to 25. These are mostly the Rule Lab's own small text (real) and wrapped <code>line-height: normal</code> paragraphs (rule noise). That is why the report's issue count grows from 192 to 791 (Readable Text Size 885 element hits before de-duplication).</li>
+</ul></section>
+
+<section class="rule" id="qa-ai"><h3>Do the AI rules get all the input they need?</h3>
+<p><b>The DOM layer's facts never reach the server.</b> Tag, input type, autocomplete, name source and aria attributes stay inside the rule engine. They change statuses and a few candidate labels, nothing more.</p>
+<p><b>The server reads only a fixed set of node fields.</b></p>
+<ul>
+ <li>For Meaningful Reading Order and Meaningful Visual Order it rebuilds the element tree from the stored snapshot, keeping only rect, class, text, hashCode, desc, uid, label, type and value (<code>snapshot_helper.rb:7-67, 322</code>).</li>
+ <li>For headings it sends only text, label, <code>isHeading</code> and <code>isAccessible</code> (<code>snapshot_helper.rb:349-369</code>).</li>
+</ul>
+<div class="tblw"><table><tr><th>AI rule</th><th>What the AI needs</th><th>Provided for web content?</th><th>Gap → fix</th></tr>
+<tr><td>Meaningful Reading Order</td><td>Screenshot + screen-reader order + tree</td><td>Partly. Stock: the order is one item (the WebView). POC/layer: the order is synthesized from Chromium's tree (1,824 stops; it matches the recording on TC1–4). The server keeps only the ids and rebuilds labels from the snapshot.</td><td>The snapshot's own focusOrder is still only "Web view". → Store the synthesized order in <code>focusOrder</code>; send each stop's role and name.</td></tr>
+<tr><td>Meaningful Visual Order</td><td>Screenshot + tree</td><td>Yes, the same in all variants (the server ignores the candidate and uses the stored tree)</td><td>Names restored by the DOM layer are not in the stored tree.</td></tr>
+<tr><td>Missing / Incorrect Heading</td><td>Text with an is-heading flag and level</td><td>Partly. Chromium sets <code>isHeading</code>; the level is only in roleText ("heading 2") and is not sent</td><td>→ send headingLevel.</td></tr>
+<tr><td>Meaningful Image Label</td><td>Crop + label + whether the alt is missing</td><td>Partly. The label carries TalkBack's role word ("…, Image"). A missing alt shows as the file name ("dog"), while the DOM knows the alt is empty</td><td>→ strip role words; send altPresent and src.</td></tr>
+<tr><td>Images of Text</td><td>Crop + OCR context</td><td>Yes</td><td>—</td></tr>
+<tr><td>Interactive / Checkbox / Switch label</td><td>Crop + element type + visible name + label</td><td>Partly. 211 of 218 labels end in a role word. A &lt;label&gt;-named checkbox is sent as <b>"Tick box"</b> even though the DOM layer knows "Accept terms"</td><td>→ use the DOM name when the layer restored it.</td></tr>
+<tr><td>Input Field Label + Input Type (one combined AI call)</td><td>Label, placeholder, input type, purpose</td><td>Partly. The HTML type reaches the node (<code>inputType</code> email/password/tel); autocomplete exists only in the DOM layer. The duplicate candidates are merged first-wins, so the label candidate ("Edit box") displaces the input-type one ("Email")</td><td>→ send autocomplete, htmlType, nameSource; merge duplicates instead of dropping one.</td></tr>
+<tr><td>Link Text Purpose</td><td>Label + surrounding context + href</td><td>No. The context is empty on every Android link candidate; there is no href</td><td>→ send href; build context from the DOM parent and preceding heading.</td></tr></table></div>
+<p><b>iOS for comparison:</b> Meaningful Reading Order never runs for web captures (no caption order, and the candidate has no sequence), and the server's type mapping (<code>ios_utils.rb</code>) recognises none of the <code>Web*</code> types.</p></section>
 
 <h2 id="rules">4 · Per rule: what TalkBack did, and the POC + DOM layer verdict</h2>
 <p class="muted">TP / FN / FP / TN compare the POC + DOM layer result with the expected verdict; where it differs from the stock engine the stock outcome is shown in brackets, and for every expected FAIL that is not reported FAIL the reason is given. "TalkBack says" shows whether the defect is real for a TalkBack user.</p>
