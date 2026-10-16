@@ -29,6 +29,7 @@
  tr.r-ok td.rule { box-shadow:inset 4px 0 var(--ok); } tr.r-ai td.rule { box-shadow:inset 4px 0 var(--ai); } tr.r-part td.rule { box-shadow:inset 4px 0 var(--part); }
  tr.r-no td.rule { box-shadow:inset 4px 0 var(--no); } tr.r-off td.rule, tr.r-na td.rule { box-shadow:inset 4px 0 var(--off); }
  .g-full { color:var(--ok); background:var(--ok-bg); } .g-part { color:var(--part); background:var(--part-bg); } .g-none { color:var(--no); background:var(--no-bg); } .g-na { color:var(--off); background:var(--off-bg); }
+ .figscroll { overflow-x:auto; } .figsteps { margin:10px 0 0; padding-left:22px; font-size:14px; } .figsteps li { margin:5px 0; }
  @media (max-width:900px) { .kpis { grid-template-columns:repeat(2,1fr); } body { padding:18px 16px 60px; } }
 </style></head><body>
 <p class="muted"><a href="../">← WebView &amp; Angular support analysis</a> · <a href="../android-run/">Android run</a> · <a href="../voiceover-validation/">iOS: VoiceOver vs capture</a> · <a href="#rules">Per rule</a> · <b><a href="#qa">Questions on the report</a></b></p>
@@ -51,6 +52,101 @@
  <div class="kpi"><b>0</b><span>expected PASS reported FAIL (FP)</span></div>
  <div class="kpi"><b>19</b><span>defects real TalkBack users hear that the POC + DOM layer misses (39 heard defects now FAIL)</span></div>
 </div>
+
+<h2>How this validation works</h2>
+<figure class="card" style="margin:12px 0">
+<div class="figscroll">
+<svg viewBox="0 0 1040 496" role="img" aria-labelledby="flowt flowd" style="width:100%;min-width:760px;height:auto;display:block">
+ <title id="flowt">TalkBack validation flow</title>
+ <desc id="flowd">Real TalkBack is screen-recorded on the Angular Rule Lab; its focus ring and caption are tracked to get one announcement per focus stop. Each announcement is matched to the node in our on-device capture with the closest spoken description, classified, reviewed by hand, and the test cases are scored against the POC + DOM layer verdicts.</desc>
+ <defs><marker id="fah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink2)"/></marker></defs>
+ <rect x="0" y="10" width="792" height="146" rx="10" fill="var(--ok-bg)"/>
+ <rect x="0" y="166" width="792" height="112" rx="10" fill="var(--off-bg)"/>
+ <rect x="0" y="288" width="792" height="112" rx="10" fill="var(--ai-bg)"/>
+ <rect x="802" y="10" width="236" height="484" rx="10" fill="var(--off-bg)"/>
+ <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="11" font-weight="700" fill="var(--ink2)">
+  <text x="14" y="34">REAL TALKBACK</text><text x="14" y="49" font-weight="400">ground truth</text>
+  <text x="14" y="190">OUR CAPTURE</text><text x="14" y="205" font-weight="400">what we detect</text>
+  <text x="14" y="312">RULE ENGINE</text><text x="14" y="327" font-weight="400">POC + DOM layer</text>
+  <text x="815" y="31">COMPARE, PER ELEMENT</text>
+ </g>
+ <g fill="none" stroke="var(--ink2)" stroke-width="1.6">
+  <path d="M340 90 H356" marker-end="url(#fah)"/><path d="M560 90 H576" marker-end="url(#fah)"/>
+  <path d="M780 76 H811" marker-end="url(#fah)"/>
+  <path d="M340 231 H356" marker-end="url(#fah)"/>
+  <path d="M600 231 H796 V108 H811" marker-end="url(#fah)"/>
+  <path d="M340 349 H356" marker-end="url(#fah)"/>
+  <path d="M600 360 H811" marker-end="url(#fah)"/>
+  <path d="M920 126 V144" marker-end="url(#fah)"/><path d="M920 204 V222" marker-end="url(#fah)"/>
+  <path d="M920 296 V314" marker-end="url(#fah)"/><path d="M920 402 V424" marker-end="url(#fah)"/>
+ </g>
+ <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="10.5" fill="var(--ink2)">
+  <text x="612" y="224">our description per node</text>
+  <text x="612" y="353">verdict per test case</text>
+  <text x="928" y="311">heard?</text>
+ </g>
+ <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" text-anchor="middle">
+<rect x="140" y="42" width="200" height="96" rx="9" fill="var(--surface)" stroke="var(--ink2)" stroke-width="1"/>
+<text x="240.0" y="63" font-size="12.5" font-weight="700" fill="var(--ink)">Record real TalkBack</text>
+<text x="240.0" y="81" font-size="11" fill="var(--ink2)">BSTalkback, Xiaomi, Android 14</text>
+<text x="240.0" y="95" font-size="11" fill="var(--ink2)">swipe through each rule page</text>
+<text x="240.0" y="109" font-size="11" fill="var(--ink2)">two recordings, 22 min</text>
+<rect x="360" y="42" width="200" height="96" rx="9" fill="var(--surface)" stroke="var(--ink2)" stroke-width="1"/>
+<text x="460.0" y="63" font-size="12.5" font-weight="700" fill="var(--ink)">Track the focus ring</text>
+<text x="460.0" y="81" font-size="11" fill="var(--ink2)">green ring, 4 fps</text>
+<text x="460.0" y="95" font-size="11" fill="var(--ink2)">same box held = one stop</text>
+<text x="460.0" y="109" font-size="11" fill="var(--ink2)">1566 focus stops</text>
+<rect x="580" y="42" width="200" height="96" rx="9" fill="var(--surface)" stroke="var(--ink2)" stroke-width="1"/>
+<text x="680.0" y="63" font-size="12.5" font-weight="700" fill="var(--ink)">Read what it said</text>
+<text x="680.0" y="81" font-size="11" fill="var(--ink2)">OCR the caption at 2 fps</text>
+<text x="680.0" y="95" font-size="11" fill="var(--ink2)">first NEW caption after the</text>
+<text x="680.0" y="109" font-size="11" fill="var(--ink2)">ring settles = announcement</text>
+<rect x="140" y="196" width="200" height="70" rx="9" fill="var(--surface)" stroke="var(--ink2)" stroke-width="1"/>
+<text x="240.0" y="217" font-size="12.5" font-weight="700" fill="var(--ink)">On-device scans</text>
+<text x="240.0" y="235" font-size="11" fill="var(--ink2)">BS talkback, same APK</text>
+<text x="240.0" y="249" font-size="11" fill="var(--ink2)">70 scans, 1 Oct</text>
+<rect x="360" y="196" width="240" height="70" rx="9" fill="var(--surface)" stroke="var(--ink2)" stroke-width="1"/>
+<text x="480.0" y="217" font-size="12.5" font-weight="700" fill="var(--ink)">Our spoken description</text>
+<text x="480.0" y="235" font-size="11" fill="var(--ink2)">spokenDescription of each node</text>
+<text x="480.0" y="249" font-size="11" fill="var(--ink2)">TC = scan stage holding its centre</text>
+<rect x="140" y="314" width="200" height="70" rx="9" fill="var(--surface)" stroke="var(--ink2)" stroke-width="1"/>
+<text x="240.0" y="335" font-size="12.5" font-weight="700" fill="var(--ink)">Sweep, 14 Oct</text>
+<text x="240.0" y="353" font-size="11" fill="var(--ink2)">BS talkback scan + host CDP</text>
+<text x="240.0" y="367" font-size="11" fill="var(--ink2)">DOM layer, within a second</text>
+<rect x="360" y="314" width="240" height="70" rx="9" fill="var(--surface)" stroke="var(--ink2)" stroke-width="1"/>
+<text x="480.0" y="335" font-size="12.5" font-weight="700" fill="var(--ink)">Replay offline</text>
+<text x="480.0" y="353" font-size="11" fill="var(--ink2)">POC + DOM layer engine</text>
+<text x="480.0" y="367" font-size="11" fill="var(--ink2)">→ verdict per test case</text>
+<rect x="815" y="42" width="210" height="84" rx="9" fill="var(--surface)" stroke="var(--ink2)" stroke-width="1"/>
+<text x="920.0" y="63" font-size="12.5" font-weight="700" fill="var(--ink)">Match stop → node</text>
+<text x="920.0" y="81" font-size="11" fill="var(--ink2)">same rule page, closest</text>
+<text x="920.0" y="95" font-size="11" fill="var(--ink2)">spokenDescription (list and</text>
+<text x="920.0" y="109" font-size="11" fill="var(--ink2)">pager context removed)</text>
+<rect x="815" y="148" width="210" height="56" rx="9" fill="var(--surface)" stroke="var(--ink2)" stroke-width="1"/>
+<text x="920.0" y="169" font-size="12.5" font-weight="700" fill="var(--ink)">Classify</text>
+<text x="920.0" y="187" font-size="11" fill="var(--ink2)">identical · same name · different</text>
+<rect x="815" y="226" width="210" height="70" rx="9" fill="var(--surface)" stroke="var(--ink2)" stroke-width="1"/>
+<text x="920.0" y="247" font-size="12.5" font-weight="700" fill="var(--ink)">Human review</text>
+<text x="920.0" y="265" font-size="11" fill="var(--ink2)">correction tool, 15 Oct</text>
+<text x="920.0" y="279" font-size="11" fill="var(--ink2)">290 elements confirmed</text>
+<rect x="815" y="318" width="210" height="84" rx="9" fill="var(--surface)" stroke="var(--ink2)" stroke-width="1"/>
+<text x="920.0" y="339" font-size="12.5" font-weight="700" fill="var(--ink)">Score each test case</text>
+<text x="920.0" y="357" font-size="11" fill="var(--ink2)">does TalkBack expose the defect?</text>
+<text x="920.0" y="371" font-size="11" fill="var(--ink2)">did POC + DOM layer report FAIL?</text>
+<text x="920.0" y="385" font-size="11" fill="var(--ink2)">→ TP · FN · FP</text>
+<rect x="815" y="428" width="210" height="56" rx="9" fill="var(--ok-bg)" stroke="var(--ink2)" stroke-width="1"/>
+<text x="920.0" y="449" font-size="12.5" font-weight="700" fill="var(--ink)">This page</text>
+<text x="920.0" y="467" font-size="11" fill="var(--ink2)">KPIs · rule table · sections 1–4</text>
+ </g>
+</svg>
+</div>
+<ol class="figsteps">
+ <li><b>Ground truth.</b> Real TalkBack is screen-recorded while swiping through each Rule Lab page. The green focus ring gives one <i>focus stop</i> per element; the announcement is the first caption that appears after the ring settles, so the previous element's caption is never used. The page comes from the title bar, the test case from the last “TCn” TalkBack read.</li>
+ <li><b>Silent stops.</b> When focus moved on before TalkBack spoke (32 elements), the text visible inside the ring identifies the element instead.</li>
+ <li><b>Match and compare.</b> Each announcement is paired with the node on the same rule page whose <code>spokenDescription</code> is closest, then marked identical, same name or different. Every row was reviewed by hand in the correction tool.</li>
+ <li><b>Score.</b> For each test case: does the recording show the defect to a TalkBack user, and did POC + DOM layer report FAIL? That gives TP / FN / FP and the “heard defects caught” column.</li>
+</ol>
+</figure>
 
 <h2>Rule by rule</h2>
 <p class="muted">Expected-FAIL test cases reported FAIL, per rule engine (<b>x/y</b>; “AI” = also sent to AI / needs review, “FP” = expected-PASS cases reported FAIL). The support status and the outlined column are for <b>POC + DOM layer</b>. “Heard defects caught” = of the expected-FAIL cases where the recording shows the defect to a TalkBack user, how many POC + DOM layer reports FAIL. Click a rule for its test cases.</p>
